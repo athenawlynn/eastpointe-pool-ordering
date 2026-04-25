@@ -1,0 +1,60 @@
+ItemID,Category,ItemName,Description,Price,Available,Alcoholic,SortOrder
+P001,Pool Favorites / Pub Menu,Steamed Edamame,Himalayan Salt,6,TRUE,FALSE,10
+P002,Pool Favorites / Pub Menu,Steamed Shrimp Dumplings,"Scallions, Ponzu Dipping Sauce",18,TRUE,FALSE,20
+P003,Pool Favorites / Pub Menu,Grilled Garlic Chicken Wings,"Celery & Carrot Sticks, Blue Cheese Dressing",16,TRUE,FALSE,30
+P004,Pool Favorites / Pub Menu,Fresh Vegetable Platter,"Carrots, Cucumbers, Yellow Squash, Grape Tomatoes, Celery, Green Olives, Cauliflower, Broccoli, Hummus & Onion Dip",14,TRUE,FALSE,40
+P005,Pool Favorites / Pub Menu,Crispy Fried Brussels Sprouts,"Bacon, Crumbled Cheese, Eastpointe Honey",14,TRUE,FALSE,50
+P006,Pool Favorites / Pub Menu,Jumbo Bavarian Pretzel,"Warm Beer Cheese Sauce, Honey Mustard & Deli Mustard",14,TRUE,FALSE,60
+P007,Pool Favorites / Pub Menu,Chicken Quesadilla,"Sour Cream, Guacamole, Pico de Gallo",18,TRUE,FALSE,70
+P008,Pool Favorites / Pub Menu,Loaded Potato Skins,"Crispy Bacon, Cheddar Cheese, Scallions, Sour Cream",8,TRUE,FALSE,80
+P009,Pool Favorites / Pub Menu,Wagyu Beef Sliders,"Caramelized Sweet Onions, Pickle Chips, Choice of Side",18,TRUE,FALSE,90
+P010,Pool Favorites / Pub Menu,Eastpointe Caesar Salad,"Romaine, croutons, shaved parmesan, Caesar dressing",12,TRUE,FALSE,100
+L001,Lunch / Soups,Soup Du Jour - Cup,Chef’s Daily Soup,6,TRUE,FALSE,110
+L002,Lunch / Soups,Soup Du Jour - Bowl,Chef’s Daily Soup,9,TRUE,FALSE,120
+L003,Lunch / Soups,Chicken Noodle Soup - Cup,,6,TRUE,FALSE,130
+L004,Lunch / Soups,Chicken Noodle Soup - Bowl,,9,TRUE,FALSE,140
+L005,Lunch / Soups,Half Sandwich and Soup,Chef’s Daily Soup plus choice of one half deli board sandwich,14,TRUE,FALSE,150
+L010,Lunch / Breakfast,Country Club Breakfast Sandwich,"Two fried egg, choice of ham, bacon or sausage, American cheese, brioche bun, choice of side",12,TRUE,FALSE,160
+L011,Lunch / Breakfast,Build Your Own Omelet,"Meat, veggies, cheese, choice of home fries or fruit",16,TRUE,FALSE,170
+L012,Lunch / Breakfast,Two Eggs Your Way,Home fries or fruit; bacon or sausage,12,TRUE,FALSE,180
+L020,Lunch / Salads,Eastpointe Classic Caesar,"Blackened or grilled chicken breast, romaine, roasted corn, avocado, tomatoes, red onions, parmesan, Caesar dressing",18,TRUE,FALSE,190
+L021,Lunch / Salads,Club Par Three Salad,"Chicken, tuna, egg salad, mixed greens, tomatoes, cucumber, balsamic vinaigrette",18,TRUE,FALSE,200
+L022,Lunch / Salads,Martha’s Vineyard Salad,"Grilled chicken, baby mixed lettuce, dried cranberries, cucumbers, grape tomatoes, mandarin segment, candied walnuts, raspberry vinaigrette",22,TRUE,FALSE,210
+L023,Lunch / Salads,Eastpointe Fresh Garden Salad,"Baby mixed greens, romaine, julienne onions, tomatoes, cucumbers, curly carrots, ranch honey dressing",12,TRUE,FALSE,220
+L024,Lunch / Salads,Eastpointe Cobb,"Bacon, hard boiled egg, tomatoes, avocado, blue cheese, cucumber, romaine, grilled chicken, choice of dressing",18,TRUE,FALSE,230
+L025,Lunch / Salads,Roasted Beet & Goat Cheese,"Baby mixed greens, diced cucumbers, pickled red onions, candied walnuts, champagne vinaigrette",14,TRUE,FALSE,240
+L030,Lunch / Wellness,Acai Power Bowl,"Berries, peanut butter, banana, granola, toasted coconut, acai sorbet, honey drizzle",16,TRUE,FALSE,250
+L031,Lunch / Wellness,Teriyaki Tofu Bowl,"Crispy tofu, edamame, wakame salad, pickled ginger, mango, brown rice, teriyaki sauce",16,TRUE,FALSE,260
+L032,Lunch / Wellness,Avocado Toast,"Smashed avocado, multigrain toast, everything seasoning, baby tomato, arugula, balsamic drizzle",12,TRUE,FALSE,270
+L040,Lunch / Deli Board,Deli Board Sandwich,"Choice of tuna salad, chicken salad, egg salad, ham, roasted turkey, or roast beef",13,TRUE,FALSE,280
+L050,Lunch / Handhelds,Golfer Grilled Cheese Sandwich,"American cheese, tomato, crispy bacon, toasted white bread",14,TRUE,FALSE,290
+L051,Lunch / Handhelds,Florida Blackened Mahi Tacos,"Lime pico de gallo, queso fresco, avocado cilantro crema",22,TRUE,FALSE,300
+L052,Lunch / Handhelds,BLT,"Bacon, lettuce and tomato, choice of bread",14,TRUE,FALSE,310
+L053,Lunch / Handhelds,Eastpointe Club,"Fresh roasted turkey, lettuce, tomato, bacon, mayonnaise, toasted white bread",17,TRUE,FALSE,320
+L054,Lunch / Handhelds,The Pointe Beef Burger,"10 oz Angus patty, lettuce, tomato, onion, toasted bun",22,TRUE,FALSE,330
+L055,Lunch / Handhelds,Classic Reuben Sandwich,"Corned beef, Swiss, Thousand Island, sauerkraut, rye bread",20,TRUE,FALSE,340
+L056,Lunch / Handhelds,Crispy Fried Chicken Sandwich,"Marinated fried chicken breast, pickle chips, brioche bun, Eastpointe honey mustard, lettuce, tomato, onion",19,TRUE,FALSE,350
+L057,Lunch / Handhelds,Blackened Salmon Wrap,"Shaved lettuce, diced tomato, crispy bacon, spinach wrap, chipotle dressing",22,TRUE,FALSE,360
+L060,Lunch / Pizza,12 inch Margherita Pizza,"Tomato, basil, mozzarella",16,TRUE,FALSE,370
+L061,Lunch / Pizza,12 inch Cheese Pizza,Add pepperoni in POS if requested,15,TRUE,FALSE,380
+L062,Lunch / Pizza,12 inch Vegetable Medley Pizza,"Cauliflower crust, mushroom, onion, broccoli, tomatoes, mozzarella, zucchini, yellow squash, basil",19,TRUE,FALSE,390
+K001,Kids Menu,Mac and Cheese,,8,TRUE,FALSE,400
+K002,Kids Menu,Chicken Tenders (3 pc),,8,TRUE,FALSE,410
+K003,Kids Menu,Cheese or Pepperoni Flatbread,,9,TRUE,FALSE,420
+K004,Kids Menu,Penne with Marinara,Add grilled chicken in POS if requested,8,TRUE,FALSE,430
+K005,Kids Menu,2 Wagyu Beef and Cheese Sliders,,14,TRUE,FALSE,440
+K006,Kids Menu,Hot Dog,,9,TRUE,FALSE,450
+K007,Kids Menu,Grilled Cheese,,8,TRUE,FALSE,460
+D001,Featured Cocktails,Mo’s Breeze,"Tito’s Vodka, lemonade, splash of cranberry",11,TRUE,TRUE,500
+D002,Featured Cocktails,Tito’s Meehan,"Tito’s Vodka, soda water, splash of cranberry",11,TRUE,TRUE,510
+D003,Featured Cocktails,White Wine Spritzer,"House wine, orange, lemon, lime, topped with soda water",10,TRUE,TRUE,520
+D004,Featured Cocktails,The Pointe Sangria,House-made red wine and seasonal fruit,10,TRUE,TRUE,530
+D010,Beer / Seltzer,Beer,All draft and bottled beer; staff posts exact brand in POS,5,TRUE,TRUE,540
+D020,Wine,House Wine,House wine glass,8,TRUE,TRUE,550
+N001,Non-Alcoholic,Bottled Water,,3,TRUE,FALSE,600
+N002,Non-Alcoholic,Coke,,3,TRUE,FALSE,610
+N003,Non-Alcoholic,Diet Coke,,3,TRUE,FALSE,620
+N004,Non-Alcoholic,Sprite,,3,TRUE,FALSE,630
+N005,Non-Alcoholic,Iced Tea,,4,TRUE,FALSE,640
+N006,Non-Alcoholic,Lemonade,,4,TRUE,FALSE,650
+N007,Non-Alcoholic,Arnold Palmer,,4,TRUE,FALSE,660

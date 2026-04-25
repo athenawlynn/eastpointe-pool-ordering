@@ -1,1 +1,0 @@
-Timestamp,OrderID,Status,FulfillmentType,MemberName,MemberNumber,Phone,TableNumber,ItemsSummary,ItemsJSON,BarRequest,SubtotalKnownItems,HasCustomBarRequest,AlcoholIncluded,AuthorizationAccepted,AlcoholVerificationAccepted,StaffNotes,UpdatedAt,CompletedAt,ReadyTextSentAt

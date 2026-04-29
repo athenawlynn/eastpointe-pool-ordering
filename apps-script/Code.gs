@@ -15,6 +15,7 @@
 const SPREADSHEET_ID = '1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0';
 const ADMIN_KEY = 'EastpointeTest2026!';
 const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
+const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -79,6 +80,42 @@ function getSettingsObject() {
     if (r.SettingKey) settings[String(r.SettingKey).trim()] = String(r.SettingValue || '').trim();
   });
   return settings;
+}
+
+function isDeliveryAvailable() {
+  const settings = getSettingsObject();
+  return String(settings.DeliveryAvailable || 'TRUE').toUpperCase() !== 'FALSE';
+}
+
+function isOrderingOpen() {
+  const settings = getSettingsObject();
+  return String(settings.OrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
+}
+
+function updateSetting(key, value) {
+  const normalizedKey = String(key || '').trim();
+  if (!ADMIN_EDITABLE_SETTINGS.includes(normalizedKey)) {
+    throw new Error('Setting cannot be updated from the staff dashboard.');
+  }
+
+  const normalizedValue = String(value || '').trim();
+  const sheet = getSheet('Settings');
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0] || [];
+  const keyCol = headers.indexOf('SettingKey') + 1;
+  const valueCol = headers.indexOf('SettingValue') + 1;
+  if (keyCol < 1 || valueCol < 1) {
+    throw new Error('Settings sheet is missing required columns.');
+  }
+
+  for (let r = 2; r <= values.length; r++) {
+    if (String(sheet.getRange(r, keyCol).getValue()).trim() === normalizedKey) {
+      sheet.getRange(r, valueCol).setValue(normalizedValue);
+      return;
+    }
+  }
+
+  sheet.appendRow([normalizedKey, normalizedValue]);
 }
 
 function getMenu() {
@@ -153,7 +190,7 @@ function doGet(e) {
     }
 
     if (action === 'orderStatus') {
-      return jsonResponse({ ok: true, status: getOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
+      return jsonResponse({ ok: true, ...getOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown action.' });
@@ -178,6 +215,12 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    if (action === 'updateSetting') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateSetting(body.key, body.value);
+      return jsonResponse({ ok: true, settings: getSettingsObject() });
+    }
+
     return jsonResponse({ ok: false, error: 'Unknown action.' });
   } catch (err) {
     return jsonResponse({ ok: false, error: err.message });
@@ -186,6 +229,9 @@ function doPost(e) {
 
 function createOrder(order) {
   if (!order) throw new Error('Missing order.');
+  if (!isOrderingOpen()) {
+    throw new Error('Pool ordering is currently closed. Please order directly at the Pool Bar.');
+  }
   validateMemberNumber(order.memberNumber);
   if (!String(order.memberName || '').trim()) throw new Error('Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
@@ -195,6 +241,9 @@ function createOrder(order) {
   }
 
   const fulfillmentType = order.fulfillmentType === 'Delivery' ? 'Delivery' : 'Pickup';
+  if (fulfillmentType === 'Delivery' && !isDeliveryAvailable()) {
+    throw new Error('Delivery is currently unavailable. Please choose pickup at the Pool Bar.');
+  }
   const tableNumberRaw = String(order.tableNumber || '').trim();
   const tableNumber = tableNumberRaw ? Number(tableNumberRaw) : '';
   if (fulfillmentType === 'Delivery' && (!Number.isInteger(tableNumber) || tableNumber < 1 || tableNumber > 100)) {
@@ -300,7 +349,11 @@ function getOrderStatus(orderId, memberNumber) {
     String(row.MemberNumber || '') === String(memberNumber || '')
   );
   if (!order) throw new Error('Order not found.');
-  return String(order.Status || 'New');
+  return {
+    status: String(order.Status || 'New'),
+    updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
+    completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
+  };
 }
 
 

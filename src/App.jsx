@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2 } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -36,6 +36,15 @@ function shortDate() {
     weekday: 'long',
     month: 'long',
     day: 'numeric'
+  });
+}
+
+function timeLabel(value) {
+  const date = new Date(value);
+  if (!date.getTime()) return '';
+  return date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit'
   });
 }
 
@@ -96,6 +105,12 @@ function isToday(value) {
 
 function isOrderToday(order) {
   return isToday(order.timestamp) || isToday(order.updatedAt) || isToday(order.completedAt);
+}
+
+function settingEnabled(settings, key, fallback = true) {
+  const value = settings?.[key];
+  if (value === undefined || value === null || value === '') return fallback;
+  return String(value).toUpperCase() !== 'FALSE';
 }
 
 function sleep(ms) {
@@ -179,6 +194,11 @@ async function localAdminFunction(name, options = {}) {
     return apiPost('updateStatus', { ...body, adminKey: ADMIN_KEY });
   }
 
+  if (name === 'admin-update-setting') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateSetting', { ...body, adminKey: ADMIN_KEY });
+  }
+
   throw new Error(`Unknown local admin function: ${name}`);
 }
 
@@ -220,6 +240,28 @@ function readSavedConfirmation() {
 
 function clearSavedConfirmation() {
   sessionStorage.removeItem(CONFIRMATION_KEY);
+}
+
+function playNewOrderSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + 0.24);
+    setTimeout(() => ctx.close(), 300);
+  } catch {
+    // Some browsers block notification sounds until user interaction.
+  }
 }
 
 function Header({ mode, setMode }) {
@@ -306,6 +348,7 @@ function OrderPage() {
     pickupLocation: savedConfirmation.pickupLocation || 'Pool Bar'
   } : null);
   const [liveStatus, setLiveStatus] = useState(savedConfirmation?.status || '');
+  const [readyAt, setReadyAt] = useState(savedConfirmation?.readyAt || '');
 
   useEffect(() => {
     async function load() {
@@ -327,6 +370,20 @@ function OrderPage() {
     load();
   }, []);
 
+  useEffect(() => {
+    if (confirmation) return;
+    async function refreshSettings() {
+      try {
+        const settingsData = await apiGet('settings');
+        setSettings(settingsData.settings || {});
+      } catch {
+        // Keep the last known settings; order submission still validates server-side.
+      }
+    }
+    const id = setInterval(refreshSettings, 20000);
+    return () => clearInterval(id);
+  }, [confirmation]);
+
   const categories = useMemo(() => [...new Set(menu.filter(i => i.available).map(i => i.category))], [menu]);
   const visibleItems = useMemo(() => menu.filter(i => i.category === activeCat), [menu, activeCat]);
 
@@ -339,6 +396,14 @@ function OrderPage() {
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const hasAlcohol = selectedItems.some(i => i.alcoholic) || form.barRequest.trim().length > 0;
   const hasBarRequest = form.barRequest.trim().length > 0;
+  const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
+  const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
+
+  useEffect(() => {
+    if (!loading && !confirmation && !deliveryAvailable && form.fulfillmentType === 'Delivery') {
+      setField('fulfillmentType', 'Pickup');
+    }
+  }, [loading, confirmation, deliveryAvailable, form.fulfillmentType]);
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -346,6 +411,8 @@ function OrderPage() {
 
   function validate() {
     if (!['Pickup', 'Delivery'].includes(form.fulfillmentType)) return 'Please choose pickup or delivery.';
+    if (!orderingOpen) return 'Pool ordering is currently closed. Please order directly at the Pool Bar.';
+    if (form.fulfillmentType === 'Delivery' && !deliveryAvailable) return 'Delivery is currently unavailable. Please choose pickup at the Pool Bar.';
     if (!form.memberName.trim()) return 'Please enter member name.';
     if (!/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
@@ -426,10 +493,14 @@ function OrderPage() {
           memberNumber: form.memberNumber.trim()
         });
         const nextStatus = res.status || '';
+        const nextReadyAt = nextStatus === 'Ready for Pickup' || nextStatus === 'Completed'
+          ? (res.updatedAt || res.completedAt || '')
+          : '';
         setLiveStatus(nextStatus);
+        setReadyAt(nextReadyAt);
         setStatusError('');
         const saved = readSavedConfirmation();
-        if (saved) sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify({ ...saved, status: nextStatus }));
+        if (saved) sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify({ ...saved, status: nextStatus, readyAt: nextReadyAt }));
       } catch (e) {
         setStatusError('Status is reconnecting. Keep this page open.');
       }
@@ -457,6 +528,7 @@ function OrderPage() {
           <div className="statusPanel">
             <span>Current Status</span>
             <strong>{liveStatus || 'New'}</strong>
+            {readyAt && <em>Ready at {timeLabel(readyAt) || readyAt}</em>}
             {statusError && <small>{statusError}</small>}
           </div>
           <div className="memberStatusTrail" aria-label="Order status progress">
@@ -483,8 +555,8 @@ function OrderPage() {
           {ready && (
             <div className="readyNotice">
               {form.fulfillmentType === 'Delivery'
-                ? 'Your order is ready and will be delivered to your table.'
-                : 'Your order is ready. Please pick it up at the Pool Bar and provide your name/member number.'}
+                ? `Your order was ready at ${timeLabel(readyAt) || 'the time shown above'} and will be delivered to your table.`
+                : `Your order was ready at ${timeLabel(readyAt) || 'the time shown above'}. Please pick it up at the Pool Bar and provide your name/member number.`}
             </div>
           )}
         </div>
@@ -496,6 +568,8 @@ function OrderPage() {
   return (
     <div className="stack memberStack">
       {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+      {!orderingOpen && <div className="serviceBanner closed"><AlertTriangle size={18} /> Pool ordering is currently closed. Please order directly at the Pool Bar.</div>}
+      {orderingOpen && !deliveryAvailable && <div className="serviceBanner"><Truck size={18} /> Pickup only today. Delivery is currently unavailable.</div>}
 
       <section className="card hero memberHero">
         <div>
@@ -533,13 +607,15 @@ function OrderPage() {
           </button>
           <button
             className={form.fulfillmentType === 'Delivery' ? 'choiceCard activeChoice' : 'choiceCard'}
+            disabled={!deliveryAvailable}
             onClick={() => setField('fulfillmentType', 'Delivery')}
             type="button"
           >
             <strong>Delivery</strong>
-            <span>Delivered to your table. Table number is required.</span>
+            <span>{deliveryAvailable ? 'Delivered to your table. Table number is required.' : 'Currently unavailable. Please choose pickup.'}</span>
           </button>
         </div>
+        {!deliveryAvailable && <div className="serviceNotice">Delivery is turned off by the pool bar today. Pickup orders are still available.</div>}
       </section>
 
       <section className="card">
@@ -645,7 +721,7 @@ function OrderPage() {
         )}
 
         <button className="primaryButton" onClick={submitOrder} disabled={submitting}>
-          {submitting ? 'Sending Order...' : 'Submit Order'}
+          {submitting ? 'Sending Order...' : orderingOpen ? 'Submit Order' : 'Ordering Closed'}
         </button>
       </section>
     </div>
@@ -694,14 +770,34 @@ function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [settings, setSettings] = useState({});
+  const [updatingSetting, setUpdatingSetting] = useState('');
+  const [newOrderAlert, setNewOrderAlert] = useState(false);
 
   async function loadOrders() {
     setLoading(true);
     try {
-      const res = await adminFunction('admin-orders', {
-        headers: { Authorization: `Bearer ${getAdminToken()}` }
+      const [ordersRes, settingsRes] = await Promise.all([
+        adminFunction('admin-orders', {
+          headers: { Authorization: `Bearer ${getAdminToken()}` }
+        }),
+        apiGet('settings')
+      ]);
+      const res = ordersRes;
+      const nextOrders = res.orders || [];
+      setOrders(prevOrders => {
+        const previousIds = new Set(prevOrders.map(order => String(order.orderId)));
+        const hasNewOrder = prevOrders.length > 0 && nextOrders.some(order =>
+          order.status === 'New' && !previousIds.has(String(order.orderId))
+        );
+        if (hasNewOrder) {
+          setNewOrderAlert(true);
+          playNewOrderSound();
+          setTimeout(() => setNewOrderAlert(false), 5000);
+        }
+        return nextOrders;
       });
-      setOrders(res.orders || []);
+      setSettings(settingsRes.settings || {});
       setLastUpdated(new Date().toLocaleTimeString());
       setErr('');
     } catch (e) {
@@ -723,6 +819,7 @@ function AdminPage() {
   }, [loggedIn]);
 
   async function updateStatus(orderId, status) {
+    if (status === 'Cancelled' && !window.confirm(`Cancel order #${orderId}?`)) return;
     setUpdatingStatus({ orderId, status });
     try {
       await adminFunction('admin-update-status', {
@@ -740,6 +837,41 @@ function AdminPage() {
     } finally {
       setUpdatingStatus(null);
     }
+  }
+
+  async function updateSetting(key, value) {
+    setUpdatingSetting(key);
+    setErr('');
+    const previousSettings = settings;
+    setSettings(prev => ({ ...prev, [key]: value }));
+    try {
+      const res = await adminFunction('admin-update-setting', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({
+          key,
+          value
+        })
+      });
+      if (res.settings) setSettings(res.settings);
+    } catch (e) {
+      setSettings(previousSettings);
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setUpdatingSetting('');
+    }
+  }
+
+  function updateOrderingOpen(nextOpen) {
+    updateSetting('OrderingOpen', nextOpen ? 'TRUE' : 'FALSE');
+  }
+
+  function updateDeliveryAvailability(nextAvailable) {
+    updateSetting('DeliveryAvailable', nextAvailable ? 'TRUE' : 'FALSE');
   }
 
   function printOrder(order) {
@@ -792,6 +924,8 @@ function AdminPage() {
   const subtotalToday = orders
     .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
+  const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
 
   function ordersForColumn(column) {
     return orders.filter(order => {
@@ -850,6 +984,10 @@ function AdminPage() {
           <strong>{currency(order.subtotalKnownItems)}{order.hasCustomBarRequest ? ' + bar' : ''}</strong>
           <span className={order.alcoholIncluded ? 'alcoholPill' : ''}>{order.alcoholIncluded ? 'Alcohol' : 'No alcohol'}</span>
         </div>
+        <div className="staffTimeLine">
+          <span>{order.updatedAt ? `Updated ${timeLabel(order.updatedAt) || order.updatedAt}` : `Placed ${timeLabel(order.timestamp) || order.timestamp}`}</span>
+          {order.completedAt && <span>Completed {timeLabel(order.completedAt) || order.completedAt}</span>}
+        </div>
 
         <div className="staffActions">
           {action && (
@@ -888,6 +1026,22 @@ function AdminPage() {
         </div>
         <div className="staffHeroControls">
           <span className="refreshStatus"><span></span> Auto-refreshing</span>
+          <button
+            className={orderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateOrderingOpen(!orderingOpen)}
+            disabled={Boolean(updatingSetting)}
+            title="Turn member ordering on or off"
+          >
+            {updatingSetting === 'OrderingOpen' ? 'Saving...' : orderingOpen ? 'Ordering Open' : 'Ordering Closed'}
+          </button>
+          <button
+            className={deliveryAvailable ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateDeliveryAvailability(!deliveryAvailable)}
+            disabled={Boolean(updatingSetting)}
+            title="Turn member delivery ordering on or off"
+          >
+            <Truck size={18} /> {updatingSetting === 'DeliveryAvailable' ? 'Saving...' : deliveryAvailable ? 'Delivery On' : 'Pickup Only'}
+          </button>
           <button className="staffRefreshButton" onClick={loadOrders} disabled={loading}><RefreshCcw className={loading ? 'spin' : ''} size={18} /> Refresh</button>
           <button className="staffOrderPageButton" onClick={() => { clearAdminToken(); setLoggedIn(false); }}>Sign out</button>
           <strong>{activeCount} active orders</strong>
@@ -895,6 +1049,7 @@ function AdminPage() {
       </section>
 
       {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
+      {newOrderAlert && <div className="staffNewOrderAlert"><AlertTriangle size={18} /> New order received</div>}
 
       <section className="staffStats">
         <div className="staffStat new"><strong>{newCount}</strong><span>New orders waiting</span></div>

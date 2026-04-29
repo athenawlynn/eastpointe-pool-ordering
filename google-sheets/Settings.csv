@@ -1,6 +1,7 @@
 SettingKey,SettingValue
 ClubName,Eastpointe Country Club
 OrderingOpen,TRUE
+DeliveryAvailable,TRUE
 PickupLocation,Pool Bar
 StaffEmail,athenawlynn@gmail.com
 MaxTableNumber,100

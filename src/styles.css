@@ -110,6 +110,9 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .choiceCard strong { color: var(--green); font-size: 17px; }
 .choiceCard span { color: var(--muted); line-height: 1.28; font-size: 13px; }
 .activeChoice { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 61, 45, .10); background: #f4f8f1; }
+.serviceNotice { margin-top: 10px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.35; font-weight: 750; }
+.serviceBanner { display: flex; align-items: center; gap: 9px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 12px; padding: 11px 12px; font-size: 13px; line-height: 1.35; font-weight: 850; }
+.serviceBanner.closed { border-color: #e7b8aa; background: #fff2ed; color: var(--danger); }
 .statusCard { gap: 12px; }
 .orderNumHeader { background: #F2F9F4; border-radius: 10px; padding: 14px; text-align: center; display: grid; gap: 2px; width: 100%; margin-bottom: 2px; }
 .orderNumHeader span { color: #5A9B6A; font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
@@ -118,6 +121,7 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .statusPanel { display: grid; gap: 4px; background: #F9F8F5; border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px; margin: 4px 0; width: 100%; text-align: left; }
 .statusPanel span { color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .statusPanel strong { color: var(--green); font-size: 20px; }
+.statusPanel em { color: var(--amber); font-size: 13px; font-style: normal; font-weight: 850; }
 .statusPanel small { color: var(--danger); font-size: 12px; font-weight: 800; }
 .memberStatusTrail { display: grid; gap: 0; margin: 10px 0; padding: 4px 0; width: 100%; text-align: left; }
 .memberStatusStep { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: 10px; min-height: 42px; color: #C5BFB4; font-size: 13px; font-weight: 800; }
@@ -146,7 +150,11 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffHeroControls > strong { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 16px; border-radius: 20px; background: rgba(255, 255, 255, .15); color: white; font-size: clamp(14px, 1.1vw, 20px); white-space: nowrap; }
 .staffRefreshButton, .staffOrderPageButton { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: white; border-radius: 8px; padding: 9px 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 850; }
 .staffOrderPageButton { color: rgba(255, 255, 255, .82); }
+.staffToggleButton { border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 9px 12px; min-height: 38px; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 900; }
+.staffToggleButton.on { background: #2D6B40; }
+.staffToggleButton.off { background: #8A5A0A; }
 .staffAlert { margin: 18px 24px 0; }
+.staffNewOrderAlert { margin: 18px 24px 0; display: flex; align-items: center; gap: 9px; border: 1px solid #B5D4F4; background: #E6F1FB; color: #185FA5; border-radius: 14px; padding: 12px 14px; font-weight: 900; }
 .staffStats { display: grid; grid-template-columns: .9fr .9fr .9fr .9fr .9fr 1.15fr; background: #F9F8F5; border-bottom: 1px solid var(--line-soft); }
 .staffStat { min-height: 96px; padding: 18px 28px; display: grid; align-content: center; border-right: 1px solid var(--line-soft); }
 .staffStat:last-child { border-right: 0; }
@@ -193,6 +201,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffOrderFoot span { color: var(--muted); font-size: 11px; font-weight: 800; }
 .staffOrderCard .staffOrderFoot span { padding: 5px 12px; border-radius: 999px; background: #f4f0e9; }
 .staffOrderCard .staffOrderFoot .alcoholPill { background: #f8e9e4; color: #a33f35; }
+.staffTimeLine { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 8px 14px; border-bottom: 1px solid var(--line-soft); color: var(--soft-muted); font-size: 11px; font-weight: 800; }
 .staffActions { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px 12px; align-items: center; }
 .staffPrimaryAction, .staffSecondaryAction, .staffPrintButton { min-height: 38px; border-radius: 8px; font-weight: 850; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 .staffPrimaryAction { border: 0; background: var(--deep-green); color: white; padding: 9px 13px; }

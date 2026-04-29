@@ -1,0 +1,946 @@
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2 } from 'lucide-react';
+
+const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
+const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'poolstaff';
+const API_TIMEOUT_MS = 12000;
+const API_RETRIES = 2;
+const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
+const ADMIN_TOKEN_KEY = 'eastpointeAdminToken';
+
+const STAFF_COLUMNS = [
+  { id: 'New', title: 'New', statuses: ['New'], tone: 'new' },
+  { id: 'Preparing', title: 'Preparing', statuses: ['Accepted', 'Preparing'], tone: 'preparing' },
+  { id: 'Ready', title: 'Ready', statuses: ['Ready for Pickup'], tone: 'ready' },
+  { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
+  { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
+];
+
+function currency(value) {
+  const n = Number(value || 0);
+  return n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+}
+
+function getQueryParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
+function todayISO() {
+  return new Date().toISOString();
+}
+
+function shortDate() {
+  return new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function ageLabel(value) {
+  const time = new Date(value).getTime();
+  if (!time) return '';
+  const minutes = Math.max(0, Math.round((Date.now() - time) / 60000));
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  return new Date(value).toLocaleDateString();
+}
+
+function itemLines(order) {
+  if (Array.isArray(order.items) && order.items.length) {
+    return order.items.map(item => `${item.quantity || 1}x ${item.itemName}`).slice(0, 5);
+  }
+  return String(order.itemsSummary || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function displayPhone(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return String(phone || '').trim();
+}
+
+function memberStatusSteps(status, fulfillmentType) {
+  const labels = fulfillmentType === 'Delivery'
+    ? ['Order received', 'Accepted by staff', 'Preparing now', 'On its way', 'Enjoy']
+    : ['Order received', 'Accepted by staff', 'Preparing now', 'Ready for pickup', 'Enjoy'];
+  const statusIndex = {
+    New: 0,
+    Accepted: 1,
+    Preparing: 2,
+    'Ready for Pickup': 3,
+    Completed: 4
+  };
+  const activeIndex = statusIndex[status] ?? 0;
+  return labels.map((label, index) => ({
+    label,
+    state: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'
+  }));
+}
+
+function isToday(value) {
+  const date = new Date(value);
+  if (!date.getTime()) return false;
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+}
+
+function isOrderToday(order) {
+  return isToday(order.timestamp) || isToday(order.updatedAt) || isToday(order.completedAt);
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function apiErrorMessage(error, action) {
+  if (error.name === 'AbortError') return 'The ordering system is taking longer than expected to respond. Please try again.';
+  if (String(error.message || '').includes('Failed to fetch')) return 'Unable to reach the ordering system. Please check the connection and try again.';
+  return error.message || `Unable to complete ${action}.`;
+}
+
+async function fetchJsonWithRetry(url, options, action) {
+  let lastError;
+  for (let attempt = 0; attempt <= API_RETRIES; attempt += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' });
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error('The ordering system returned an unexpected response. Please refresh and try again.');
+      }
+      if (!res.ok) throw new Error(data.error || `Request failed with status ${res.status}.`);
+      if (!data.ok) throw new Error(data.error || 'Request failed.');
+      return data;
+    } catch (error) {
+      lastError = error;
+      if (attempt < API_RETRIES) await sleep(450 * (attempt + 1));
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+  throw new Error(apiErrorMessage(lastError || new Error('Request failed.'), action));
+}
+
+async function apiGet(action, extra = {}) {
+  if (!SCRIPT_URL) throw new Error('Missing VITE_SCRIPT_URL. Add your Apps Script URL in Netlify environment variables.');
+  const url = new URL(SCRIPT_URL);
+  url.searchParams.set('action', action);
+  url.searchParams.set('_', Date.now().toString());
+  Object.entries(extra).forEach(([k, v]) => url.searchParams.set(k, v));
+  return fetchJsonWithRetry(url.toString(), {}, action);
+}
+
+async function apiPost(action, payload) {
+  if (!SCRIPT_URL) throw new Error('Missing VITE_SCRIPT_URL. Add your Apps Script URL in Netlify environment variables.');
+  return fetchJsonWithRetry(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, ...payload })
+  }, action);
+}
+
+async function localAdminFunction(name, options = {}) {
+  if (name === 'admin-login') {
+    const body = JSON.parse(options.body || '{}');
+    if (String(body.password || '') !== ADMIN_PASSWORD) {
+      throw new Error('Incorrect password.');
+    }
+    return { ok: true, token: `local-dev.${Date.now() + 4 * 60 * 60 * 1000}` };
+  }
+
+  if (!getAdminToken()) {
+    throw new Error('Staff session expired. Please sign in again.');
+  }
+
+  if (!ADMIN_KEY) {
+    throw new Error('Missing VITE_ADMIN_KEY. Add your Apps Script admin key to local environment variables.');
+  }
+
+  if (name === 'admin-orders') {
+    return apiGet('orders', { adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'admin-update-status') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateStatus', { ...body, adminKey: ADMIN_KEY });
+  }
+
+  throw new Error(`Unknown local admin function: ${name}`);
+}
+
+async function adminFunction(name, options = {}) {
+  if (import.meta.env.DEV) {
+    return localAdminFunction(name, options);
+  }
+
+  return fetchJsonWithRetry(`/.netlify/functions/${name}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  }, name);
+}
+
+function getAdminToken() {
+  return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
+}
+
+function setAdminToken(token) {
+  sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+}
+
+function clearAdminToken() {
+  sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+function readSavedConfirmation() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(CONFIRMATION_KEY) || 'null');
+    if (!saved?.orderId || !saved?.memberNumber) return null;
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
+function clearSavedConfirmation() {
+  sessionStorage.removeItem(CONFIRMATION_KEY);
+}
+
+function Header({ mode, setMode }) {
+  return (
+    <header className="header">
+      <div className="brandLockup">
+        <img src="/eastpointe-logo.png" alt="Eastpointe Country Club" className="brandLogo" />
+        <div>
+          <p className="eyebrow">Eastpointe Country Club</p>
+          <h1>Eastpointe Pool Bar</h1>
+        </div>
+      </div>
+      <button className="ghostButton" onClick={() => setMode(mode === 'admin' ? 'order' : 'admin')}>
+        {mode === 'admin' ? 'Order Page' : 'Staff'}
+      </button>
+    </header>
+  );
+}
+
+function LoadingCard({ message = 'Loading...' }) {
+  return <div className="card centered"><RefreshCcw className="spin" size={22} /><p>{message}</p></div>;
+}
+
+function EmptyState({ title, body }) {
+  return <div className="card centered"><ClipboardList size={26} /><h3>{title}</h3><p>{body}</p></div>;
+}
+
+function CategoryTabs({ categories, active, setActive }) {
+  return (
+    <div className="tabs">
+      {categories.map(cat => (
+        <button key={cat} className={cat === active ? 'tab active' : 'tab'} onClick={() => setActive(cat)}>
+          {cat}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function MenuItem({ item, quantity, setQuantity }) {
+  return (
+    <div className={!item.available ? 'menuItem unavailable' : 'menuItem'}>
+      <div className="menuText">
+        <div className="menuTitleLine">
+          <h3>{item.itemName}</h3>
+          <strong>{currency(item.price)}</strong>
+        </div>
+        {item.description && <p>{item.description}</p>}
+        {item.alcoholic && <span className="pill warning">Alcohol</span>}
+        {!item.available && <span className="pill muted">Unavailable</span>}
+      </div>
+      <div className="qty">
+        <button disabled={!item.available || quantity <= 0} onClick={() => setQuantity(Math.max(0, quantity - 1))}>−</button>
+        <span>{quantity}</span>
+        <button disabled={!item.available} onClick={() => setQuantity(quantity + 1)}>+</button>
+      </div>
+    </div>
+  );
+}
+
+function OrderPage() {
+  const initialTable = getQueryParam('table') || '';
+  const savedConfirmation = readSavedConfirmation();
+  const [menu, setMenu] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [statusError, setStatusError] = useState('');
+  const [activeCat, setActiveCat] = useState('');
+  const [quantities, setQuantities] = useState({});
+  const [form, setForm] = useState({
+    fulfillmentType: savedConfirmation?.fulfillmentType || 'Pickup',
+    memberName: savedConfirmation?.memberName || '',
+    memberNumber: savedConfirmation?.memberNumber || '',
+    phone: '',
+    tableNumber: savedConfirmation?.tableNumber || initialTable,
+    barRequest: '',
+    authorizationAccepted: false,
+    alcoholVerificationAccepted: false
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmation, setConfirmation] = useState(savedConfirmation ? {
+    orderId: savedConfirmation.orderId,
+    pickupLocation: savedConfirmation.pickupLocation || 'Pool Bar'
+  } : null);
+  const [liveStatus, setLiveStatus] = useState(savedConfirmation?.status || '');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [menuData, settingsData] = await Promise.all([
+          apiGet('menu'),
+          apiGet('settings')
+        ]);
+        setMenu(menuData.items || []);
+        setSettings(settingsData.settings || {});
+        const cats = [...new Set((menuData.items || []).filter(i => i.available).map(i => i.category))];
+        setActiveCat(cats[0] || '');
+      } catch (e) {
+        setErr(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const categories = useMemo(() => [...new Set(menu.filter(i => i.available).map(i => i.category))], [menu]);
+  const visibleItems = useMemo(() => menu.filter(i => i.category === activeCat), [menu, activeCat]);
+
+  const selectedItems = useMemo(() => {
+    return menu
+      .filter(item => Number(quantities[item.itemId] || 0) > 0)
+      .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) }));
+  }, [menu, quantities]);
+
+  const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const hasAlcohol = selectedItems.some(i => i.alcoholic) || form.barRequest.trim().length > 0;
+  const hasBarRequest = form.barRequest.trim().length > 0;
+
+  function setField(field, value) {
+    setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  function validate() {
+    if (!['Pickup', 'Delivery'].includes(form.fulfillmentType)) return 'Please choose pickup or delivery.';
+    if (!form.memberName.trim()) return 'Please enter member name.';
+    if (!/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!form.phone.trim()) return 'Please enter mobile number.';
+    const t = Number(form.tableNumber);
+    if (form.fulfillmentType === 'Delivery' && (!Number.isInteger(t) || t < 1 || t > 100)) {
+      return 'For delivery, table number must be between 1 and 100.';
+    }
+    if (form.tableNumber && (!Number.isInteger(t) || t < 1 || t > 100)) {
+      return 'Table number must be between 1 and 100.';
+    }
+    if (selectedItems.length === 0 && !form.barRequest.trim()) return 'Please select at least one item or enter a bar/cocktail request.';
+    if (!form.authorizationAccepted) return 'Please authorize the charge to the member account.';
+    if (hasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
+    return '';
+  }
+
+  async function submitOrder() {
+    const v = validate();
+    if (v) {
+      setErr(v);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setSubmitting(true);
+    setErr('');
+    try {
+      const payload = {
+        order: {
+          timestamp: todayISO(),
+          status: 'New',
+          fulfillmentType: form.fulfillmentType,
+          memberName: form.memberName.trim(),
+          memberNumber: form.memberNumber.trim(),
+          phone: form.phone.trim(),
+          tableNumber: form.tableNumber.trim(),
+          items: selectedItems.map(i => ({
+            itemId: i.itemId,
+            category: i.category,
+            itemName: i.itemName,
+            price: Number(i.price || 0),
+            quantity: Number(i.quantity || 0),
+            alcoholic: Boolean(i.alcoholic)
+          })),
+          barRequest: form.barRequest.trim(),
+          subtotalKnownItems: subtotal,
+          hasCustomBarRequest: hasBarRequest,
+          alcoholIncluded: hasAlcohol,
+          authorizationAccepted: form.authorizationAccepted,
+          alcoholVerificationAccepted: form.alcoholVerificationAccepted
+        }
+      };
+      const res = await apiPost('createOrder', payload);
+      const nextConfirmation = { orderId: res.orderId, pickupLocation: settings.PickupLocation || 'Pool Bar' };
+      setConfirmation(nextConfirmation);
+      setLiveStatus('New');
+      sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify({
+        ...nextConfirmation,
+        status: 'New',
+        memberName: form.memberName.trim(),
+        memberNumber: form.memberNumber.trim(),
+        fulfillmentType: form.fulfillmentType,
+        tableNumber: form.tableNumber.trim()
+      }));
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+
+  useEffect(() => {
+    if (!confirmation?.orderId || !form.memberNumber) return;
+    async function pollStatus() {
+      try {
+        const res = await apiGet('orderStatus', {
+          orderId: confirmation.orderId,
+          memberNumber: form.memberNumber.trim()
+        });
+        const nextStatus = res.status || '';
+        setLiveStatus(nextStatus);
+        setStatusError('');
+        const saved = readSavedConfirmation();
+        if (saved) sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify({ ...saved, status: nextStatus }));
+      } catch (e) {
+        setStatusError('Status is reconnecting. Keep this page open.');
+      }
+    }
+    pollStatus();
+    const id = setInterval(pollStatus, 8000);
+    return () => clearInterval(id);
+  }, [confirmation?.orderId, form.memberNumber]);
+
+  if (loading) return <LoadingCard message="Loading menu..." />;
+
+  if (confirmation) {
+    const ready = liveStatus === 'Ready for Pickup';
+    return (
+      <div className="stack memberStack">
+        <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
+          <div className="orderNumHeader">
+            <span>Order confirmed</span>
+            <strong>#{confirmation.orderId}</strong>
+            <small>{form.fulfillmentType}{form.tableNumber ? ` · Table ${form.tableNumber}` : ''}</small>
+          </div>
+          <CheckCircle size={34} />
+          <h2>{ready ? (form.fulfillmentType === 'Delivery' ? 'Order Ready for Delivery' : 'Ready for Pickup') : 'Order Sent'}</h2>
+          <p>Thank you, {form.memberName}. Your order status updates automatically.</p>
+          <div className="statusPanel">
+            <span>Current Status</span>
+            <strong>{liveStatus || 'New'}</strong>
+            {statusError && <small>{statusError}</small>}
+          </div>
+          <div className="memberStatusTrail" aria-label="Order status progress">
+            {memberStatusSteps(liveStatus || 'New', form.fulfillmentType).map(step => (
+              <div className={`memberStatusStep ${step.state}`} key={step.label}>
+                <div className="memberStatusDot">{step.state === 'done' ? '✓' : ''}</div>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="notice">
+            {form.fulfillmentType === 'Delivery' ? (
+              <>
+                <strong>Delivery:</strong> Table {form.tableNumber}<br />
+                Please keep this screen open. The order status will update automatically.
+              </>
+            ) : (
+              <>
+                <strong>Pickup:</strong> {confirmation.pickupLocation}<br />
+                Please keep this screen open. We will update this screen when your order is ready for pickup.
+              </>
+            )}
+          </div>
+          {ready && (
+            <div className="readyNotice">
+              {form.fulfillmentType === 'Delivery'
+                ? 'Your order is ready and will be delivered to your table.'
+                : 'Your order is ready. Please pick it up at the Pool Bar and provide your name/member number.'}
+            </div>
+          )}
+        </div>
+        <button className="primaryButton" onClick={() => { clearSavedConfirmation(); window.location.reload(); }}>Start New Order</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="stack memberStack">
+      {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+
+      <section className="card hero memberHero">
+        <div>
+          <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
+          <h2>Poolside food & beverage</h2>
+          <p>Order from your table and charge it to your member account. No app download needed.</p>
+        </div>
+        {form.tableNumber ? (
+          <div className="tableHighlight">
+            <span>You're sitting at</span>
+            <strong>Table {form.tableNumber}</strong>
+            <small>Pre-filled from your QR code</small>
+          </div>
+        ) : (
+          <div className="tableHighlight mutedTable">
+            <span>Choose service</span>
+            <strong>{form.fulfillmentType}</strong>
+            <small>Add a table number for delivery</small>
+          </div>
+        )}
+      </section>
+
+
+      <section className="card">
+        <div className="sectionKicker"><MapPin size={15} /> Service</div>
+        <h2>How would you like your order?</h2>
+        <div className="choiceGrid">
+          <button
+            className={form.fulfillmentType === 'Pickup' ? 'choiceCard activeChoice' : 'choiceCard'}
+            onClick={() => setField('fulfillmentType', 'Pickup')}
+            type="button"
+          >
+            <strong>Pickup</strong>
+            <span>Pick up at the Pool Bar when ready.</span>
+          </button>
+          <button
+            className={form.fulfillmentType === 'Delivery' ? 'choiceCard activeChoice' : 'choiceCard'}
+            onClick={() => setField('fulfillmentType', 'Delivery')}
+            type="button"
+          >
+            <strong>Delivery</strong>
+            <span>Delivered to your table. Table number is required.</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="sectionKicker"><UserRound size={15} /> Member details</div>
+        <h2>Member Information</h2>
+        <label>Member Name
+          <input value={form.memberName} onChange={e => setField('memberName', e.target.value)} placeholder="First and last name" />
+        </label>
+        <label>Member Number
+          <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={e => setField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+        </label>
+        <label>Mobile Number
+          <input inputMode="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="Example: 917-207-6562" />
+          <span className="fieldHint">For staff to contact you if there is a question about your order.</span>
+        </label>
+        <label>{form.fulfillmentType === 'Delivery' ? 'Delivery Table Number' : 'Table Number, if applicable'}
+          <input inputMode="numeric" value={form.tableNumber} onChange={e => setField('tableNumber', e.target.value.replace(/\D/g, ''))} placeholder="1–100" />
+          <span className="fieldHint">{form.fulfillmentType === 'Delivery' ? 'Required for delivery.' : 'Optional for pickup; QR codes may prefill this field.'}</span>
+        </label>
+      </section>
+
+      <section className="card">
+        <div className="sectionTitle">
+          <div>
+            <div className="sectionKicker"><Utensils size={15} /> Browse & build</div>
+            <h2>Menu</h2>
+          </div>
+          <span className="pill">{form.fulfillmentType}{form.tableNumber ? ` · Table ${form.tableNumber}` : ''}</span>
+        </div>
+        {categories.length ? (
+          <>
+            <CategoryTabs categories={categories} active={activeCat} setActive={setActiveCat} />
+            <div className="menuList">
+              {visibleItems.map(item => (
+                <MenuItem
+                  key={item.itemId}
+                  item={item}
+                  quantity={Number(quantities[item.itemId] || 0)}
+                  setQuantity={(q) => setQuantities(prev => ({ ...prev, [item.itemId]: q }))}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyState title="No menu available" body="Please check the MenuItems Google Sheet." />
+        )}
+      </section>
+
+      <section className="card">
+        <div className="sectionKicker"><ShoppingCart size={15} /> Custom drinks</div>
+        <h2>Bar / Cocktail Request</h2>
+        <p className="hint">Enter your bar or cocktail order exactly as you would tell the bartender.</p>
+        <textarea
+          rows="4"
+          value={form.barRequest}
+          onChange={e => setField('barRequest', e.target.value)}
+          placeholder="Example: 2 Tito’s sodas with lime, 1 margarita, 1 bourbon rocks, 1 Transfusion"
+        />
+        <p className="finePrint">Custom bar requests will be priced according to standard club bar pricing and charged to your member account.</p>
+      </section>
+
+      <section className="card">
+        <div className="sectionTitle">
+          <div>
+            <div className="sectionKicker"><ShieldCheck size={15} /> Review & submit</div>
+            <h2>Your Order</h2>
+          </div>
+          <span className="orderTotalPill">{selectedItems.length} item{selectedItems.length === 1 ? '' : 's'} · {currency(subtotal)}</span>
+        </div>
+        {selectedItems.length === 0 && !form.barRequest.trim() ? (
+          <p className="hint">No items selected yet.</p>
+        ) : (
+          <div className="cartList">
+            {selectedItems.map(item => (
+              <div className="cartRow" key={item.itemId}>
+                <span>{item.itemName} × {item.quantity}</span>
+                <strong>{currency(Number(item.price) * Number(item.quantity))}</strong>
+              </div>
+            ))}
+            {form.barRequest.trim() && (
+              <div className="cartRow barRequest">
+                <span>Bar Request: {form.barRequest}</span>
+                <strong>Priced by bar</strong>
+              </div>
+            )}
+            <div className="cartTotal">
+              <span>Known subtotal</span>
+              <strong>{currency(subtotal)}</strong>
+            </div>
+          </div>
+        )}
+
+        <label className="check">
+          <input type="checkbox" checked={form.authorizationAccepted} onChange={e => setField('authorizationAccepted', e.target.checked)} />
+          <span>I authorize this order to be charged to the member account listed above. I understand the club will verify the member number against its member list and may confirm my name at pickup or delivery.</span>
+        </label>
+
+        {hasAlcohol && (
+          <label className="check alcoholCheck">
+            <input type="checkbox" checked={form.alcoholVerificationAccepted} onChange={e => setField('alcoholVerificationAccepted', e.target.checked)} />
+            <span>I understand alcoholic beverages must be picked up by a member or guest of legal drinking age and may require ID or member verification at pickup.</span>
+          </label>
+        )}
+
+        <button className="primaryButton" onClick={submitOrder} disabled={submitting}>
+          {submitting ? 'Sending Order...' : 'Submit Order'}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+function Login({ onLogin }) {
+  const [pw, setPw] = useState('');
+  const [err, setErr] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  async function handle() {
+    if (!pw.trim()) {
+      setErr('Please enter the staff password.');
+      return;
+    }
+    setSubmitting(true);
+    setErr('');
+    try {
+      const res = await adminFunction('admin-login', {
+        method: 'POST',
+        body: JSON.stringify({ password: pw })
+      });
+      onLogin(res.token);
+    } catch (e) {
+      setErr(e.message || 'Incorrect password.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+  return (
+    <div className="card login">
+      <Lock size={28} />
+      <h2>Staff Dashboard</h2>
+      <p>Enter the staff password to view orders.</p>
+      {err && <div className="alert">{err}</div>}
+      <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Staff password" onKeyDown={e => e.key === 'Enter' && handle()} />
+      <button className="primaryButton" onClick={handle} disabled={submitting}>{submitting ? 'Opening...' : 'Open Dashboard'}</button>
+    </div>
+  );
+}
+
+function AdminPage() {
+  const [loggedIn, setLoggedIn] = useState(Boolean(getAdminToken()));
+  const [orders, setOrders] = useState([]);
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(null);
+
+  async function loadOrders() {
+    setLoading(true);
+    try {
+      const res = await adminFunction('admin-orders', {
+        headers: { Authorization: `Bearer ${getAdminToken()}` }
+      });
+      setOrders(res.orders || []);
+      setLastUpdated(new Date().toLocaleTimeString());
+      setErr('');
+    } catch (e) {
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    loadOrders();
+    const id = setInterval(loadOrders, 8000);
+    return () => clearInterval(id);
+  }, [loggedIn]);
+
+  async function updateStatus(orderId, status) {
+    setUpdatingStatus({ orderId, status });
+    try {
+      await adminFunction('admin-update-status', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({ orderId, status })
+      });
+      await loadOrders();
+    } catch (e) {
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
+  function printOrder(order) {
+    const w = window.open('', '_blank');
+    if (!w) {
+      setErr('Pop-up blocked. Please allow pop-ups to print tickets.');
+      return;
+    }
+    w.document.write(`
+      <html><head><title>Order ${order.orderId}</title>
+      <style>body{font-family:Arial,sans-serif;padding:20px} h1{font-size:22px} pre{white-space:pre-wrap;font-size:16px}</style>
+      </head><body>
+      <h1>Order #${order.orderId}</h1>
+      <pre>${formatOrder(order)}</pre>
+      </body></html>
+    `);
+    w.document.close();
+    w.print();
+  }
+
+  function formatOrder(order) {
+    return [
+      `Status: ${order.status}`,
+      `Time: ${order.timestamp}`,
+      `Service: ${order.fulfillmentType || 'Pickup'}`,
+      `Table: ${order.tableNumber || '—'}`,
+      `Member: ${order.memberName}`,
+      `Member #: ${order.memberNumber}`,
+      `Phone: ${order.phone}`,
+      ``,
+      `Items:`,
+      `${order.itemsSummary || ''}`,
+      order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
+      ``,
+      `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
+      `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`
+    ].join('\n');
+  }
+
+  if (!loggedIn) {
+    return <Login onLogin={(token) => { setAdminToken(token); setLoggedIn(true); }} />;
+  }
+
+  const activeCount = orders.filter(o => !['Completed', 'Cancelled'].includes(o.status)).length;
+  const newCount = orders.filter(o => o.status === 'New').length;
+  const preparingCount = orders.filter(o => ['Accepted', 'Preparing'].includes(o.status)).length;
+  const readyCount = orders.filter(o => o.status === 'Ready for Pickup').length;
+  const completedCount = orders.filter(o => o.status === 'Completed' && isOrderToday(o)).length;
+  const cancelledCount = orders.filter(o => o.status === 'Cancelled' && isOrderToday(o)).length;
+  const subtotalToday = orders
+    .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
+    .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+
+  function ordersForColumn(column) {
+    return orders.filter(order => {
+      if (!column.statuses.includes(order.status)) return false;
+      return !column.todayOnly || isOrderToday(order);
+    });
+  }
+
+  function primaryAction(order) {
+    if (order.status === 'New') return { label: 'Accept', status: 'Accepted' };
+    if (order.status === 'Accepted') return { label: 'Start Prep', status: 'Preparing' };
+    if (order.status === 'Preparing') return { label: 'Mark Ready', status: 'Ready for Pickup' };
+    if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
+    return null;
+  }
+
+  function renderOrderCard(order, tone) {
+    const action = primaryAction(order);
+    const isUpdating = updatingStatus?.orderId === order.orderId;
+    const serviceLabel = order.fulfillmentType === 'Delivery' && order.tableNumber
+      ? `Delivery · Table ${order.tableNumber}`
+      : order.fulfillmentType === 'Delivery'
+        ? 'Delivery'
+        : order.tableNumber
+          ? `Pickup · Table ${order.tableNumber}`
+          : 'Pickup at Bar';
+    const lines = itemLines(order);
+
+    return (
+      <article className={`staffOrderCard ${tone}`} key={order.orderId}>
+        <div className="staffOrderHead">
+          <strong>#{order.orderId}</strong>
+          <span>{ageLabel(order.timestamp || order.updatedAt)}</span>
+        </div>
+        <div className="staffOrderMember">
+          <h3>{order.memberName || 'Member'}</h3>
+          <div className="staffMemberLine">
+            <span>Member #{order.memberNumber}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
+          </div>
+          <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
+        </div>
+
+        <div className="staffItems">
+          {lines.length ? lines.map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>) : <p>No standard items.</p>}
+        </div>
+
+        {order.barRequest && (
+          <div className="barRequestBox">
+            <span>Bar Request</span>
+            <p>{order.barRequest}</p>
+          </div>
+        )}
+
+        <div className="staffOrderFoot">
+          <strong>{currency(order.subtotalKnownItems)}{order.hasCustomBarRequest ? ' + bar' : ''}</strong>
+          <span className={order.alcoholIncluded ? 'alcoholPill' : ''}>{order.alcoholIncluded ? 'Alcohol' : 'No alcohol'}</span>
+        </div>
+
+        <div className="staffActions">
+          {action && (
+            <button className="staffPrimaryAction" onClick={() => updateStatus(order.orderId, action.status)} disabled={isUpdating}>
+              {isUpdating && updatingStatus?.status === action.status ? 'Updating...' : action.label}
+            </button>
+          )}
+          {order.status !== 'Completed' && order.status !== 'Cancelled' && (
+            <button className="staffSecondaryAction" onClick={() => updateStatus(order.orderId, 'Cancelled')} disabled={isUpdating}>Cancel</button>
+          )}
+          {order.status === 'Completed' && (
+            <div className="postedBadge"><CheckCircle size={16} /> Posted to POS · {currency(order.subtotalKnownItems)}</div>
+          )}
+          {order.status === 'Completed' && (
+            <button className="staffSecondaryAction" onClick={() => updateStatus(order.orderId, 'Ready for Pickup')} disabled={isUpdating}>
+              <Undo2 size={15} /> Reopen
+            </button>
+          )}
+          {order.status === 'Cancelled' && (
+            <button className="staffSecondaryAction" onClick={() => updateStatus(order.orderId, 'New')} disabled={isUpdating}>
+              <Undo2 size={15} /> Restore
+            </button>
+          )}
+          <button className="staffPrintButton" onClick={() => printOrder(order)}><Printer size={16} /> Ticket</button>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <div className="staffDashboard">
+      <section className="staffDashboardHero">
+        <div>
+          <h2>Eastpointe Pool Bar — Staff Dashboard</h2>
+          <p>{shortDate()} · Logged in as Pool Staff</p>
+        </div>
+        <div className="staffHeroControls">
+          <span className="refreshStatus"><span></span> Auto-refreshing</span>
+          <button className="staffRefreshButton" onClick={loadOrders} disabled={loading}><RefreshCcw className={loading ? 'spin' : ''} size={18} /> Refresh</button>
+          <button className="staffOrderPageButton" onClick={() => { clearAdminToken(); setLoggedIn(false); }}>Sign out</button>
+          <strong>{activeCount} active orders</strong>
+        </div>
+      </section>
+
+      {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
+
+      <section className="staffStats">
+        <div className="staffStat new"><strong>{newCount}</strong><span>New orders waiting</span></div>
+        <div className="staffStat preparing"><strong>{preparingCount}</strong><span>Being prepared</span></div>
+        <div className="staffStat ready"><strong>{readyCount}</strong><span>Ready / delivering</span></div>
+        <div className="staffStat completed"><strong>{completedCount}</strong><span>Completed today</span></div>
+        <div className="staffStat cancelled"><strong>{cancelledCount}</strong><span>Cancelled today</span></div>
+        <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's menu subtotal</span></div>
+      </section>
+
+      <section className="staffBoard">
+        {STAFF_COLUMNS.map(column => {
+          const columnOrders = ordersForColumn(column);
+          return (
+            <div className={`staffColumn ${column.tone}`} key={column.id}>
+              <div className="staffColumnHead">
+                <h3>{column.title}</h3>
+                <span>{columnOrders.length}</span>
+              </div>
+              <div className="staffColumnBody">
+                {columnOrders.length
+                  ? columnOrders.map(order => renderOrderCard(order, column.tone))
+                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    </div>
+  );
+}
+
+export default function App() {
+  const initialMode = window.location.pathname.includes('/admin') ? 'admin' : 'order';
+  const [mode, setMode] = useState(initialMode);
+
+  useEffect(() => {
+    const path = mode === 'admin' ? '/admin' : '/order' + window.location.search;
+    window.history.replaceState(null, '', path);
+  }, [mode]);
+
+  return (
+    <main className={mode === 'admin' ? 'app adminApp' : 'app'}>
+      {mode !== 'admin' && <Header mode={mode} setMode={setMode} />}
+      {mode === 'admin' ? <AdminPage /> : <OrderPage />}
+      {mode !== 'admin' && <footer>Member-account ordering only. No online payment processing.</footer>}
+    </main>
+  );
+}

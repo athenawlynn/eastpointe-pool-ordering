@@ -1,0 +1,10 @@
+
+# QR Code URL Generator
+
+Use this formula in Excel or Google Sheets to generate table URLs:
+
+="https://your-site.netlify.app/order?table="&A2
+
+Where column A contains table numbers 1 through 100.
+
+You can then use a QR code generator in bulk, or create a QR code from each URL.

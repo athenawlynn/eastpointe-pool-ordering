@@ -409,6 +409,10 @@ function OrderPage() {
   const [statusError, setStatusError] = useState('');
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
+  const [lookup, setLookup] = useState({
+    orderId: getQueryParam('order') || '',
+    memberNumber: savedConfirmation?.memberNumber || ''
+  });
   const [form, setForm] = useState({
     fulfillmentType: savedConfirmation?.fulfillmentType || 'Pickup',
     memberName: savedConfirmation?.memberName || '',
@@ -420,6 +424,7 @@ function OrderPage() {
     alcoholVerificationAccepted: false
   });
   const [submitting, setSubmitting] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
   const [confirmation, setConfirmation] = useState(savedConfirmation ? {
     orderId: savedConfirmation.orderId,
     pickupLocation: savedConfirmation.pickupLocation || 'Pool Bar'
@@ -489,6 +494,10 @@ function OrderPage() {
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  function setLookupField(field, value) {
+    setLookup(prev => ({ ...prev, [field]: value }));
   }
 
   function validate() {
@@ -562,6 +571,45 @@ function OrderPage() {
       setErr(e.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function lookupOrder() {
+    const orderId = String(lookup.orderId || '').trim();
+    const memberNumber = String(lookup.memberNumber || '').trim();
+    if (!orderId || !/^\d{4,6}$/.test(memberNumber)) {
+      setErr('Enter your order number and 4–6 digit member number.');
+      return;
+    }
+
+    setLookingUp(true);
+    setErr('');
+    try {
+      const res = await apiGet('orderStatus', {
+        orderId,
+        memberNumber
+      });
+      const nextReadyAt = res.status === 'Ready for Pickup' || res.status === 'Completed'
+        ? (res.updatedAt || res.completedAt || '')
+        : '';
+      const restored = {
+        orderId,
+        pickupLocation: settings.PickupLocation || 'Pool Bar',
+        status: res.status || 'New',
+        memberNumber,
+        fulfillmentType: 'Pickup',
+        tableNumber: '',
+        readyAt: nextReadyAt
+      };
+      setForm(prev => ({ ...prev, memberNumber, fulfillmentType: 'Pickup', tableNumber: '' }));
+      setConfirmation({ orderId, pickupLocation: restored.pickupLocation });
+      setLiveStatus(restored.status);
+      setReadyAt(nextReadyAt);
+      sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify(restored));
+    } catch (e) {
+      setErr(e.message || 'Order not found.');
+    } finally {
+      setLookingUp(false);
     }
   }
 
@@ -672,6 +720,21 @@ function OrderPage() {
             <small>Add a table number for delivery</small>
           </div>
         )}
+      </section>
+
+      <section className="card statusLookupCard">
+        <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
+        <h2>Check Order Status</h2>
+        <p className="hint">If you closed your confirmation screen, enter your order number and member number to reopen the live status.</p>
+        <div className="lookupGrid">
+          <label>Order Number
+            <input inputMode="numeric" value={lookup.orderId} onChange={e => setLookupField('orderId', e.target.value.replace(/\D/g, ''))} placeholder="Example: 1042" />
+          </label>
+          <label>Member Number
+            <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={e => setLookupField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+          </label>
+        </div>
+        <button className="ghostLookupButton" onClick={lookupOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
       </section>
 
 

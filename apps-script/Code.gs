@@ -517,10 +517,6 @@ function updateStationStatus(orderId, station, status) {
     const overallStatusCol = headers.indexOf('Status') + 1;
     const updatedCol = headers.indexOf('UpdatedAt') + 1;
     const completedCol = headers.indexOf('CompletedAt') + 1;
-    const phoneCol = headers.indexOf('Phone') + 1;
-    const memberNameCol = headers.indexOf('MemberName') + 1;
-    const tableCol = headers.indexOf('TableNumber') + 1;
-    const readyTextSentCol = headers.indexOf('ReadyTextSentAt') + 1;
     const stationStatusCol = headers.indexOf(config.statusCol) + 1;
     const stationUpdatedCol = headers.indexOf(config.updatedCol) + 1;
     if (idCol < 1 || overallStatusCol < 1 || stationStatusCol < 1 || updatedCol < 1) {
@@ -543,15 +539,6 @@ function updateStationStatus(orderId, station, status) {
         sheet.getRange(r, overallStatusCol).setValue(nextOverall);
         if (nextOverall === 'Completed' && completedCol > 0) {
           sheet.getRange(r, completedCol).setValue(now);
-        }
-        if (nextOverall === 'Ready for Pickup') {
-          maybeSendReadyTextForRow(sheet, r, {
-            orderId,
-            phoneCol,
-            memberNameCol,
-            tableCol,
-            readyTextSentCol
-          });
         }
         return;
       }
@@ -595,25 +582,6 @@ function updatePosPosted(orderId, posted, postedBy) {
   throw new Error('Order not found.');
 }
 
-function maybeSendReadyTextForRow(sheet, rowNumber, columns) {
-  const readyTextSentCol = columns.readyTextSentCol || 0;
-  const alreadySent = readyTextSentCol > 0 ? String(sheet.getRange(rowNumber, readyTextSentCol).getValue() || '').trim() : '';
-  if (alreadySent) return;
-
-  const phone = columns.phoneCol > 0 ? sheet.getRange(rowNumber, columns.phoneCol).getValue() : '';
-  const memberName = columns.memberNameCol > 0 ? sheet.getRange(rowNumber, columns.memberNameCol).getValue() : '';
-  const tableNumber = columns.tableCol > 0 ? sheet.getRange(rowNumber, columns.tableCol).getValue() : '';
-  const sent = sendReadyPickupText({
-    orderId: columns.orderId,
-    phone,
-    memberName,
-    tableNumber
-  });
-  if (sent && readyTextSentCol > 0) {
-    sheet.getRange(rowNumber, readyTextSentCol).setValue(new Date());
-  }
-}
-
 
 function updateOrderStatus(orderId, status) {
   const allowed = ['New', 'Accepted', 'Preparing', 'Ready for Pickup', 'Completed', 'Cancelled'];
@@ -647,13 +615,21 @@ function updateOrderStatus(orderId, status) {
         }
 
         if (status === 'Ready for Pickup') {
-          maybeSendReadyTextForRow(sheet, r, {
-            orderId,
-            phoneCol,
-            memberNameCol,
-            tableCol,
-            readyTextSentCol
-          });
+          const alreadySent = readyTextSentCol > 0 ? String(sheet.getRange(r, readyTextSentCol).getValue() || '').trim() : '';
+          if (!alreadySent) {
+            const phone = phoneCol > 0 ? sheet.getRange(r, phoneCol).getValue() : '';
+            const memberName = memberNameCol > 0 ? sheet.getRange(r, memberNameCol).getValue() : '';
+            const tableNumber = tableCol > 0 ? sheet.getRange(r, tableCol).getValue() : '';
+            const sent = sendReadyPickupText({
+              orderId,
+              phone,
+              memberName,
+              tableNumber
+            });
+            if (sent && readyTextSentCol > 0) {
+              sheet.getRange(r, readyTextSentCol).setValue(new Date());
+            }
+          }
         }
         return;
       }

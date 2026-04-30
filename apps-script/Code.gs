@@ -77,7 +77,7 @@ function getSettingsObject() {
   const rows = rowsToObjects(sheet);
   const settings = {};
   rows.forEach(r => {
-    if (r.SettingKey) settings[String(r.SettingKey).trim()] = String(r.SettingValue || '').trim();
+    if (r.SettingKey) settings[String(r.SettingKey).trim()] = String(r.SettingValue ?? '').trim();
   });
   return settings;
 }

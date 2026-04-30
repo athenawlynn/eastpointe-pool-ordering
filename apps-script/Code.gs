@@ -17,7 +17,7 @@ const ADMIN_KEY = 'EastpointeTest2026!';
 const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
 const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable'];
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
-const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt'];
+const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -290,6 +290,12 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    if (action === 'updatePosPosted') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updatePosPosted(body.orderId, body.posted, body.postedBy);
+      return jsonResponse({ ok: true });
+    }
+
     if (action === 'updateSetting') {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateSetting(body.key, body.value);
@@ -375,6 +381,9 @@ function createOrder(order) {
       routing.runnerStatus,
       '',
       '',
+      '',
+      false,
+      '',
       ''
     ]);
   } finally {
@@ -434,7 +443,10 @@ function getOrders() {
       runnerStatus: normalizeStationStatus(row.RunnerStatus, routeStations.includes('Wait Station')),
       barUpdatedAt: row.BarUpdatedAt ? new Date(row.BarUpdatedAt).toLocaleString() : '',
       kitchenUpdatedAt: row.KitchenUpdatedAt ? new Date(row.KitchenUpdatedAt).toLocaleString() : '',
-      runnerUpdatedAt: row.RunnerUpdatedAt ? new Date(row.RunnerUpdatedAt).toLocaleString() : ''
+      runnerUpdatedAt: row.RunnerUpdatedAt ? new Date(row.RunnerUpdatedAt).toLocaleString() : '',
+      posPosted: String(row.POSPosted).toUpperCase() === 'TRUE' || row.POSPosted === true,
+      posPostedAt: row.POSPostedAt ? new Date(row.POSPostedAt).toLocaleString() : '',
+      posPostedBy: String(row.POSPostedBy || '')
     };
   }).reverse();
 }
@@ -499,6 +511,39 @@ function updateStationStatus(orderId, station, status) {
         if (nextOverall === 'Completed' && completedCol > 0) {
           sheet.getRange(r, completedCol).setValue(now);
         }
+        return;
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  throw new Error('Order not found.');
+}
+
+function updatePosPosted(orderId, posted, postedBy) {
+  const isPosted = posted === true || String(posted).toUpperCase() === 'TRUE';
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet('Orders');
+    const headers = ensureOrderColumns(sheet);
+    const idCol = headers.indexOf('OrderID') + 1;
+    const posPostedCol = headers.indexOf('POSPosted') + 1;
+    const posPostedAtCol = headers.indexOf('POSPostedAt') + 1;
+    const posPostedByCol = headers.indexOf('POSPostedBy') + 1;
+    const updatedCol = headers.indexOf('UpdatedAt') + 1;
+    if (idCol < 1 || posPostedCol < 1 || posPostedAtCol < 1 || posPostedByCol < 1) {
+      throw new Error('Orders sheet is missing POS reconciliation columns.');
+    }
+
+    const values = sheet.getDataRange().getValues();
+    for (let r = 2; r <= values.length; r++) {
+      if (String(sheet.getRange(r, idCol).getValue()) === String(orderId)) {
+        const now = new Date();
+        sheet.getRange(r, posPostedCol).setValue(isPosted);
+        sheet.getRange(r, posPostedAtCol).setValue(isPosted ? now : '');
+        sheet.getRange(r, posPostedByCol).setValue(isPosted ? String(postedBy || 'Pool Staff').trim() : '');
+        if (updatedCol > 0) sheet.getRange(r, updatedCol).setValue(now);
         return;
       }
     }

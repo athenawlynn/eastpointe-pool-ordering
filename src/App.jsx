@@ -251,6 +251,11 @@ async function localAdminFunction(name, options = {}) {
     return apiPost('updateStationStatus', { ...body, adminKey: ADMIN_KEY });
   }
 
+  if (name === 'admin-update-pos-posted') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updatePosPosted', { ...body, adminKey: ADMIN_KEY });
+  }
+
   if (name === 'admin-update-setting') {
     const body = JSON.parse(options.body || '{}');
     return apiPost('updateSetting', { ...body, adminKey: ADMIN_KEY });
@@ -935,6 +940,26 @@ function AdminPage() {
     }
   }
 
+  async function updatePosPosted(orderId, posted) {
+    setUpdatingStatus({ orderId, posPosted: posted });
+    try {
+      await adminFunction('admin-update-pos-posted', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({ orderId, posted, postedBy: 'Pool Staff' })
+      });
+      await loadOrders();
+    } catch (e) {
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
   async function updateSetting(key, value) {
     setUpdatingSetting(key);
     setErr('');
@@ -1003,7 +1028,8 @@ function AdminPage() {
       order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
       ``,
       `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
-      `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`
+      `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`,
+      `POS Posted: ${order.posPosted ? 'YES' : 'No'}`
     ].join('\n');
   }
 
@@ -1017,6 +1043,10 @@ function AdminPage() {
   const readyCount = orders.filter(o => o.status === 'Ready for Pickup').length;
   const completedCount = orders.filter(o => o.status === 'Completed' && isOrderToday(o)).length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled' && isOrderToday(o)).length;
+  const needsPosCount = orders.filter(o => o.status === 'Completed' && !o.posPosted && isOrderToday(o)).length;
+  const needsPosTotal = orders
+    .filter(o => o.status === 'Completed' && !o.posPosted && isOrderToday(o))
+    .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
   const subtotalToday = orders
     .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
@@ -1143,7 +1173,20 @@ function AdminPage() {
             <button className="staffSecondaryAction" onClick={() => updateStatus(order.orderId, 'Cancelled')} disabled={isUpdating}>Cancel</button>
           )}
           {order.status === 'Completed' && (
-            <div className="postedBadge"><CheckCircle size={16} /> Posted to POS · {currency(order.subtotalKnownItems)}</div>
+            <div className={order.posPosted ? 'postedBadge posted' : 'postedBadge needsPosting'}>
+              {order.posPosted ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+              <span>
+                {order.posPosted ? 'Posted to POS' : 'Needs POS Posting'} · {currency(order.subtotalKnownItems)}
+                {order.posPostedAt ? ` · ${timeLabel(order.posPostedAt) || order.posPostedAt}` : ''}
+              </span>
+            </div>
+          )}
+          {order.status === 'Completed' && (
+            <button className="staffSecondaryAction" onClick={() => updatePosPosted(order.orderId, !order.posPosted)} disabled={isUpdating}>
+              {isUpdating && updatingStatus?.posPosted !== undefined
+                ? 'Saving...'
+                : order.posPosted ? 'Undo POS Posted' : 'Mark POS Posted'}
+            </button>
           )}
           {order.status === 'Completed' && (
             <button className="staffSecondaryAction" onClick={() => updateStatus(order.orderId, 'Ready for Pickup')} disabled={isUpdating}>
@@ -1220,6 +1263,7 @@ function AdminPage() {
         <div className="staffStat preparing"><strong>{preparingCount}</strong><span>Being prepared</span></div>
         <div className="staffStat ready"><strong>{readyCount}</strong><span>Ready / delivering</span></div>
         <div className="staffStat completed"><strong>{completedCount}</strong><span>Completed today</span></div>
+        <div className="staffStat pos"><strong>{needsPosCount}</strong><span>Need POS posting · {currency(needsPosTotal)}</span></div>
         <div className="staffStat cancelled"><strong>{cancelledCount}</strong><span>Cancelled today</span></div>
         <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's menu subtotal</span></div>
       </section>

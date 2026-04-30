@@ -181,7 +181,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffStat.ready strong { color: #2D6B40; }
 .staffStat.pos strong { color: #8A5A0A; }
 .staffStat.cancelled strong { color: #A32D2D; }
-.managerPanels { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--line-soft); background: #FFFDF9; }
+.managerPanels { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; padding: 18px 24px 28px; border-top: 1px solid var(--line-soft); background: #FFFDF9; }
 .managerPanel { border: 1px solid var(--line-soft); background: white; border-radius: 10px; overflow: hidden; }
 .managerPanelHead { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
 .managerPanelHead h3 { margin: 0; font-size: 16px; color: var(--ink); }
@@ -220,7 +220,6 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffOrderCard.ready { border-color: #97C459; }
 .staffOrderCard.completed { border-color: var(--line-soft); background: #F9F8F5; opacity: .76; }
 .staffOrderCard.cancelled { border-color: #E7B8AA; background: #FFF8F5; opacity: .8; }
-.staffOrderCard.alcoholOrder { border-width: 2px; border-color: #D06C54; }
 .staffOrderHead { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line-soft); }
 .staffOrderHead strong { color: var(--ink); font-size: 15px; letter-spacing: 0; }
 .staffOrderHead span { color: var(--soft-muted); font-size: 11px; font-weight: 750; white-space: nowrap; }

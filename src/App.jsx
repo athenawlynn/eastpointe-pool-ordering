@@ -1312,6 +1312,25 @@ function AdminPage() {
         <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's menu subtotal</span></div>
       </section>
 
+      <section className={activeStation.id === 'all' ? 'staffBoard' : 'staffBoard stationBoard'}>
+        {boardColumns.map(column => {
+          const columnOrders = ordersForColumn(column);
+          return (
+            <div className={`staffColumn ${column.tone}`} key={column.id}>
+              <div className="staffColumnHead">
+                <h3>{column.title}</h3>
+                <span>{columnOrders.length}</span>
+              </div>
+              <div className="staffColumnBody">
+                {columnOrders.length
+                  ? columnOrders.map(order => renderOrderCard(order, column.tone))
+                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
       <section className="managerPanels">
         <div className="managerPanel">
           <div className="managerPanelHead">
@@ -1354,25 +1373,6 @@ function AdminPage() {
             ))}
           </div>
         </div>
-      </section>
-
-      <section className={activeStation.id === 'all' ? 'staffBoard' : 'staffBoard stationBoard'}>
-        {boardColumns.map(column => {
-          const columnOrders = ordersForColumn(column);
-          return (
-            <div className={`staffColumn ${column.tone}`} key={column.id}>
-              <div className="staffColumnHead">
-                <h3>{column.title}</h3>
-                <span>{columnOrders.length}</span>
-              </div>
-              <div className="staffColumnBody">
-                {columnOrders.length
-                  ? columnOrders.map(order => renderOrderCard(order, column.tone))
-                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
-              </div>
-            </div>
-          );
-        })}
       </section>
     </div>
   );

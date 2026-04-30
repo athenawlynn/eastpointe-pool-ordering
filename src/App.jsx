@@ -577,32 +577,32 @@ function OrderPage() {
   async function lookupOrder() {
     const orderId = String(lookup.orderId || '').trim();
     const memberNumber = String(lookup.memberNumber || '').trim();
-    if (!orderId || !/^\d{4,6}$/.test(memberNumber)) {
-      setErr('Enter your order number and 4–6 digit member number.');
+    if (!/^\d{4,6}$/.test(memberNumber)) {
+      setErr('Enter your 4–6 digit member number.');
       return;
     }
 
     setLookingUp(true);
     setErr('');
     try {
-      const res = await apiGet('orderStatus', {
-        orderId,
-        memberNumber
-      });
+      const res = orderId
+        ? await apiGet('orderStatus', { orderId, memberNumber })
+        : await apiGet('latestOrderStatus', { memberNumber });
+      const resolvedOrderId = res.orderId || orderId;
       const nextReadyAt = res.status === 'Ready for Pickup' || res.status === 'Completed'
         ? (res.updatedAt || res.completedAt || '')
         : '';
       const restored = {
-        orderId,
+        orderId: resolvedOrderId,
         pickupLocation: settings.PickupLocation || 'Pool Bar',
         status: res.status || 'New',
         memberNumber,
-        fulfillmentType: 'Pickup',
-        tableNumber: '',
+        fulfillmentType: res.fulfillmentType || 'Pickup',
+        tableNumber: res.tableNumber || '',
         readyAt: nextReadyAt
       };
-      setForm(prev => ({ ...prev, memberNumber, fulfillmentType: 'Pickup', tableNumber: '' }));
-      setConfirmation({ orderId, pickupLocation: restored.pickupLocation });
+      setForm(prev => ({ ...prev, memberNumber, fulfillmentType: restored.fulfillmentType, tableNumber: restored.tableNumber }));
+      setConfirmation({ orderId: resolvedOrderId, pickupLocation: restored.pickupLocation });
       setLiveStatus(restored.status);
       setReadyAt(nextReadyAt);
       sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify(restored));
@@ -725,9 +725,9 @@ function OrderPage() {
       <section className="card statusLookupCard">
         <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
         <h2>Check Order Status</h2>
-        <p className="hint">If you closed your confirmation screen, enter your order number and member number to reopen the live status.</p>
+        <p className="hint">If you closed your confirmation screen, enter your member number. Order number is optional if you have it.</p>
         <div className="lookupGrid">
-          <label>Order Number
+          <label>Order Number <span className="optionalText">Optional</span>
             <input inputMode="numeric" value={lookup.orderId} onChange={e => setLookupField('orderId', e.target.value.replace(/\D/g, ''))} placeholder="Example: 1042" />
           </label>
           <label>Member Number

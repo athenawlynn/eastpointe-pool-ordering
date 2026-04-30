@@ -285,6 +285,10 @@ function doGet(e) {
       return jsonResponse({ ok: true, ...getOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
     }
 
+    if (action === 'latestOrderStatus') {
+      return jsonResponse({ ok: true, ...getLatestOrderStatus(e.parameter.memberNumber) });
+    }
+
     return jsonResponse({ ok: false, error: 'Unknown action.' });
   } catch (err) {
     return jsonResponse({ ok: false, error: err.message });
@@ -492,10 +496,58 @@ function getOrderStatus(orderId, memberNumber) {
   if (!order) throw new Error('Order not found.');
   const derivedStatus = deriveOverallStatus(order);
   return {
+    orderId: String(order.OrderID || ''),
     status: derivedStatus,
+    fulfillmentType: String(order.FulfillmentType || 'Pickup'),
+    tableNumber: String(order.TableNumber || ''),
     updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
     completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
   };
+}
+
+function isTodayValue(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!date.getTime()) return false;
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+}
+
+function orderStatusPayload(order) {
+  const derivedStatus = deriveOverallStatus(order);
+  return {
+    orderId: String(order.OrderID || ''),
+    status: derivedStatus,
+    fulfillmentType: String(order.FulfillmentType || 'Pickup'),
+    tableNumber: String(order.TableNumber || ''),
+    updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
+    completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
+  };
+}
+
+function getLatestOrderStatus(memberNumber) {
+  const normalizedMemberNumber = String(memberNumber || '').trim();
+  validateMemberNumber(normalizedMemberNumber);
+  const sheet = getSheet('Orders');
+  const rows = rowsToObjects(sheet)
+    .filter(row => String(row.MemberNumber || '') === normalizedMemberNumber)
+    .reverse();
+  if (!rows.length) throw new Error('No orders found for that member number.');
+
+  const activeToday = rows.find(row =>
+    isTodayValue(row.Timestamp || row.UpdatedAt) &&
+    !['Completed', 'Cancelled'].includes(deriveOverallStatus(row))
+  );
+  if (activeToday) return orderStatusPayload(activeToday);
+
+  const today = rows.find(row => isTodayValue(row.Timestamp || row.UpdatedAt));
+  if (today) return orderStatusPayload(today);
+
+  const active = rows.find(row => !['Completed', 'Cancelled'].includes(deriveOverallStatus(row)));
+  if (active) return orderStatusPayload(active);
+
+  return orderStatusPayload(rows[0]);
 }
 
 function updateStationStatus(orderId, station, status) {

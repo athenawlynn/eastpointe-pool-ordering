@@ -120,6 +120,7 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .statusLookupCard { background: #FFFDF9; }
 .lookupGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .lookupGrid label { margin-bottom: 0; }
+.optionalText { color: var(--muted); font-size: 10px; font-weight: 750; text-transform: none; letter-spacing: 0; }
 .ghostLookupButton { width: 100%; min-height: 40px; border: 1px solid var(--deep-green); border-radius: 8px; background: white; color: var(--deep-green); font-size: 13px; font-weight: 900; }
 .statusCard { gap: 12px; }
 .orderNumHeader { background: #F2F9F4; border-radius: 10px; padding: 14px; text-align: center; display: grid; gap: 2px; width: 100%; margin-bottom: 2px; }

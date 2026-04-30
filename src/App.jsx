@@ -10,9 +10,8 @@ const API_RETRIES = 2;
 const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
 const ADMIN_TOKEN_KEY = 'eastpointeAdminToken';
 
-const STAFF_COLUMNS = [
-  { id: 'New', title: 'New', statuses: ['New'], tone: 'new' },
-  { id: 'Preparing', title: 'Preparing', statuses: ['Accepted', 'Preparing'], tone: 'preparing' },
+const ALL_ORDER_COLUMNS = [
+  { id: 'Active', title: 'Active Orders', statuses: ['New', 'Accepted', 'Preparing'], tone: 'new' },
   { id: 'Ready', title: 'Ready', statuses: ['Ready for Pickup'], tone: 'ready' },
   { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
   { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
@@ -1160,7 +1159,7 @@ function AdminPage({ onBackToOrder }) {
   const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
   const activeStation = STATION_TABS.find(tab => tab.id === activeStationId) || STATION_TABS[0];
-  const boardColumns = activeStation.id === 'all' ? STAFF_COLUMNS : STATION_COLUMNS;
+  const boardColumns = activeStation.id === 'all' ? ALL_ORDER_COLUMNS : STATION_COLUMNS;
   const stationTabCounts = STATION_TABS.reduce((counts, tab) => {
     if (tab.id === 'all') {
       counts[tab.id] = activeCount;

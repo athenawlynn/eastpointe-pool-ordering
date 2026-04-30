@@ -1183,14 +1183,6 @@ function AdminPage({ onBackToOrder }) {
     });
   }
 
-  function primaryAction(order) {
-    if (order.status === 'New') return { label: 'Accept', status: 'Accepted' };
-    if (order.status === 'Accepted') return { label: 'Start Prep', status: 'Preparing' };
-    if (order.status === 'Preparing') return { label: 'Mark Ready', status: 'Ready for Pickup' };
-    if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
-    return null;
-  }
-
   function stationPrimaryAction(status) {
     if (status === 'New') return { label: 'Start', status: 'Preparing' };
     if (status === 'Preparing') return { label: 'Mark Ready', status: 'Ready' };
@@ -1213,9 +1205,7 @@ function AdminPage({ onBackToOrder }) {
   }
 
   function renderOrderCard(order, tone) {
-    const action = activeStation.id === 'all'
-      ? primaryAction(order)
-      : stationPrimaryAction(stationStatus(order, activeStation));
+    const action = activeStation.id === 'all' ? null : stationPrimaryAction(stationStatus(order, activeStation));
     const isUpdating = updatingStatus?.orderId === order.orderId;
     const stationTime = activeStation.id === 'all' ? '' : order[activeStation.updatedKey];
     const serviceLabel = order.fulfillmentType === 'Delivery' && order.tableNumber

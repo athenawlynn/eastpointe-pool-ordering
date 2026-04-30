@@ -85,10 +85,31 @@ function itemLines(order) {
 }
 
 function stationRoutes(order) {
-  return String(order.routeStations || '')
+  const savedRoutes = String(order.routeStations || '')
     .split(',')
     .map(route => route.trim())
     .filter(Boolean);
+  if (savedRoutes.length) return savedRoutes;
+
+  const items = Array.isArray(order.items) ? order.items : [];
+  const isBarItem = item => {
+    const category = String(item.category || '').toLowerCase();
+    return Boolean(item.alcoholic) ||
+      category.includes('beer') ||
+      category.includes('wine') ||
+      category.includes('cocktail') ||
+      category.includes('seltzer') ||
+      category.includes('non-alcoholic') ||
+      category.includes('drink');
+  };
+  const needsBar = Boolean(order.alcoholIncluded) || Boolean(String(order.barRequest || '').trim()) || items.some(isBarItem);
+  const needsKitchen = items.some(item => !isBarItem(item));
+  const needsWaitStation = order.fulfillmentType === 'Delivery' || (needsBar && needsKitchen);
+  const routes = [];
+  if (needsBar) routes.push('Bar');
+  if (needsKitchen) routes.push('Kitchen');
+  if (needsWaitStation) routes.push('Wait Station');
+  return routes;
 }
 
 function hasStationRoute(order, route) {

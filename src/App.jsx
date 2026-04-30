@@ -876,7 +876,7 @@ function OrderPage() {
   );
 }
 
-function Login({ onLogin }) {
+function Login({ onLogin, onBack }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -907,11 +907,12 @@ function Login({ onLogin }) {
       {err && <div className="alert">{err}</div>}
       <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Staff password" onKeyDown={e => e.key === 'Enter' && handle()} />
       <button className="primaryButton" onClick={handle} disabled={submitting}>{submitting ? 'Opening...' : 'Open Dashboard'}</button>
+      <button className="backToOrderButton" onClick={onBack} type="button">Back to Order</button>
     </div>
   );
 }
 
-function AdminPage() {
+function AdminPage({ onBackToOrder }) {
   const [loggedIn, setLoggedIn] = useState(Boolean(getAdminToken()));
   const [orders, setOrders] = useState([]);
   const [err, setErr] = useState('');
@@ -1130,7 +1131,7 @@ function AdminPage() {
   }
 
   if (!loggedIn) {
-    return <Login onLogin={(token) => { setAdminToken(token); setLoggedIn(true); }} />;
+    return <Login onLogin={(token) => { setAdminToken(token); setLoggedIn(true); }} onBack={onBackToOrder} />;
   }
 
   const activeCount = orders.filter(o => !['Completed', 'Cancelled'].includes(o.status)).length;
@@ -1467,7 +1468,7 @@ export default function App() {
   return (
     <main className={mode === 'admin' ? 'app adminApp' : 'app'}>
       {mode !== 'admin' && <Header mode={mode} setMode={setMode} />}
-      {mode === 'admin' ? <AdminPage /> : <OrderPage />}
+      {mode === 'admin' ? <AdminPage onBackToOrder={() => setMode('order')} /> : <OrderPage />}
       {mode !== 'admin' && <footer>Member-account ordering only. No online payment processing.</footer>}
     </main>
   );

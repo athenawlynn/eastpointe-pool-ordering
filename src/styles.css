@@ -96,6 +96,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .pickupNotice { background: #fff2ed; border-color: #e7b8aa; color: var(--danger); font-weight: 850; }
 .pickupNotice strong { color: var(--danger); }
 .login { width: min(420px, 100%); margin: 28px auto; text-align: center; }
+.backToOrderButton { width: 100%; margin-top: 9px; min-height: 40px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--deep-green); font-size: 13px; font-weight: 900; }
 .orderGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .orderCard { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 13px; box-shadow: 0 8px 18px rgba(35, 31, 25, .055); overflow: hidden; }
 .newOrder { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(180, 148, 93, .12); }

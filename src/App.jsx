@@ -261,6 +261,11 @@ async function localAdminFunction(name, options = {}) {
     return apiPost('updateSetting', { ...body, adminKey: ADMIN_KEY });
   }
 
+  if (name === 'admin-update-menu-availability') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateMenuAvailability', { ...body, adminKey: ADMIN_KEY });
+  }
+
   throw new Error(`Unknown local admin function: ${name}`);
 }
 
@@ -851,18 +856,21 @@ function AdminPage() {
   const [lastUpdated, setLastUpdated] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(null);
   const [settings, setSettings] = useState({});
+  const [menuItems, setMenuItems] = useState([]);
   const [updatingSetting, setUpdatingSetting] = useState('');
+  const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [activeStationId, setActiveStationId] = useState('all');
 
   async function loadOrders() {
     setLoading(true);
     try {
-      const [ordersRes, settingsRes] = await Promise.all([
+      const [ordersRes, settingsRes, menuRes] = await Promise.all([
         adminFunction('admin-orders', {
           headers: { Authorization: `Bearer ${getAdminToken()}` }
         }),
-        apiGet('settings')
+        apiGet('settings'),
+        apiGet('menu')
       ]);
       const res = ordersRes;
       const nextOrders = res.orders || [];
@@ -879,6 +887,7 @@ function AdminPage() {
         return nextOrders;
       });
       setSettings(settingsRes.settings || {});
+      setMenuItems(menuRes.items || []);
       setLastUpdated(new Date().toLocaleTimeString());
       setErr('');
     } catch (e) {
@@ -987,6 +996,30 @@ function AdminPage() {
     }
   }
 
+  async function updateMenuAvailability(itemId, available) {
+    setUpdatingMenuItem(itemId);
+    setErr('');
+    const previousMenuItems = menuItems;
+    setMenuItems(prev => prev.map(item => item.itemId === itemId ? { ...item, available } : item));
+    try {
+      const res = await adminFunction('admin-update-menu-availability', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({ itemId, available })
+      });
+      if (res.items) setMenuItems(res.items);
+    } catch (e) {
+      setMenuItems(previousMenuItems);
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setUpdatingMenuItem('');
+    }
+  }
+
   function updateOrderingOpen(nextOpen) {
     updateSetting('OrderingOpen', nextOpen ? 'TRUE' : 'FALSE');
   }
@@ -1047,6 +1080,10 @@ function AdminPage() {
   const needsPosTotal = orders
     .filter(o => o.status === 'Completed' && !o.posPosted && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const todaysCompletedOrders = orders.filter(o => o.status === 'Completed' && isOrderToday(o));
+  const todaysPostedCount = todaysCompletedOrders.filter(o => o.posPosted).length;
+  const todaysAlcoholCount = orders.filter(o => o.alcoholIncluded && isOrderToday(o) && o.status !== 'Cancelled').length;
+  const todaysDeliveryCount = orders.filter(o => o.fulfillmentType === 'Delivery' && isOrderToday(o) && o.status !== 'Cancelled').length;
   const subtotalToday = orders
     .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
@@ -1121,7 +1158,7 @@ function AdminPage() {
     const lines = itemLines(order);
 
     return (
-      <article className={`staffOrderCard ${tone}`} key={order.orderId}>
+      <article className={`staffOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
         <div className="staffOrderHead">
           <strong>#{order.orderId}</strong>
           <span>{ageLabel(order.timestamp || order.updatedAt)}</span>
@@ -1143,6 +1180,13 @@ function AdminPage() {
           <div className="barRequestBox">
             <span>Bar Request</span>
             <p>{order.barRequest}</p>
+          </div>
+        )}
+
+        {order.alcoholIncluded && (
+          <div className="alcoholStaffBanner">
+            <AlertTriangle size={15} />
+            Alcohol order: verify member age/ID at pickup or handoff.
           </div>
         )}
 
@@ -1266,6 +1310,50 @@ function AdminPage() {
         <div className="staffStat pos"><strong>{needsPosCount}</strong><span>Need POS posting · {currency(needsPosTotal)}</span></div>
         <div className="staffStat cancelled"><strong>{cancelledCount}</strong><span>Cancelled today</span></div>
         <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's menu subtotal</span></div>
+      </section>
+
+      <section className="managerPanels">
+        <div className="managerPanel">
+          <div className="managerPanelHead">
+            <h3>End-of-Day Reconciliation</h3>
+            <span>{shortDate()}</span>
+          </div>
+          <div className="closingGrid">
+            <div><strong>{todaysCompletedOrders.length}</strong><span>Completed</span></div>
+            <div><strong>{todaysPostedCount}</strong><span>POS posted</span></div>
+            <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
+            <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
+            <div><strong>{todaysAlcoholCount}</strong><span>Alcohol orders</span></div>
+            <div><strong>{todaysDeliveryCount}</strong><span>Deliveries</span></div>
+          </div>
+          {needsPosCount > 0
+            ? <p className="closingNote">Closing check: mark all completed orders as POS posted before end of shift.</p>
+            : <p className="closingNote good">POS reconciliation is clear for completed orders.</p>}
+        </div>
+
+        <div className="managerPanel">
+          <div className="managerPanelHead">
+            <h3>Menu Availability</h3>
+            <span>{menuItems.filter(item => !item.available).length} unavailable</span>
+          </div>
+          <div className="menuAvailabilityList">
+            {menuItems.map(item => (
+              <div className={item.available ? 'menuAvailabilityItem' : 'menuAvailabilityItem unavailable'} key={item.itemId}>
+                <div>
+                  <strong>{item.itemName}</strong>
+                  <span>{item.category} · {currency(item.price)}</span>
+                </div>
+                <button
+                  className={item.available ? 'availabilityButton available' : 'availabilityButton unavailable'}
+                  onClick={() => updateMenuAvailability(item.itemId, !item.available)}
+                  disabled={updatingMenuItem === item.itemId}
+                >
+                  {updatingMenuItem === item.itemId ? 'Saving...' : item.available ? 'Available' : 'Sold Out'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className={activeStation.id === 'all' ? 'staffBoard' : 'staffBoard stationBoard'}>

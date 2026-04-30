@@ -120,6 +120,29 @@ function updateSetting(key, value) {
   sheet.appendRow([normalizedKey, normalizedValue]);
 }
 
+function updateMenuAvailability(itemId, available) {
+  const normalizedItemId = String(itemId || '').trim();
+  if (!normalizedItemId) throw new Error('Missing menu item.');
+
+  const sheet = getSheet('MenuItems');
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0] || [];
+  const itemIdCol = headers.indexOf('ItemID') + 1;
+  const availableCol = headers.indexOf('Available') + 1;
+  if (itemIdCol < 1 || availableCol < 1) {
+    throw new Error('MenuItems sheet is missing required columns.');
+  }
+
+  for (let r = 2; r <= values.length; r++) {
+    if (String(sheet.getRange(r, itemIdCol).getValue()).trim() === normalizedItemId) {
+      sheet.getRange(r, availableCol).setValue(Boolean(available));
+      return;
+    }
+  }
+
+  throw new Error('Menu item not found.');
+}
+
 function getMenu() {
   const sheet = getSheet('MenuItems');
   const items = rowsToObjects(sheet)
@@ -300,6 +323,12 @@ function doPost(e) {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateSetting(body.key, body.value);
       return jsonResponse({ ok: true, settings: getSettingsObject() });
+    }
+
+    if (action === 'updateMenuAvailability') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateMenuAvailability(body.itemId, body.available);
+      return jsonResponse({ ok: true, items: getMenu() });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown action.' });

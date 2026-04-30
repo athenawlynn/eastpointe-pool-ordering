@@ -91,6 +91,8 @@ input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px r
 .success svg { color: var(--success); }
 .big { font-size: 22px; font-weight: 900; color: var(--green); }
 .notice { background: #F9F8F5; border-radius: 10px; padding: 12px; margin-top: 8px; text-align: left; font-size: 13px; border: 1px solid var(--line-soft); }
+.pickupNotice { background: #fff2ed; border-color: #e7b8aa; color: var(--danger); font-weight: 850; }
+.pickupNotice strong { color: var(--danger); }
 .login { width: min(420px, 100%); margin: 28px auto; text-align: center; }
 .orderGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .orderCard { background: white; border: 1px solid var(--line); border-radius: 18px; padding: 13px; box-shadow: 0 8px 18px rgba(35, 31, 25, .055); overflow: hidden; }
@@ -142,6 +144,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .adminApp { max-width: none; padding: 0; min-height: 100vh; background: #F5F3EE; }
 .staffDashboard { width: min(1600px, 100%); margin: 0 auto; background: #fff; min-height: 100vh; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 .staffDashboardHero { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 28px; background: var(--deep-green); color: white; }
+.staffHeroBrand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.staffHeroLogo { width: 46px; height: 46px; object-fit: contain; background: white; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; padding: 4px; flex: 0 0 auto; }
 .staffDashboardHero h2 { margin: 0; color: white; font-size: clamp(22px, 1.8vw, 32px); line-height: 1.08; letter-spacing: -.03em; }
 .staffDashboardHero p { margin: 4px 0 0; color: #8BB89A; font-size: clamp(13px, 1vw, 18px); font-weight: 750; }
 .staffHeroControls { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; color: #A8D4B0; font-size: 14px; font-weight: 850; }

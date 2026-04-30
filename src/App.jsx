@@ -539,7 +539,7 @@ function OrderPage() {
               </div>
             ))}
           </div>
-          <div className="notice">
+          <div className={form.fulfillmentType === 'Delivery' ? 'notice' : 'notice pickupNotice'}>
             {form.fulfillmentType === 'Delivery' ? (
               <>
                 <strong>Delivery:</strong> Table {form.tableNumber}<br />
@@ -631,10 +631,12 @@ function OrderPage() {
           <input inputMode="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="Example: 917-207-6562" />
           <span className="fieldHint">For staff to contact you if there is a question about your order.</span>
         </label>
-        <label>{form.fulfillmentType === 'Delivery' ? 'Delivery Table Number' : 'Table Number, if applicable'}
-          <input inputMode="numeric" value={form.tableNumber} onChange={e => setField('tableNumber', e.target.value.replace(/\D/g, ''))} placeholder="1–100" />
-          <span className="fieldHint">{form.fulfillmentType === 'Delivery' ? 'Required for delivery.' : 'Optional for pickup; QR codes may prefill this field.'}</span>
-        </label>
+        {form.fulfillmentType === 'Delivery' && (
+          <label>Delivery Table Number
+            <input inputMode="numeric" value={form.tableNumber} onChange={e => setField('tableNumber', e.target.value.replace(/\D/g, ''))} placeholder="1–100" />
+            <span className="fieldHint">Required for delivery.</span>
+          </label>
+        )}
       </section>
 
       <section className="card">
@@ -1020,9 +1022,12 @@ function AdminPage() {
   return (
     <div className="staffDashboard">
       <section className="staffDashboardHero">
-        <div>
-          <h2>Eastpointe Pool Bar — Staff Dashboard</h2>
-          <p>{shortDate()} · Logged in as Pool Staff</p>
+        <div className="staffHeroBrand">
+          <img src="/eastpointe-logo.png" alt="Eastpointe Country Club" className="staffHeroLogo" />
+          <div>
+            <h2>Eastpointe Pool Bar — Staff Dashboard</h2>
+            <p>{shortDate()} · Logged in as Pool Staff</p>
+          </div>
         </div>
         <div className="staffHeroControls">
           <span className="refreshStatus"><span></span> Auto-refreshing</span>

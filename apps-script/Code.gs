@@ -16,6 +16,8 @@ const SPREADSHEET_ID = '1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0';
 const ADMIN_KEY = 'EastpointeTest2026!';
 const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
 const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable'];
+const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
+const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -173,6 +175,73 @@ function itemSummary(items) {
   }).join('\n');
 }
 
+function isBarItem(item) {
+  const category = String(item.category || '').toLowerCase();
+  return Boolean(item.alcoholic) ||
+    category.includes('beer') ||
+    category.includes('wine') ||
+    category.includes('cocktail') ||
+    category.includes('seltzer') ||
+    category.includes('non-alcoholic') ||
+    category.includes('drink');
+}
+
+function routeOrder(order, items) {
+  const requiresBar = Boolean(order.alcoholIncluded) ||
+    String(order.barRequest || '').trim().length > 0 ||
+    items.some(isBarItem);
+  const requiresKitchen = items.some(item => !isBarItem(item));
+  const requiresRunner = order.fulfillmentType === 'Delivery' || (requiresBar && requiresKitchen);
+  const routes = [];
+  if (requiresBar) routes.push('Bar');
+  if (requiresKitchen) routes.push('Kitchen');
+  if (requiresRunner) routes.push('Wait Station');
+  return {
+    routes,
+    barStatus: requiresBar ? 'New' : 'Not Needed',
+    kitchenStatus: requiresKitchen ? 'New' : 'Not Needed',
+    runnerStatus: requiresRunner ? 'New' : 'Not Needed'
+  };
+}
+
+function ensureOrderColumns(sheet) {
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0].map(h => String(h).trim());
+  STATION_COLUMNS.forEach(column => {
+    if (!headers.includes(column)) {
+      sheet.getRange(1, headers.length + 1).setValue(column);
+      headers.push(column);
+    }
+  });
+  return headers;
+}
+
+function normalizeStationStatus(value, needed) {
+  const status = String(value || '').trim();
+  if (status) return status;
+  return needed ? 'New' : 'Not Needed';
+}
+
+function deriveOverallStatus(row) {
+  const existingStatus = String(row.Status || 'New');
+  if (existingStatus === 'Cancelled') return 'Cancelled';
+  if (existingStatus === 'Completed') return 'Completed';
+  const bar = normalizeStationStatus(row.BarStatus, String(row.RouteStations || '').includes('Bar'));
+  const kitchen = normalizeStationStatus(row.KitchenStatus, String(row.RouteStations || '').includes('Kitchen'));
+  const runner = normalizeStationStatus(row.RunnerStatus, String(row.RouteStations || '').includes('Wait Station'));
+  const active = [bar, kitchen, runner].filter(status => status !== 'Not Needed');
+  if (!active.length) return existingStatus;
+  if (active.every(status => status === 'Completed')) return 'Completed';
+
+  const prepStatuses = [bar, kitchen].filter(status => status !== 'Not Needed');
+  if (prepStatuses.length && prepStatuses.every(status => ['Ready', 'Completed'].includes(status))) {
+    return 'Ready for Pickup';
+  }
+
+  if (active.some(status => ['Preparing', 'Ready', 'Completed'].includes(status))) return 'Preparing';
+  return existingStatus;
+}
+
 function doGet(e) {
   try {
     const action = e.parameter.action;
@@ -212,6 +281,12 @@ function doPost(e) {
     if (action === 'updateStatus') {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateOrderStatus(body.orderId, body.status);
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'updateStationStatus') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateStationStatus(body.orderId, body.station, body.status);
       return jsonResponse({ ok: true });
     }
 
@@ -262,6 +337,7 @@ function createOrder(order) {
     throw new Error('Please select at least one item or enter a bar/cocktail request.');
   }
   const summary = itemSummary(items);
+  const routing = routeOrder({ ...order, fulfillmentType }, items);
   let orderId;
   let timestamp;
 
@@ -271,6 +347,7 @@ function createOrder(order) {
     orderId = makeOrderId();
     timestamp = new Date();
     const sheet = getSheet('Orders');
+    ensureOrderColumns(sheet);
     sheet.appendRow([
       timestamp,
       orderId,
@@ -290,6 +367,14 @@ function createOrder(order) {
       Boolean(order.alcoholVerificationAccepted),
       '',
       timestamp,
+      '',
+      '',
+      routing.routes.join(', '),
+      routing.barStatus,
+      routing.kitchenStatus,
+      routing.runnerStatus,
+      '',
+      '',
       ''
     ]);
   } finally {
@@ -313,14 +398,22 @@ function createOrder(order) {
 
 function getOrders() {
   const sheet = getSheet('Orders');
+  ensureOrderColumns(sheet);
   const rows = rowsToObjects(sheet);
   return rows.map(row => {
     let items = [];
     try { items = JSON.parse(row.ItemsJSON || '[]'); } catch (e) {}
+    const routing = routeOrder({
+      fulfillmentType: String(row.FulfillmentType || 'Pickup'),
+      barRequest: String(row.BarRequest || ''),
+      alcoholIncluded: String(row.AlcoholIncluded).toUpperCase() === 'TRUE' || row.AlcoholIncluded === true
+    }, items);
+    const routeStations = String(row.RouteStations || '').trim() || routing.routes.join(', ');
+    const derivedStatus = deriveOverallStatus({ ...row, RouteStations: routeStations });
     return {
       timestamp: row.Timestamp ? new Date(row.Timestamp).toLocaleString() : '',
       orderId: String(row.OrderID || ''),
-      status: String(row.Status || 'New'),
+      status: derivedStatus,
       fulfillmentType: String(row.FulfillmentType || 'Pickup'),
       memberName: String(row.MemberName || ''),
       memberNumber: String(row.MemberNumber || ''),
@@ -334,7 +427,14 @@ function getOrders() {
       alcoholIncluded: String(row.AlcoholIncluded).toUpperCase() === 'TRUE' || row.AlcoholIncluded === true,
       staffNotes: String(row.StaffNotes || ''),
       updatedAt: row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleString() : '',
-      completedAt: row.CompletedAt ? new Date(row.CompletedAt).toLocaleString() : ''
+      completedAt: row.CompletedAt ? new Date(row.CompletedAt).toLocaleString() : '',
+      routeStations,
+      barStatus: normalizeStationStatus(row.BarStatus, routeStations.includes('Bar')),
+      kitchenStatus: normalizeStationStatus(row.KitchenStatus, routeStations.includes('Kitchen')),
+      runnerStatus: normalizeStationStatus(row.RunnerStatus, routeStations.includes('Wait Station')),
+      barUpdatedAt: row.BarUpdatedAt ? new Date(row.BarUpdatedAt).toLocaleString() : '',
+      kitchenUpdatedAt: row.KitchenUpdatedAt ? new Date(row.KitchenUpdatedAt).toLocaleString() : '',
+      runnerUpdatedAt: row.RunnerUpdatedAt ? new Date(row.RunnerUpdatedAt).toLocaleString() : ''
     };
   }).reverse();
 }
@@ -349,11 +449,63 @@ function getOrderStatus(orderId, memberNumber) {
     String(row.MemberNumber || '') === String(memberNumber || '')
   );
   if (!order) throw new Error('Order not found.');
+  const derivedStatus = deriveOverallStatus(order);
   return {
-    status: String(order.Status || 'New'),
+    status: derivedStatus,
     updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
     completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
   };
+}
+
+function updateStationStatus(orderId, station, status) {
+  const stationMap = {
+    Bar: { statusCol: 'BarStatus', updatedCol: 'BarUpdatedAt' },
+    Kitchen: { statusCol: 'KitchenStatus', updatedCol: 'KitchenUpdatedAt' },
+    Runner: { statusCol: 'RunnerStatus', updatedCol: 'RunnerUpdatedAt' },
+    'Wait Station': { statusCol: 'RunnerStatus', updatedCol: 'RunnerUpdatedAt' }
+  };
+  const config = stationMap[String(station || '')];
+  if (!config || !STATION_STATUSES.includes(status)) throw new Error('Invalid station status update.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet('Orders');
+    const headers = ensureOrderColumns(sheet);
+    const idCol = headers.indexOf('OrderID') + 1;
+    const overallStatusCol = headers.indexOf('Status') + 1;
+    const updatedCol = headers.indexOf('UpdatedAt') + 1;
+    const completedCol = headers.indexOf('CompletedAt') + 1;
+    const stationStatusCol = headers.indexOf(config.statusCol) + 1;
+    const stationUpdatedCol = headers.indexOf(config.updatedCol) + 1;
+    if (idCol < 1 || overallStatusCol < 1 || stationStatusCol < 1 || updatedCol < 1) {
+      throw new Error('Orders sheet is missing a required column.');
+    }
+
+    const values = sheet.getDataRange().getValues();
+    for (let r = 2; r <= values.length; r++) {
+      if (String(sheet.getRange(r, idCol).getValue()) === String(orderId)) {
+        const now = new Date();
+        sheet.getRange(r, stationStatusCol).setValue(status);
+        sheet.getRange(r, stationUpdatedCol).setValue(now);
+        sheet.getRange(r, updatedCol).setValue(now);
+
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header] = index === stationStatusCol - 1 ? status : sheet.getRange(r, index + 1).getValue();
+        });
+        const nextOverall = deriveOverallStatus(row);
+        sheet.getRange(r, overallStatusCol).setValue(nextOverall);
+        if (nextOverall === 'Completed' && completedCol > 0) {
+          sheet.getRange(r, completedCol).setValue(now);
+        }
+        return;
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  throw new Error('Order not found.');
 }
 
 

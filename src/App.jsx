@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -16,6 +16,20 @@ const STAFF_COLUMNS = [
   { id: 'Ready', title: 'Ready', statuses: ['Ready for Pickup'], tone: 'ready' },
   { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
   { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
+];
+
+const STATION_TABS = [
+  { id: 'all', title: 'All Orders', route: '', station: '', statusKey: '', updatedKey: '', Icon: ClipboardList },
+  { id: 'bar', title: 'Bar', route: 'Bar', station: 'Bar', statusKey: 'barStatus', updatedKey: 'barUpdatedAt', Icon: Wine },
+  { id: 'kitchen', title: 'Kitchen', route: 'Kitchen', station: 'Kitchen', statusKey: 'kitchenStatus', updatedKey: 'kitchenUpdatedAt', Icon: ChefHat },
+  { id: 'wait', title: 'Wait Station', route: 'Wait Station', station: 'Wait Station', statusKey: 'runnerStatus', updatedKey: 'runnerUpdatedAt', Icon: Users }
+];
+
+const STATION_COLUMNS = [
+  { id: 'New', title: 'New', statuses: ['New'], tone: 'new' },
+  { id: 'Preparing', title: 'Preparing', statuses: ['Preparing'], tone: 'preparing' },
+  { id: 'Ready', title: 'Ready', statuses: ['Ready'], tone: 'ready' },
+  { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true }
 ];
 
 function currency(value) {
@@ -68,6 +82,23 @@ function itemLines(order) {
     .map(line => line.trim())
     .filter(Boolean)
     .slice(0, 5);
+}
+
+function stationRoutes(order) {
+  return String(order.routeStations || '')
+    .split(',')
+    .map(route => route.trim())
+    .filter(Boolean);
+}
+
+function hasStationRoute(order, route) {
+  return stationRoutes(order).includes(route);
+}
+
+function stationStatus(order, station) {
+  if (!station || !station.statusKey) return order.status || 'New';
+  if (!hasStationRoute(order, station.route)) return 'Not Needed';
+  return order[station.statusKey] || 'New';
 }
 
 function displayPhone(phone) {
@@ -192,6 +223,11 @@ async function localAdminFunction(name, options = {}) {
   if (name === 'admin-update-status') {
     const body = JSON.parse(options.body || '{}');
     return apiPost('updateStatus', { ...body, adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'admin-update-station-status') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateStationStatus', { ...body, adminKey: ADMIN_KEY });
   }
 
   if (name === 'admin-update-setting') {
@@ -775,6 +811,7 @@ function AdminPage() {
   const [settings, setSettings] = useState({});
   const [updatingSetting, setUpdatingSetting] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
+  const [activeStationId, setActiveStationId] = useState('all');
 
   async function loadOrders() {
     setLoading(true);
@@ -828,6 +865,26 @@ function AdminPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${getAdminToken()}` },
         body: JSON.stringify({ orderId, status })
+      });
+      await loadOrders();
+    } catch (e) {
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearAdminToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
+  async function updateStationStatus(orderId, station, status) {
+    setUpdatingStatus({ orderId, station, status });
+    try {
+      await adminFunction('admin-update-station-status', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAdminToken()}` },
+        body: JSON.stringify({ orderId, station, status })
       });
       await loadOrders();
     } catch (e) {
@@ -928,10 +985,26 @@ function AdminPage() {
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
   const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
+  const activeStation = STATION_TABS.find(tab => tab.id === activeStationId) || STATION_TABS[0];
+  const boardColumns = activeStation.id === 'all' ? STAFF_COLUMNS : STATION_COLUMNS;
+  const stationTabCounts = STATION_TABS.reduce((counts, tab) => {
+    if (tab.id === 'all') {
+      counts[tab.id] = activeCount;
+    } else {
+      counts[tab.id] = orders.filter(order =>
+        hasStationRoute(order, tab.route) &&
+        !['Completed', 'Cancelled'].includes(order.status) &&
+        stationStatus(order, tab) !== 'Completed'
+      ).length;
+    }
+    return counts;
+  }, {});
 
   function ordersForColumn(column) {
     return orders.filter(order => {
-      if (!column.statuses.includes(order.status)) return false;
+      const visibleStatus = activeStation.id === 'all' ? order.status : stationStatus(order, activeStation);
+      if (activeStation.id !== 'all' && !hasStationRoute(order, activeStation.route)) return false;
+      if (!column.statuses.includes(visibleStatus)) return false;
       return !column.todayOnly || isOrderToday(order);
     });
   }
@@ -944,9 +1017,33 @@ function AdminPage() {
     return null;
   }
 
+  function stationPrimaryAction(status) {
+    if (status === 'New') return { label: 'Start', status: 'Preparing' };
+    if (status === 'Preparing') return { label: 'Mark Ready', status: 'Ready' };
+    if (status === 'Ready') return { label: 'Complete', status: 'Completed' };
+    return null;
+  }
+
+  function renderStationBadges(order) {
+    const routes = stationRoutes(order);
+    if (!routes.length) return null;
+    return (
+      <div className="stationBadges">
+        {routes.map(route => {
+          const tab = STATION_TABS.find(item => item.route === route);
+          const status = stationStatus(order, tab);
+          return <span key={`${order.orderId}-${route}`}>{route}: {status}</span>;
+        })}
+      </div>
+    );
+  }
+
   function renderOrderCard(order, tone) {
-    const action = primaryAction(order);
+    const action = activeStation.id === 'all'
+      ? primaryAction(order)
+      : stationPrimaryAction(stationStatus(order, activeStation));
     const isUpdating = updatingStatus?.orderId === order.orderId;
+    const stationTime = activeStation.id === 'all' ? '' : order[activeStation.updatedKey];
     const serviceLabel = order.fulfillmentType === 'Delivery' && order.tableNumber
       ? `Delivery · Table ${order.tableNumber}`
       : order.fulfillmentType === 'Delivery'
@@ -982,19 +1079,27 @@ function AdminPage() {
           </div>
         )}
 
+        {renderStationBadges(order)}
+
         <div className="staffOrderFoot">
           <strong>{currency(order.subtotalKnownItems)}{order.hasCustomBarRequest ? ' + bar' : ''}</strong>
           <span className={order.alcoholIncluded ? 'alcoholPill' : ''}>{order.alcoholIncluded ? 'Alcohol' : 'No alcohol'}</span>
         </div>
         <div className="staffTimeLine">
           <span>{order.updatedAt ? `Updated ${timeLabel(order.updatedAt) || order.updatedAt}` : `Placed ${timeLabel(order.timestamp) || order.timestamp}`}</span>
+          {stationTime && <span>{activeStation.title} {timeLabel(stationTime) || stationTime}</span>}
           {order.completedAt && <span>Completed {timeLabel(order.completedAt) || order.completedAt}</span>}
         </div>
 
         <div className="staffActions">
-          {action && (
+          {action && activeStation.id === 'all' && (
             <button className="staffPrimaryAction" onClick={() => updateStatus(order.orderId, action.status)} disabled={isUpdating}>
               {isUpdating && updatingStatus?.status === action.status ? 'Updating...' : action.label}
+            </button>
+          )}
+          {action && activeStation.id !== 'all' && (
+            <button className="staffPrimaryAction" onClick={() => updateStationStatus(order.orderId, activeStation.station, action.status)} disabled={isUpdating}>
+              {isUpdating && updatingStatus?.station === activeStation.station && updatingStatus?.status === action.status ? 'Updating...' : action.label}
             </button>
           )}
           {order.status !== 'Completed' && order.status !== 'Cancelled' && (
@@ -1056,6 +1161,23 @@ function AdminPage() {
       {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
       {newOrderAlert && <div className="staffNewOrderAlert"><AlertTriangle size={18} /> New order received</div>}
 
+      <section className="stationTabs" aria-label="Staff station views">
+        {STATION_TABS.map(tab => {
+          const Icon = tab.Icon;
+          return (
+            <button
+              key={tab.id}
+              className={activeStation.id === tab.id ? 'stationTab active' : 'stationTab'}
+              onClick={() => setActiveStationId(tab.id)}
+            >
+              <Icon size={18} />
+              <span>{tab.title}</span>
+              <strong>{stationTabCounts[tab.id] || 0}</strong>
+            </button>
+          );
+        })}
+      </section>
+
       <section className="staffStats">
         <div className="staffStat new"><strong>{newCount}</strong><span>New orders waiting</span></div>
         <div className="staffStat preparing"><strong>{preparingCount}</strong><span>Being prepared</span></div>
@@ -1065,8 +1187,8 @@ function AdminPage() {
         <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's menu subtotal</span></div>
       </section>
 
-      <section className="staffBoard">
-        {STAFF_COLUMNS.map(column => {
+      <section className={activeStation.id === 'all' ? 'staffBoard' : 'staffBoard stationBoard'}>
+        {boardColumns.map(column => {
           const columnOrders = ordersForColumn(column);
           return (
             <div className={`staffColumn ${column.tone}`} key={column.id}>

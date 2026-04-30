@@ -1134,10 +1134,6 @@ function AdminPage({ onBackToOrder }) {
   }
 
   const activeCount = orders.filter(o => !['Completed', 'Cancelled'].includes(o.status)).length;
-  const newCount = orders.filter(o => o.status === 'New').length;
-  const preparingCount = orders.filter(o => ['Accepted', 'Preparing'].includes(o.status)).length;
-  const readyCount = orders.filter(o => o.status === 'Ready for Pickup').length;
-  const completedCount = orders.filter(o => o.status === 'Completed' && isOrderToday(o)).length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled' && isOrderToday(o)).length;
   const needsPosCount = orders.filter(o => o.status === 'Completed' && !o.posPosted && isOrderToday(o)).length;
   const needsPosTotal = orders
@@ -1160,6 +1156,17 @@ function AdminPage({ onBackToOrder }) {
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
   const activeStation = STATION_TABS.find(tab => tab.id === activeStationId) || STATION_TABS[0];
   const boardColumns = activeStation.id === 'all' ? ALL_ORDER_COLUMNS : STATION_COLUMNS;
+  const statOrders = activeStation.id === 'all'
+    ? orders
+    : orders.filter(order => hasStationRoute(order, activeStation.route) && order.status !== 'Cancelled');
+  const statStatus = order => activeStation.id === 'all' ? order.status : stationStatus(order, activeStation);
+  const newCount = statOrders.filter(order => statStatus(order) === 'New' && !['Completed', 'Cancelled'].includes(order.status)).length;
+  const preparingCount = statOrders.filter(order => ['Accepted', 'Preparing'].includes(statStatus(order)) && !['Completed', 'Cancelled'].includes(order.status)).length;
+  const readyCount = statOrders.filter(order => (activeStation.id === 'all' ? order.status === 'Ready for Pickup' : statStatus(order) === 'Ready') && !['Completed', 'Cancelled'].includes(order.status)).length;
+  const completedCount = statOrders.filter(order => {
+    if (!isOrderToday(order)) return false;
+    return activeStation.id === 'all' ? order.status === 'Completed' : statStatus(order) === 'Completed' && order.status !== 'Cancelled';
+  }).length;
   const stationTabCounts = STATION_TABS.reduce((counts, tab) => {
     if (tab.id === 'all') {
       counts[tab.id] = activeCount;

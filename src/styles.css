@@ -32,7 +32,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .app { width: 100%; max-width: 520px; margin: 0 auto; padding: 18px 12px; overflow-x: hidden; }
 .header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 12px; padding: 14px 16px; background: var(--deep-green); color: white; border-radius: 22px 22px 8px 8px; box-shadow: 0 2px 16px rgba(0, 0, 0, .08); }
 .brandLockup { display: flex; align-items: center; gap: 9px; min-width: 0; flex: 1 1 auto; }
-.brandLogo { width: 38px; height: 38px; object-fit: contain; background: white; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; padding: 3px; box-shadow: none; flex: 0 0 auto; }
+.brandLogo { width: 42px; height: 42px; object-fit: cover; background: white; border: 1px solid rgba(255,255,255,.5); border-radius: 999px; padding: 0; box-shadow: none; flex: 0 0 auto; }
 .header h1 { font-size: clamp(17px, 4.7vw, 22px); margin: 0; letter-spacing: 0; line-height: 1.02; color: white; overflow-wrap: anywhere; font-weight: 750; }
 .eyebrow { margin: 0 0 2px; color: var(--soft-muted); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; line-height: 1.15; }
 .header .eyebrow { color: #8BB89A; }
@@ -145,7 +145,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffDashboard { width: min(1600px, 100%); margin: 0 auto; background: #fff; min-height: 100vh; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 .staffDashboardHero { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 28px; background: var(--deep-green); color: white; }
 .staffHeroBrand { display: flex; align-items: center; gap: 14px; min-width: 0; }
-.staffHeroLogo { width: 46px; height: 46px; object-fit: contain; background: white; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; padding: 4px; flex: 0 0 auto; }
+.staffHeroLogo { width: 50px; height: 50px; object-fit: cover; background: white; border: 1px solid rgba(255,255,255,.45); border-radius: 999px; padding: 0; flex: 0 0 auto; }
 .staffDashboardHero h2 { margin: 0; color: white; font-size: clamp(22px, 1.8vw, 32px); line-height: 1.08; letter-spacing: -.03em; }
 .staffDashboardHero p { margin: 4px 0 0; color: #8BB89A; font-size: clamp(13px, 1vw, 18px); font-weight: 750; }
 .staffHeroControls { display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-wrap: wrap; color: #A8D4B0; font-size: 14px; font-weight: 850; }
@@ -248,7 +248,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .staffActions { grid-template-columns: 1fr; }
   .staffPrimaryAction, .staffSecondaryAction { width: 100%; min-height: 48px; font-size: 16px; }
   .header { gap: 7px; margin-bottom: 8px; }
-  .brandLogo { width: 32px; height: 32px; padding: 2px; }
+  .brandLogo { width: 36px; height: 36px; padding: 0; }
   .brandLockup { gap: 7px; }
   .header h1 { font-size: 20px; }
   .eyebrow { font-size: 8px; letter-spacing: .09em; }
@@ -269,5 +269,5 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 @media (max-width: 380px) {
   .header h1 { font-size: 18px; }
   .hero h2, .card h2 { font-size: 20px; }
-  .brandLogo { width: 30px; height: 30px; }
+  .brandLogo { width: 34px; height: 34px; }
 }

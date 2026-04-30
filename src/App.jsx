@@ -268,7 +268,7 @@ function Header({ mode, setMode }) {
   return (
     <header className="header">
       <div className="brandLockup">
-        <img src="/eastpointe-logo.png" alt="Eastpointe Country Club" className="brandLogo" />
+        <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" className="brandLogo" />
         <div>
           <p className="eyebrow">Eastpointe Country Club</p>
           <h1>Eastpointe Pool Bar</h1>
@@ -1023,7 +1023,7 @@ function AdminPage() {
     <div className="staffDashboard">
       <section className="staffDashboardHero">
         <div className="staffHeroBrand">
-          <img src="/eastpointe-logo.png" alt="Eastpointe Country Club" className="staffHeroLogo" />
+          <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" className="staffHeroLogo" />
           <div>
             <h2>Eastpointe Pool Bar — Staff Dashboard</h2>
             <p>{shortDate()} · Logged in as Pool Staff</p>

@@ -162,9 +162,13 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .stationTabs { display: flex; gap: 10px; padding: 16px 24px; border-bottom: 1px solid var(--line-soft); background: #FFFDF9; overflow-x: auto; }
 .stationTab { min-height: 48px; border: 1px solid var(--line); background: white; color: var(--muted); border-radius: 8px; padding: 9px 12px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-weight: 900; white-space: nowrap; }
 .stationTab svg { color: currentColor; }
-.stationTab strong { min-width: 24px; height: 24px; border-radius: 999px; background: #F0EDE8; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; padding: 0 7px; font-size: 12px; }
-.stationTab.active { background: var(--deep-green); border-color: var(--deep-green); color: white; }
-.stationTab.active strong { background: rgba(255,255,255,.18); color: white; }
+.stationTab strong { min-width: 24px; height: 24px; border-radius: 999px; background: rgba(255,255,255,.7); color: currentColor; display: inline-flex; align-items: center; justify-content: center; padding: 0 7px; font-size: 12px; }
+.stationTab.all { background: #F3F0EA; border-color: #D9D2C6; color: #534C41; }
+.stationTab.bar { background: #FBE8EC; border-color: #E8BCC6; color: #863B4C; }
+.stationTab.kitchen { background: #FFF0D4; border-color: #EAC98D; color: #76520C; }
+.stationTab.wait { background: #E4F2EE; border-color: #B8D8CD; color: #235E50; }
+.stationTab.active { box-shadow: inset 0 0 0 2px currentColor; }
+.stationTab.active strong { background: rgba(255,255,255,.86); }
 .staffStats { display: grid; grid-template-columns: .9fr .9fr .9fr .9fr .9fr 1.15fr; background: #F9F8F5; border-bottom: 1px solid var(--line-soft); }
 .staffStat { min-height: 96px; padding: 18px 28px; display: grid; align-content: center; border-right: 1px solid var(--line-soft); }
 .staffStat:last-child { border-right: 0; }

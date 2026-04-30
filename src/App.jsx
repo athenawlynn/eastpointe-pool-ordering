@@ -1188,7 +1188,7 @@ function AdminPage() {
           return (
             <button
               key={tab.id}
-              className={activeStation.id === tab.id ? 'stationTab active' : 'stationTab'}
+              className={activeStation.id === tab.id ? `stationTab ${tab.id} active` : `stationTab ${tab.id}`}
               onClick={() => setActiveStationId(tab.id)}
             >
               <Icon size={18} />

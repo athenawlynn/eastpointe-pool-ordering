@@ -1177,9 +1177,16 @@ function AdminPage({ onBackToOrder }) {
     return orders.filter(order => {
       const visibleStatus = activeStation.id === 'all' ? order.status : stationStatus(order, activeStation);
       if (activeStation.id !== 'all' && !hasStationRoute(order, activeStation.route)) return false;
+      if (activeStation.id !== 'all' && column.id !== 'Completed' && ['Completed', 'Cancelled'].includes(order.status)) return false;
+      if (activeStation.id !== 'all' && column.id === 'Completed' && order.status === 'Cancelled') return false;
       if (!column.statuses.includes(visibleStatus)) return false;
       return !column.todayOnly || isOrderToday(order);
     });
+  }
+
+  function emptyColumnLabel(column) {
+    if (column.id === 'Active') return 'No active orders';
+    return `No ${column.title.toLowerCase()} orders`;
   }
 
   function stationPrimaryAction(status) {
@@ -1383,7 +1390,7 @@ function AdminPage({ onBackToOrder }) {
               <div className="staffColumnBody">
                 {columnOrders.length
                   ? columnOrders.map(order => renderOrderCard(order, column.tone))
-                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
+                  : <div className="staffEmpty">{emptyColumnLabel(column)}</div>}
               </div>
             </div>
           );

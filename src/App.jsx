@@ -358,6 +358,16 @@ function CategoryTabs({ categories, active, setActive }) {
   );
 }
 
+function CategorySelect({ categories, active, setActive }) {
+  return (
+    <label className="categorySelectLabel">Menu Category
+      <select value={active} onChange={event => setActive(event.target.value)}>
+        {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+      </select>
+    </label>
+  );
+}
+
 function MenuItem({ item, quantity, setQuantity }) {
   return (
     <div className={!item.available ? 'menuItem unavailable' : 'menuItem'}>
@@ -416,8 +426,7 @@ function OrderPage() {
         ]);
         setMenu(menuData.items || []);
         setSettings(settingsData.settings || {});
-        const cats = [...new Set((menuData.items || []).filter(i => i.available).map(i => i.category))];
-        setActiveCat(cats[0] || '');
+        setActiveCat('All Items');
       } catch (e) {
         setErr(e.message);
       } finally {
@@ -441,8 +450,14 @@ function OrderPage() {
     return () => clearInterval(id);
   }, [confirmation]);
 
-  const categories = useMemo(() => [...new Set(menu.filter(i => i.available).map(i => i.category))], [menu]);
-  const visibleItems = useMemo(() => menu.filter(i => i.category === activeCat), [menu, activeCat]);
+  const categories = useMemo(() => {
+    const itemCategories = [...new Set(menu.filter(i => i.available).map(i => i.category))];
+    return itemCategories.length ? ['All Items', ...itemCategories] : [];
+  }, [menu]);
+  const visibleItems = useMemo(() => {
+    if (activeCat === 'All Items') return menu.filter(i => i.available);
+    return menu.filter(i => i.available && i.category === activeCat);
+  }, [menu, activeCat]);
 
   const selectedItems = useMemo(() => {
     return menu
@@ -706,6 +721,7 @@ function OrderPage() {
         </div>
         {categories.length ? (
           <>
+            <CategorySelect categories={categories} active={activeCat} setActive={setActiveCat} />
             <CategoryTabs categories={categories} active={activeCat} setActive={setActiveCat} />
             <div className="menuList">
               {visibleItems.map(item => (

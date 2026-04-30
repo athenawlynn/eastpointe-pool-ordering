@@ -52,10 +52,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .mutedTable span, .mutedTable small { color: var(--soft-muted); }
 .sectionKicker { display: inline-flex; align-items: center; gap: 6px; margin: 0 0 6px; color: var(--soft-muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 850; }
 label { display: grid; gap: 7px; margin: 12px 0; color: var(--soft-muted); letter-spacing: .03em; text-transform: uppercase; font-weight: 800; font-size: 11px; }
-input, textarea { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; background: #F9F8F5; color: var(--ink); outline: none; font-size: 16px; line-height: 1.25; }
-input:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(180, 148, 93, .14); }
+input, textarea, select { width: 100%; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; background: #F9F8F5; color: var(--ink); outline: none; font-size: 16px; line-height: 1.25; }
+select { appearance: auto; }
+input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(180, 148, 93, .14); }
 .fieldHint { color: var(--muted); font-size: 12px; font-weight: 600; margin-top: -3px; }
 .sectionTitle { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; width: 100%; }
+.categorySelectLabel { margin: 12px 0 6px; }
 .tabs { display: flex; overflow-x: auto; gap: 6px; padding: 6px 0 10px; -webkit-overflow-scrolling: touch; max-width: 100%; }
 .tab { border: 1px solid var(--line); background: white; color: var(--muted); white-space: nowrap; padding: 7px 12px; border-radius: 20px; font-weight: 800; font-size: 12px; flex: 0 0 auto; }
 .tab.active { background: var(--deep-green); color: white; border-color: var(--deep-green); }

@@ -1084,6 +1084,12 @@ function AdminPage() {
   const todaysPostedCount = todaysCompletedOrders.filter(o => o.posPosted).length;
   const todaysAlcoholCount = orders.filter(o => o.alcoholIncluded && isOrderToday(o) && o.status !== 'Cancelled').length;
   const todaysDeliveryCount = orders.filter(o => o.fulfillmentType === 'Delivery' && isOrderToday(o) && o.status !== 'Cancelled').length;
+  const menuItemsByCategory = menuItems.reduce((groups, item) => {
+    const category = item.category || 'Other';
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(item);
+    return groups;
+  }, {});
   const subtotalToday = orders
     .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
@@ -1356,19 +1362,27 @@ function AdminPage() {
             <span>{menuItems.filter(item => !item.available).length} unavailable</span>
           </div>
           <div className="menuAvailabilityList">
-            {menuItems.map(item => (
-              <div className={item.available ? 'menuAvailabilityItem' : 'menuAvailabilityItem unavailable'} key={item.itemId}>
-                <div>
-                  <strong>{item.itemName}</strong>
-                  <span>{item.category} · {currency(item.price)}</span>
+            {Object.entries(menuItemsByCategory).map(([category, items]) => (
+              <div className="menuAvailabilityGroup" key={category}>
+                <div className="menuAvailabilityGroupHead">
+                  <strong>{category}</strong>
+                  <span>{items.filter(item => !item.available).length} sold out</span>
                 </div>
-                <button
-                  className={item.available ? 'availabilityButton available' : 'availabilityButton unavailable'}
-                  onClick={() => updateMenuAvailability(item.itemId, !item.available)}
-                  disabled={updatingMenuItem === item.itemId}
-                >
-                  {updatingMenuItem === item.itemId ? 'Saving...' : item.available ? 'Available' : 'Sold Out'}
-                </button>
+                {items.map(item => (
+                  <div className={item.available ? 'menuAvailabilityItem' : 'menuAvailabilityItem unavailable'} key={item.itemId}>
+                    <div>
+                      <strong>{item.itemName}</strong>
+                      <span>{currency(item.price)}</span>
+                    </div>
+                    <button
+                      className={item.available ? 'availabilityButton available' : 'availabilityButton unavailable'}
+                      onClick={() => updateMenuAvailability(item.itemId, !item.available)}
+                      disabled={updatingMenuItem === item.itemId}
+                    >
+                      {updatingMenuItem === item.itemId ? 'Saving...' : item.available ? 'Available' : 'Sold Out'}
+                    </button>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

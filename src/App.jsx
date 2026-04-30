@@ -1197,9 +1197,10 @@ function AdminPage({ onBackToOrder }) {
   }
 
   function stationPrimaryAction(status) {
-    if (status === 'New') return { label: 'Start', status: 'Preparing' };
-    if (status === 'Preparing') return { label: 'Mark Ready', status: 'Ready' };
-    if (status === 'Ready') return { label: 'Complete', status: 'Completed' };
+    const stationName = activeStation.title;
+    if (status === 'New') return { label: activeStation.id === 'wait' ? 'Start Handoff' : `Start ${stationName}`, status: 'Preparing' };
+    if (status === 'Preparing') return { label: activeStation.id === 'wait' ? 'Mark Handoff Ready' : `Mark ${stationName} Ready`, status: 'Ready' };
+    if (status === 'Ready') return { label: activeStation.id === 'wait' ? 'Complete Handoff' : `Complete ${stationName}`, status: 'Completed' };
     return null;
   }
 

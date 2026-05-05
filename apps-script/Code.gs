@@ -3,7 +3,7 @@
  * Google Apps Script backend for Country Club Pool Ordering MVP.
  *
  * Setup:
- * 1. Create a Google Sheet with tabs: MenuItems, Orders, Settings.
+ * 1. Create a Google Sheet with tabs: MenuItems, Orders, TruckMenuItems, TruckOrders, Settings.
  * 2. Paste this file into Extensions > Apps Script.
  * 3. Set constants below.
  * 4. Deploy as Web App:
@@ -15,9 +15,10 @@
 const SPREADSHEET_ID = '1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0';
 const ADMIN_KEY = 'EastpointeTest2026!';
 const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
-const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable'];
+const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrderingOpen'];
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
 const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
+const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -94,6 +95,11 @@ function isOrderingOpen() {
   return String(settings.OrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
 }
 
+function isTruckOrderingOpen() {
+  const settings = getSettingsObject();
+  return String(settings.TruckOrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
+}
+
 function updateSetting(key, value) {
   const normalizedKey = String(key || '').trim();
   if (!ADMIN_EDITABLE_SETTINGS.includes(normalizedKey)) {
@@ -143,8 +149,47 @@ function updateMenuAvailability(itemId, available) {
   throw new Error('Menu item not found.');
 }
 
+function updateTruckMenuAvailability(itemId, available) {
+  updateMenuAvailabilityForSheet('TruckMenuItems', itemId, available);
+}
+
+function updateMenuAvailabilityForSheet(sheetName, itemId, available) {
+  const normalizedItemId = String(itemId || '').trim();
+  if (!normalizedItemId) throw new Error('Missing menu item.');
+
+  const sheet = getSheet(sheetName);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0] || [];
+  const itemIdCol = headers.indexOf('ItemID') + 1;
+  const availableCol = headers.indexOf('Available') + 1;
+  if (itemIdCol < 1 || availableCol < 1) {
+    throw new Error(sheetName + ' sheet is missing required columns.');
+  }
+
+  for (let r = 2; r <= values.length; r++) {
+    if (String(sheet.getRange(r, itemIdCol).getValue()).trim() === normalizedItemId) {
+      sheet.getRange(r, availableCol).setValue(Boolean(available));
+      return;
+    }
+  }
+
+  throw new Error('Menu item not found.');
+}
+
 function getMenu() {
   const sheet = getSheet('MenuItems');
+  const items = rowsToObjects(sheet)
+    .map(normalizeMenuItem)
+    .filter(i => i.itemId && i.itemName)
+    .sort((a, b) => {
+      if (a.category === b.category) return a.sortOrder - b.sortOrder;
+      return a.category.localeCompare(b.category);
+    });
+  return items;
+}
+
+function getTruckMenu() {
+  const sheet = getSheet('TruckMenuItems');
   const items = rowsToObjects(sheet)
     .map(normalizeMenuItem)
     .filter(i => i.itemId && i.itemName)
@@ -187,6 +232,13 @@ function makeOrderId() {
   const props = PropertiesService.getScriptProperties();
   const current = Number(props.getProperty('LAST_ORDER_ID') || '1000') + 1;
   props.setProperty('LAST_ORDER_ID', String(current));
+  return String(current);
+}
+
+function makeTruckOrderId() {
+  const props = PropertiesService.getScriptProperties();
+  const current = Number(props.getProperty('LAST_TRUCK_ORDER_ID') || '5000') + 1;
+  props.setProperty('LAST_TRUCK_ORDER_ID', String(current));
   return String(current);
 }
 
@@ -239,6 +291,18 @@ function ensureOrderColumns(sheet) {
   return headers;
 }
 
+function ensureTruckOrderColumns(sheet) {
+  const values = sheet.getDataRange().getValues();
+  const headers = values.length ? values[0].map(h => String(h).trim()) : [];
+  TRUCK_ORDER_COLUMNS.forEach(column => {
+    if (!headers.includes(column)) {
+      sheet.getRange(1, headers.length + 1).setValue(column);
+      headers.push(column);
+    }
+  });
+  return headers;
+}
+
 function normalizeStationStatus(value, needed) {
   const status = String(value || '').trim();
   if (status) return status;
@@ -272,6 +336,10 @@ function doGet(e) {
       return jsonResponse({ ok: true, items: getMenu() });
     }
 
+    if (action === 'truckMenu') {
+      return jsonResponse({ ok: true, items: getTruckMenu() });
+    }
+
     if (action === 'settings') {
       return jsonResponse({ ok: true, settings: getSettingsObject() });
     }
@@ -281,12 +349,25 @@ function doGet(e) {
       return jsonResponse({ ok: true, orders: getOrders() });
     }
 
+    if (action === 'truckOrders') {
+      if (e.parameter.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      return jsonResponse({ ok: true, orders: getTruckOrders() });
+    }
+
     if (action === 'orderStatus') {
       return jsonResponse({ ok: true, ...getOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
     }
 
     if (action === 'latestOrderStatus') {
       return jsonResponse({ ok: true, ...getLatestOrderStatus(e.parameter.memberNumber) });
+    }
+
+    if (action === 'truckOrderStatus') {
+      return jsonResponse({ ok: true, ...getTruckOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
+    }
+
+    if (action === 'latestTruckOrderStatus') {
+      return jsonResponse({ ok: true, ...getLatestTruckOrderStatus(e.parameter.memberNumber) });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown action.' });
@@ -305,9 +386,20 @@ function doPost(e) {
       return jsonResponse({ ok: true, orderId: result.orderId });
     }
 
+    if (action === 'createTruckOrder') {
+      const result = createTruckOrder(body.order);
+      return jsonResponse({ ok: true, orderId: result.orderId });
+    }
+
     if (action === 'updateStatus') {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateOrderStatus(body.orderId, body.status);
+      return jsonResponse({ ok: true });
+    }
+
+    if (action === 'updateTruckStatus') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateTruckOrderStatus(body.orderId, body.status);
       return jsonResponse({ ok: true });
     }
 
@@ -323,6 +415,12 @@ function doPost(e) {
       return jsonResponse({ ok: true });
     }
 
+    if (action === 'updateTruckPosPosted') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateTruckPosPosted(body.orderId, body.posted, body.postedBy);
+      return jsonResponse({ ok: true });
+    }
+
     if (action === 'updateSetting') {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateSetting(body.key, body.value);
@@ -333,6 +431,12 @@ function doPost(e) {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateMenuAvailability(body.itemId, body.available);
       return jsonResponse({ ok: true, items: getMenu() });
+    }
+
+    if (action === 'updateTruckMenuAvailability') {
+      if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+      updateTruckMenuAvailability(body.itemId, body.available);
+      return jsonResponse({ ok: true, items: getTruckMenu() });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown action.' });
@@ -438,6 +542,74 @@ function createOrder(order) {
   return { orderId };
 }
 
+function validateTruckItems(items) {
+  const menu = getTruckMenu();
+  const byId = {};
+  menu.forEach(item => byId[item.itemId] = item);
+  return items.map(item => {
+    const menuItem = byId[String(item.itemId || '').trim()];
+    if (!menuItem) throw new Error('A selected food truck item is no longer available.');
+    if (!menuItem.available) throw new Error(menuItem.itemName + ' is currently sold out.');
+    return {
+      itemId: menuItem.itemId,
+      category: menuItem.category,
+      itemName: menuItem.itemName,
+      price: menuItem.price,
+      quantity: Number(item.quantity || 0),
+      alcoholic: false
+    };
+  }).filter(item => item.quantity > 0);
+}
+
+function createTruckOrder(order) {
+  if (!order) throw new Error('Missing order.');
+  if (!isTruckOrderingOpen()) {
+    throw new Error('Food truck ordering is currently closed. Please order directly at the truck.');
+  }
+  validateMemberNumber(order.memberNumber);
+  if (!String(order.memberName || '').trim()) throw new Error('Member name is required.');
+  if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
+  if (!order.authorizationAccepted) throw new Error('Charge authorization is required.');
+
+  const incomingItems = Array.isArray(order.items) ? order.items : [];
+  const items = validateTruckItems(incomingItems);
+  if (!items.length) throw new Error('Please select at least one food truck item.');
+  const summary = itemSummary(items);
+  let orderId;
+  let timestamp;
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    orderId = makeTruckOrderId();
+    timestamp = new Date();
+    const sheet = getSheet('TruckOrders');
+    ensureTruckOrderColumns(sheet);
+    sheet.appendRow([
+      timestamp,
+      orderId,
+      'New',
+      String(order.memberName || '').trim(),
+      String(order.memberNumber || '').trim(),
+      String(order.phone || '').trim(),
+      summary,
+      JSON.stringify(items),
+      Number(order.subtotalKnownItems || 0),
+      Boolean(order.authorizationAccepted),
+      '',
+      timestamp,
+      '',
+      false,
+      '',
+      ''
+    ]);
+  } finally {
+    lock.releaseLock();
+  }
+
+  return { orderId };
+}
+
 function getOrders() {
   const sheet = getSheet('Orders');
   ensureOrderColumns(sheet);
@@ -482,6 +654,36 @@ function getOrders() {
       posPostedBy: String(row.POSPostedBy || '')
     };
   }).reverse();
+}
+
+function normalizeTruckOrder(row) {
+  let items = [];
+  try { items = JSON.parse(row.ItemsJSON || '[]'); } catch (e) {}
+  return {
+    timestamp: row.Timestamp ? new Date(row.Timestamp).toLocaleString() : '',
+    orderId: String(row.OrderID || ''),
+    status: String(row.Status || 'New'),
+    memberName: String(row.MemberName || ''),
+    memberNumber: String(row.MemberNumber || ''),
+    phone: String(row.Phone || ''),
+    itemsSummary: String(row.ItemsSummary || ''),
+    items,
+    subtotalKnownItems: Number(row.SubtotalKnownItems || 0),
+    authorizationAccepted: String(row.AuthorizationAccepted).toUpperCase() === 'TRUE' || row.AuthorizationAccepted === true,
+    staffNotes: String(row.StaffNotes || ''),
+    updatedAt: row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleString() : '',
+    completedAt: row.CompletedAt ? new Date(row.CompletedAt).toLocaleString() : '',
+    posPosted: String(row.POSPosted).toUpperCase() === 'TRUE' || row.POSPosted === true,
+    posPostedAt: row.POSPostedAt ? new Date(row.POSPostedAt).toLocaleString() : '',
+    posPostedBy: String(row.POSPostedBy || '')
+  };
+}
+
+function getTruckOrders() {
+  const sheet = getSheet('TruckOrders');
+  ensureTruckOrderColumns(sheet);
+  const rows = rowsToObjects(sheet);
+  return rows.map(normalizeTruckOrder).reverse();
 }
 
 
@@ -548,6 +750,51 @@ function getLatestOrderStatus(memberNumber) {
   if (active) return orderStatusPayload(active);
 
   return orderStatusPayload(rows[0]);
+}
+
+function truckStatusPayload(order) {
+  return {
+    orderId: String(order.OrderID || ''),
+    status: String(order.Status || 'New'),
+    updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
+    completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
+  };
+}
+
+function getTruckOrderStatus(orderId, memberNumber) {
+  validateMemberNumber(memberNumber);
+  const sheet = getSheet('TruckOrders');
+  const rows = rowsToObjects(sheet);
+  const order = rows.find(row =>
+    String(row.OrderID || '') === String(orderId || '') &&
+    String(row.MemberNumber || '') === String(memberNumber || '')
+  );
+  if (!order) throw new Error('Food truck order not found.');
+  return truckStatusPayload(order);
+}
+
+function getLatestTruckOrderStatus(memberNumber) {
+  const normalizedMemberNumber = String(memberNumber || '').trim();
+  validateMemberNumber(normalizedMemberNumber);
+  const sheet = getSheet('TruckOrders');
+  const rows = rowsToObjects(sheet)
+    .filter(row => String(row.MemberNumber || '') === normalizedMemberNumber)
+    .reverse();
+  if (!rows.length) throw new Error('No food truck orders found for that member number.');
+
+  const activeToday = rows.find(row =>
+    isTodayValue(row.Timestamp || row.UpdatedAt) &&
+    !['Completed', 'Cancelled'].includes(String(row.Status || 'New'))
+  );
+  if (activeToday) return truckStatusPayload(activeToday);
+
+  const today = rows.find(row => isTodayValue(row.Timestamp || row.UpdatedAt));
+  if (today) return truckStatusPayload(today);
+
+  const active = rows.find(row => !['Completed', 'Cancelled'].includes(String(row.Status || 'New')));
+  if (active) return truckStatusPayload(active);
+
+  return truckStatusPayload(rows[0]);
 }
 
 function updateStationStatus(orderId, station, status) {
@@ -632,6 +879,74 @@ function updatePosPosted(orderId, posted, postedBy) {
     lock.releaseLock();
   }
   throw new Error('Order not found.');
+}
+
+function updateTruckOrderStatus(orderId, status) {
+  const allowed = ['New', 'Ready for Pickup', 'Completed', 'Cancelled'];
+  if (!allowed.includes(status)) throw new Error('Invalid truck order status.');
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet('TruckOrders');
+    const headers = ensureTruckOrderColumns(sheet);
+    const idCol = headers.indexOf('OrderID') + 1;
+    const statusCol = headers.indexOf('Status') + 1;
+    const updatedCol = headers.indexOf('UpdatedAt') + 1;
+    const completedCol = headers.indexOf('CompletedAt') + 1;
+    if (idCol < 1 || statusCol < 1 || updatedCol < 1) {
+      throw new Error('TruckOrders sheet is missing a required column.');
+    }
+
+    const values = sheet.getDataRange().getValues();
+    for (let r = 2; r <= values.length; r++) {
+      if (String(sheet.getRange(r, idCol).getValue()) === String(orderId)) {
+        const now = new Date();
+        sheet.getRange(r, statusCol).setValue(status);
+        sheet.getRange(r, updatedCol).setValue(now);
+        if (status === 'Completed' && completedCol > 0) {
+          sheet.getRange(r, completedCol).setValue(now);
+        }
+        return;
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  throw new Error('Food truck order not found.');
+}
+
+function updateTruckPosPosted(orderId, posted, postedBy) {
+  const isPosted = posted === true || String(posted).toUpperCase() === 'TRUE';
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sheet = getSheet('TruckOrders');
+    const headers = ensureTruckOrderColumns(sheet);
+    const idCol = headers.indexOf('OrderID') + 1;
+    const posPostedCol = headers.indexOf('POSPosted') + 1;
+    const posPostedAtCol = headers.indexOf('POSPostedAt') + 1;
+    const posPostedByCol = headers.indexOf('POSPostedBy') + 1;
+    const updatedCol = headers.indexOf('UpdatedAt') + 1;
+    if (idCol < 1 || posPostedCol < 1 || posPostedAtCol < 1 || posPostedByCol < 1) {
+      throw new Error('TruckOrders sheet is missing POS reconciliation columns.');
+    }
+
+    const values = sheet.getDataRange().getValues();
+    for (let r = 2; r <= values.length; r++) {
+      if (String(sheet.getRange(r, idCol).getValue()) === String(orderId)) {
+        const now = new Date();
+        sheet.getRange(r, posPostedCol).setValue(isPosted);
+        sheet.getRange(r, posPostedAtCol).setValue(isPosted ? now : '');
+        sheet.getRange(r, posPostedByCol).setValue(isPosted ? String(postedBy || 'Truck Staff').trim() : '');
+        if (updatedCol > 0) sheet.getRange(r, updatedCol).setValue(now);
+        return;
+      }
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  throw new Error('Food truck order not found.');
 }
 
 

@@ -5,10 +5,13 @@ import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, Al
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'poolstaff';
+const TRUCK_PASSWORD = import.meta.env.VITE_TRUCK_STAFF_PASSWORD || 'truckstaff';
 const API_TIMEOUT_MS = 12000;
 const API_RETRIES = 2;
 const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
+const TRUCK_CONFIRMATION_KEY = 'eastpointeLastTruckConfirmation';
 const ADMIN_TOKEN_KEY = 'eastpointeAdminToken';
+const TRUCK_TOKEN_KEY = 'eastpointeTruckToken';
 
 const ALL_ORDER_COLUMNS = [
   { id: 'Active', title: 'Active Orders', statuses: ['New', 'Accepted', 'Preparing'], tone: 'new' },
@@ -29,6 +32,13 @@ const STATION_COLUMNS = [
   { id: 'Preparing', title: 'Preparing', statuses: ['Preparing'], tone: 'preparing' },
   { id: 'Ready', title: 'Ready', statuses: ['Ready'], tone: 'ready' },
   { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true }
+];
+
+const TRUCK_COLUMNS = [
+  { id: 'New', title: 'Order Received', statuses: ['New'], tone: 'new' },
+  { id: 'Ready', title: 'Ready for Pickup', statuses: ['Ready for Pickup'], tone: 'ready' },
+  { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
+  { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
 ];
 
 function currency(value) {
@@ -145,6 +155,20 @@ function memberStatusSteps(status, fulfillmentType) {
   }));
 }
 
+function truckStatusSteps(status) {
+  const labels = ['Order received', 'Ready for pickup', 'Completed'];
+  const statusIndex = {
+    New: 0,
+    'Ready for Pickup': 1,
+    Completed: 2
+  };
+  const activeIndex = statusIndex[status] ?? 0;
+  return labels.map((label, index) => ({
+    label,
+    state: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'
+  }));
+}
+
 function isToday(value) {
   const date = new Date(value);
   if (!date.getTime()) return false;
@@ -220,6 +244,14 @@ async function apiPost(action, payload) {
 }
 
 async function localAdminFunction(name, options = {}) {
+  if (name === 'truck-login') {
+    const body = JSON.parse(options.body || '{}');
+    if (String(body.password || '') !== TRUCK_PASSWORD) {
+      throw new Error('Incorrect password.');
+    }
+    return { ok: true, token: `local-dev.${Date.now() + 4 * 60 * 60 * 1000}` };
+  }
+
   if (name === 'admin-login') {
     const body = JSON.parse(options.body || '{}');
     if (String(body.password || '') !== ADMIN_PASSWORD) {
@@ -229,7 +261,10 @@ async function localAdminFunction(name, options = {}) {
   }
 
   if (!getAdminToken()) {
-    throw new Error('Staff session expired. Please sign in again.');
+    const isTruckFunction = name.startsWith('truck-');
+    if (!isTruckFunction || !getTruckToken()) {
+      throw new Error('Staff session expired. Please sign in again.');
+    }
   }
 
   if (!ADMIN_KEY) {
@@ -238,6 +273,10 @@ async function localAdminFunction(name, options = {}) {
 
   if (name === 'admin-orders') {
     return apiGet('orders', { adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'truck-orders') {
+    return apiGet('truckOrders', { adminKey: ADMIN_KEY });
   }
 
   if (name === 'admin-update-status') {
@@ -265,6 +304,26 @@ async function localAdminFunction(name, options = {}) {
     return apiPost('updateMenuAvailability', { ...body, adminKey: ADMIN_KEY });
   }
 
+  if (name === 'truck-update-status') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateTruckStatus', { ...body, adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'truck-update-pos-posted') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateTruckPosPosted', { ...body, adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'truck-update-setting') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateSetting', { ...body, adminKey: ADMIN_KEY });
+  }
+
+  if (name === 'truck-update-menu-availability') {
+    const body = JSON.parse(options.body || '{}');
+    return apiPost('updateTruckMenuAvailability', { ...body, adminKey: ADMIN_KEY });
+  }
+
   throw new Error(`Unknown local admin function: ${name}`);
 }
 
@@ -286,12 +345,24 @@ function getAdminToken() {
   return sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
 }
 
+function getTruckToken() {
+  return sessionStorage.getItem(TRUCK_TOKEN_KEY) || '';
+}
+
 function setAdminToken(token) {
   sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
 }
 
+function setTruckToken(token) {
+  sessionStorage.setItem(TRUCK_TOKEN_KEY, token);
+}
+
 function clearAdminToken() {
   sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+}
+
+function clearTruckToken() {
+  sessionStorage.removeItem(TRUCK_TOKEN_KEY);
 }
 
 function readSavedConfirmation() {
@@ -304,8 +375,22 @@ function readSavedConfirmation() {
   }
 }
 
+function readSavedTruckConfirmation() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(TRUCK_CONFIRMATION_KEY) || 'null');
+    if (!saved?.orderId || !saved?.memberNumber) return null;
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
 function clearSavedConfirmation() {
   sessionStorage.removeItem(CONFIRMATION_KEY);
+}
+
+function clearSavedTruckConfirmation() {
+  sessionStorage.removeItem(TRUCK_CONFIRMATION_KEY);
 }
 
 function playNewOrderSound() {
@@ -342,6 +427,23 @@ function Header({ mode, setMode }) {
       </div>
       <button className="ghostButton" onClick={() => setMode(mode === 'admin' ? 'order' : 'admin')}>
         {mode === 'admin' ? 'Order Page' : 'Staff'}
+      </button>
+    </header>
+  );
+}
+
+function TruckHeader({ mode, setMode }) {
+  return (
+    <header className="header truckHeader">
+      <div className="brandLockup">
+        <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" className="brandLogo" />
+        <div>
+          <p className="eyebrow">Eastpointe Country Club</p>
+          <h1>The Turn Truck</h1>
+        </div>
+      </div>
+      <button className="ghostButton" onClick={() => setMode(mode === 'truck-admin' ? 'truck' : 'truck-admin')}>
+        {mode === 'truck-admin' ? 'Order Page' : 'Truck Staff'}
       </button>
     </header>
   );
@@ -875,7 +977,335 @@ function OrderPage() {
   );
 }
 
-function Login({ onLogin, onBack }) {
+function TruckOrderPage() {
+  const savedConfirmation = readSavedTruckConfirmation();
+  const [menu, setMenu] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState('');
+  const [statusError, setStatusError] = useState('');
+  const [activeCat, setActiveCat] = useState('');
+  const [quantities, setQuantities] = useState({});
+  const [lookup, setLookup] = useState({
+    orderId: getQueryParam('order') || '',
+    memberNumber: savedConfirmation?.memberNumber || ''
+  });
+  const [form, setForm] = useState({
+    memberName: savedConfirmation?.memberName || '',
+    memberNumber: savedConfirmation?.memberNumber || '',
+    phone: '',
+    authorizationAccepted: false
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [confirmation, setConfirmation] = useState(savedConfirmation ? { orderId: savedConfirmation.orderId } : null);
+  const [liveStatus, setLiveStatus] = useState(savedConfirmation?.status || '');
+  const [readyAt, setReadyAt] = useState(savedConfirmation?.readyAt || '');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [menuData, settingsData] = await Promise.all([
+          apiGet('truckMenu'),
+          apiGet('settings')
+        ]);
+        setMenu(menuData.items || []);
+        setSettings(settingsData.settings || {});
+        setActiveCat('All Items');
+      } catch (e) {
+        setErr(e.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const categories = useMemo(() => {
+    const itemCategories = [...new Set(menu.filter(i => i.available).map(i => i.category))];
+    return itemCategories.length ? ['All Items', ...itemCategories] : [];
+  }, [menu]);
+  const visibleItems = useMemo(() => {
+    if (activeCat === 'All Items') return menu.filter(i => i.available);
+    return menu.filter(i => i.available && i.category === activeCat);
+  }, [menu, activeCat]);
+  const selectedItems = useMemo(() => menu
+    .filter(item => Number(quantities[item.itemId] || 0) > 0)
+    .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [menu, quantities]);
+  const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+
+  function setField(field, value) {
+    setForm(prev => ({ ...prev, [field]: value }));
+  }
+
+  function setLookupField(field, value) {
+    setLookup(prev => ({ ...prev, [field]: value }));
+  }
+
+  function validateTruckOrder() {
+    if (!truckOrderingOpen) return 'The Turn Truck ordering is currently closed.';
+    if (!form.memberName.trim()) return 'Please enter member name.';
+    if (!/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!form.phone.trim()) return 'Please enter mobile number.';
+    if (!selectedItems.length) return 'Please select at least one item.';
+    if (!form.authorizationAccepted) return 'Please authorize the charge to the member account.';
+    return '';
+  }
+
+  async function submitTruckOrder() {
+    const validation = validateTruckOrder();
+    if (validation) {
+      setErr(validation);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setSubmitting(true);
+    setErr('');
+    try {
+      const res = await apiPost('createTruckOrder', {
+        order: {
+          timestamp: todayISO(),
+          memberName: form.memberName.trim(),
+          memberNumber: form.memberNumber.trim(),
+          phone: form.phone.trim(),
+          items: selectedItems.map(item => ({
+            itemId: item.itemId,
+            category: item.category,
+            itemName: item.itemName,
+            price: Number(item.price || 0),
+            quantity: Number(item.quantity || 0)
+          })),
+          subtotalKnownItems: subtotal,
+          authorizationAccepted: form.authorizationAccepted
+        }
+      });
+      const saved = {
+        orderId: res.orderId,
+        status: 'New',
+        memberName: form.memberName.trim(),
+        memberNumber: form.memberNumber.trim()
+      };
+      setConfirmation({ orderId: res.orderId });
+      setLiveStatus('New');
+      sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function lookupTruckOrder() {
+    const orderId = String(lookup.orderId || '').trim();
+    const memberNumber = String(lookup.memberNumber || '').trim();
+    if (!/^\d{4,6}$/.test(memberNumber)) {
+      setErr('Enter your 4–6 digit member number.');
+      return;
+    }
+    setLookingUp(true);
+    setErr('');
+    try {
+      const res = orderId
+        ? await apiGet('truckOrderStatus', { orderId, memberNumber })
+        : await apiGet('latestTruckOrderStatus', { memberNumber });
+      const resolvedOrderId = res.orderId || orderId;
+      const nextReadyAt = res.status === 'Ready for Pickup' || res.status === 'Completed'
+        ? (res.updatedAt || res.completedAt || '')
+        : '';
+      const saved = {
+        orderId: resolvedOrderId,
+        status: res.status || 'New',
+        memberNumber,
+        readyAt: nextReadyAt
+      };
+      setForm(prev => ({ ...prev, memberNumber }));
+      setConfirmation({ orderId: resolvedOrderId });
+      setLiveStatus(saved.status);
+      setReadyAt(nextReadyAt);
+      sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
+    } catch (e) {
+      setErr(e.message || 'Food truck order not found.');
+    } finally {
+      setLookingUp(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!confirmation?.orderId || !form.memberNumber) return;
+    async function pollStatus() {
+      try {
+        const res = await apiGet('truckOrderStatus', {
+          orderId: confirmation.orderId,
+          memberNumber: form.memberNumber.trim()
+        });
+        const nextStatus = res.status || '';
+        const nextReadyAt = nextStatus === 'Ready for Pickup' || nextStatus === 'Completed'
+          ? (res.updatedAt || res.completedAt || '')
+          : '';
+        setLiveStatus(nextStatus);
+        setReadyAt(nextReadyAt);
+        setStatusError('');
+        const saved = readSavedTruckConfirmation();
+        if (saved) sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify({ ...saved, status: nextStatus, readyAt: nextReadyAt }));
+      } catch {
+        setStatusError('Status is reconnecting. Keep this page open.');
+      }
+    }
+    pollStatus();
+    const id = setInterval(pollStatus, 8000);
+    return () => clearInterval(id);
+  }, [confirmation?.orderId, form.memberNumber]);
+
+  if (loading) return <LoadingCard message="Loading truck menu..." />;
+
+  if (confirmation) {
+    const ready = liveStatus === 'Ready for Pickup';
+    return (
+      <div className="stack memberStack truckMember">
+        <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
+          <div className="orderNumHeader truckOrderHeader">
+            <span>Truck order confirmed</span>
+            <strong>#{confirmation.orderId}</strong>
+            <small>The Turn Truck</small>
+          </div>
+          <CheckCircle size={34} />
+          <h2>{ready ? 'Ready for Pickup' : 'Order Received'}</h2>
+          <p>Thank you. Your truck order status updates automatically.</p>
+          <div className="statusPanel">
+            <span>Current Status</span>
+            <strong>{liveStatus || 'New'}</strong>
+            {readyAt && <em>Ready at {timeLabel(readyAt) || readyAt}</em>}
+            {statusError && <small>{statusError}</small>}
+          </div>
+          <div className="memberStatusTrail" aria-label="Truck order status progress">
+            {truckStatusSteps(liveStatus || 'New').map(step => (
+              <div className={`memberStatusStep ${step.state}`} key={step.label}>
+                <div className="memberStatusDot">{step.state === 'done' ? '✓' : ''}</div>
+                <span>{step.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="notice pickupNotice">
+            <strong>Pickup:</strong> The Turn Truck<br />
+            Please keep this screen open. We will update this screen when your order is ready.
+          </div>
+        </div>
+        <button className="primaryButton" onClick={() => { clearSavedTruckConfirmation(); window.location.reload(); }}>Start New Truck Order</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="stack memberStack truckMember">
+      {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+      {!truckOrderingOpen && <div className="serviceBanner closed"><AlertTriangle size={18} /> The Turn Truck ordering is currently closed.</div>}
+
+      <section className="card hero memberHero truckHero">
+        <div>
+          <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
+          <h2>The Turn Truck</h2>
+          <p>Order on the golf course and charge it to your member account. Pickup only.</p>
+        </div>
+      </section>
+
+      <section className="card statusLookupCard">
+        <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
+        <h2>Check Truck Order</h2>
+        <p className="hint">Enter your member number. Order number is optional if you have it.</p>
+        <div className="lookupGrid">
+          <label>Order Number <span className="optionalText">Optional</span>
+            <input inputMode="numeric" value={lookup.orderId} onChange={event => setLookupField('orderId', event.target.value.replace(/\D/g, ''))} placeholder="Example: 5001" />
+          </label>
+          <label>Member Number
+            <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+          </label>
+        </div>
+        <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
+      </section>
+
+      <section className="card">
+        <div className="sectionKicker"><UserRound size={15} /> Member details</div>
+        <h2>Member Information</h2>
+        <label>Member Name
+          <input value={form.memberName} onChange={event => setField('memberName', event.target.value)} placeholder="First and last name" />
+        </label>
+        <label>Member Number
+          <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+        </label>
+        <label>Mobile Number
+          <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 917-207-6562" />
+          <span className="fieldHint">Required so truck staff can contact you if there is a question.</span>
+        </label>
+      </section>
+
+      <section className="card">
+        <div className="sectionTitle">
+          <div>
+            <div className="sectionKicker"><Utensils size={15} /> The turn menu</div>
+            <h2>Food Truck Menu</h2>
+          </div>
+          <span className="pill">Pickup only</span>
+        </div>
+        {categories.length ? (
+          <>
+            <CategorySelect categories={categories} active={activeCat} setActive={setActiveCat} />
+            <CategoryTabs categories={categories} active={activeCat} setActive={setActiveCat} />
+            <div className="menuList">
+              {visibleItems.map(item => (
+                <MenuItem
+                  key={item.itemId}
+                  item={item}
+                  quantity={Number(quantities[item.itemId] || 0)}
+                  setQuantity={(quantity) => setQuantities(prev => ({ ...prev, [item.itemId]: quantity }))}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <EmptyState title="No truck menu available" body="Please add items to the TruckMenuItems Google Sheet." />
+        )}
+      </section>
+
+      <section className="card">
+        <div className="sectionTitle">
+          <div>
+            <div className="sectionKicker"><ShieldCheck size={15} /> Review & submit</div>
+            <h2>Your Truck Order</h2>
+          </div>
+          <span className="orderTotalPill">{selectedItems.length} item{selectedItems.length === 1 ? '' : 's'} · {currency(subtotal)}</span>
+        </div>
+        {selectedItems.length === 0 ? (
+          <p className="hint">No items selected yet.</p>
+        ) : (
+          <div className="cartList">
+            {selectedItems.map(item => (
+              <div className="cartRow" key={item.itemId}>
+                <span>{item.itemName} × {item.quantity}</span>
+                <strong>{currency(Number(item.price) * Number(item.quantity))}</strong>
+              </div>
+            ))}
+            <div className="cartTotal">
+              <span>Known subtotal</span>
+              <strong>{currency(subtotal)}</strong>
+            </div>
+          </div>
+        )}
+
+        <label className="check">
+          <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />
+          <span>I authorize this food truck order to be charged to the member account listed above.</span>
+        </label>
+
+        <button className="primaryButton" onClick={submitTruckOrder} disabled={submitting}>
+          {submitting ? 'Sending Order...' : truckOrderingOpen ? 'Submit Truck Order' : 'Ordering Closed'}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+function Login({ onLogin, onBack, title = 'Staff Dashboard', body = 'Enter the staff password to view orders.', backLabel = 'Back to Order' }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -901,12 +1331,12 @@ function Login({ onLogin, onBack }) {
   return (
     <div className="card login">
       <Lock size={28} />
-      <h2>Staff Dashboard</h2>
-      <p>Enter the staff password to view orders.</p>
+      <h2>{title}</h2>
+      <p>{body}</p>
       {err && <div className="alert">{err}</div>}
       <input type="password" value={pw} onChange={e => setPw(e.target.value)} placeholder="Staff password" onKeyDown={e => e.key === 'Enter' && handle()} />
       <button className="primaryButton" onClick={handle} disabled={submitting}>{submitting ? 'Opening...' : 'Open Dashboard'}</button>
-      <button className="backToOrderButton" onClick={onBack} type="button">Back to Order</button>
+      <button className="backToOrderButton" onClick={onBack} type="button">{backLabel}</button>
     </div>
   );
 }
@@ -1460,20 +1890,376 @@ function AdminPage({ onBackToOrder }) {
   );
 }
 
+function TruckAdminPage({ onBackToOrder }) {
+  const [loggedIn, setLoggedIn] = useState(Boolean(getTruckToken()));
+  const [orders, setOrders] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [settings, setSettings] = useState({});
+  const [err, setErr] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(null);
+  const [updatingSetting, setUpdatingSetting] = useState(false);
+  const [updatingMenuItem, setUpdatingMenuItem] = useState('');
+  const [newOrderAlert, setNewOrderAlert] = useState(false);
+
+  async function loadTruckOrders() {
+    setLoading(true);
+    try {
+      const [ordersRes, settingsRes, menuRes] = await Promise.all([
+        adminFunction('truck-orders', {
+          headers: { Authorization: `Bearer ${getTruckToken()}` }
+        }),
+        apiGet('settings'),
+        apiGet('truckMenu')
+      ]);
+      const nextOrders = ordersRes.orders || [];
+      setOrders(prevOrders => {
+        const previousIds = new Set(prevOrders.map(order => String(order.orderId)));
+        const hasNewOrder = prevOrders.length > 0 && nextOrders.some(order =>
+          order.status === 'New' && !previousIds.has(String(order.orderId))
+        );
+        if (hasNewOrder) {
+          setNewOrderAlert(true);
+          playNewOrderSound();
+          setTimeout(() => setNewOrderAlert(false), 5000);
+        }
+        return nextOrders;
+      });
+      setSettings(settingsRes.settings || {});
+      setMenuItems(menuRes.items || []);
+      setErr('');
+    } catch (e) {
+      setErr(e.message);
+      if (String(e.message || '').toLowerCase().includes('session')) {
+        clearTruckToken();
+        setLoggedIn(false);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    loadTruckOrders();
+    const id = setInterval(loadTruckOrders, 8000);
+    return () => clearInterval(id);
+  }, [loggedIn]);
+
+  async function updateTruckStatus(orderId, status) {
+    if (status === 'Cancelled' && !window.confirm(`Cancel truck order #${orderId}?`)) return;
+    setUpdatingStatus({ orderId, status });
+    try {
+      await adminFunction('truck-update-status', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getTruckToken()}` },
+        body: JSON.stringify({ orderId, status })
+      });
+      await loadTruckOrders();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
+  async function updateTruckPosPosted(orderId, posted) {
+    setUpdatingStatus({ orderId, posPosted: posted });
+    try {
+      await adminFunction('truck-update-pos-posted', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getTruckToken()}` },
+        body: JSON.stringify({ orderId, posted, postedBy: 'Truck Staff' })
+      });
+      await loadTruckOrders();
+    } catch (e) {
+      setErr(e.message);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  }
+
+  async function updateTruckOrderingOpen(nextOpen) {
+    setUpdatingSetting(true);
+    const previousSettings = settings;
+    setSettings(prev => ({ ...prev, TruckOrderingOpen: nextOpen ? 'TRUE' : 'FALSE' }));
+    try {
+      const res = await adminFunction('truck-update-setting', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getTruckToken()}` },
+        body: JSON.stringify({ key: 'TruckOrderingOpen', value: nextOpen ? 'TRUE' : 'FALSE' })
+      });
+      if (res.settings) setSettings(res.settings);
+    } catch (e) {
+      setSettings(previousSettings);
+      setErr(e.message);
+    } finally {
+      setUpdatingSetting(false);
+    }
+  }
+
+  async function updateTruckMenuAvailability(itemId, available) {
+    setUpdatingMenuItem(itemId);
+    const previousMenuItems = menuItems;
+    setMenuItems(prev => prev.map(item => item.itemId === itemId ? { ...item, available } : item));
+    try {
+      const res = await adminFunction('truck-update-menu-availability', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getTruckToken()}` },
+        body: JSON.stringify({ itemId, available })
+      });
+      if (res.items) setMenuItems(res.items);
+    } catch (e) {
+      setMenuItems(previousMenuItems);
+      setErr(e.message);
+    } finally {
+      setUpdatingMenuItem('');
+    }
+  }
+
+  function truckOrdersForColumn(column) {
+    return orders.filter(order => {
+      if (!column.statuses.includes(order.status)) return false;
+      return !column.todayOnly || isOrderToday(order);
+    });
+  }
+
+  function truckAction(order) {
+    if (order.status === 'New') return { label: 'Mark Ready', status: 'Ready for Pickup' };
+    if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
+    return null;
+  }
+
+  function renderTruckOrderCard(order, tone) {
+    const action = truckAction(order);
+    const isUpdating = updatingStatus?.orderId === order.orderId;
+    return (
+      <article className={`staffOrderCard truckOrderCard ${tone}`} key={order.orderId}>
+        <div className="staffOrderHead">
+          <strong>#{order.orderId}</strong>
+          <span>{ageLabel(order.timestamp || order.updatedAt)}</span>
+        </div>
+        <div className="staffOrderMember">
+          <h3>{order.memberName || 'Member'}</h3>
+          <div className="staffMemberLine">
+            <span>Member #{order.memberNumber}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
+          </div>
+        </div>
+        <div className="staffItems">
+          {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
+        </div>
+        <div className="staffOrderFoot">
+          <strong>{currency(order.subtotalKnownItems)}</strong>
+          <span>Truck order</span>
+        </div>
+        <div className="staffTimeLine">
+          <span>{order.updatedAt ? `Updated ${timeLabel(order.updatedAt) || order.updatedAt}` : `Placed ${timeLabel(order.timestamp) || order.timestamp}`}</span>
+          {order.completedAt && <span>Completed {timeLabel(order.completedAt) || order.completedAt}</span>}
+        </div>
+        <div className="staffActions">
+          {action && (
+            <button className="staffPrimaryAction" onClick={() => updateTruckStatus(order.orderId, action.status)} disabled={isUpdating}>
+              {isUpdating && updatingStatus?.status === action.status ? 'Updating...' : action.label}
+            </button>
+          )}
+          {order.status !== 'Completed' && order.status !== 'Cancelled' && (
+            <button className="staffSecondaryAction" onClick={() => updateTruckStatus(order.orderId, 'Cancelled')} disabled={isUpdating}>Cancel</button>
+          )}
+          {order.status === 'Completed' && (
+            <div className={order.posPosted ? 'postedBadge posted' : 'postedBadge needsPosting'}>
+              {order.posPosted ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+              <span>{order.posPosted ? 'Posted to POS' : 'Needs POS Posting'} · {currency(order.subtotalKnownItems)}</span>
+            </div>
+          )}
+          {order.status === 'Completed' && (
+            <button className="staffSecondaryAction" onClick={() => updateTruckPosPosted(order.orderId, !order.posPosted)} disabled={isUpdating}>
+              {isUpdating && updatingStatus?.posPosted !== undefined ? 'Saving...' : order.posPosted ? 'Undo POS Posted' : 'Mark POS Posted'}
+            </button>
+          )}
+          {order.status === 'Completed' && (
+            <button className="staffSecondaryAction" onClick={() => updateTruckStatus(order.orderId, 'Ready for Pickup')} disabled={isUpdating}>
+              <Undo2 size={15} /> Reopen
+            </button>
+          )}
+          {order.status === 'Cancelled' && (
+            <button className="staffSecondaryAction" onClick={() => updateTruckStatus(order.orderId, 'New')} disabled={isUpdating}>
+              <Undo2 size={15} /> Restore
+            </button>
+          )}
+        </div>
+      </article>
+    );
+  }
+
+  if (!loggedIn) {
+    return (
+      <Login
+        title="Truck Staff"
+        body="Enter the truck staff password to view orders."
+        backLabel="Back to Truck Ordering"
+        onLogin={(token) => { setTruckToken(token); setLoggedIn(true); }}
+        onBack={onBackToOrder}
+      />
+    );
+  }
+
+  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+  const activeCount = orders.filter(order => !['Completed', 'Cancelled'].includes(order.status)).length;
+  const readyCount = orders.filter(order => order.status === 'Ready for Pickup').length;
+  const completedToday = orders.filter(order => order.status === 'Completed' && isOrderToday(order)).length;
+  const needsPosCount = orders.filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order)).length;
+  const needsPosTotal = orders
+    .filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order))
+    .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const subtotalToday = orders
+    .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
+    .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const menuItemsByCategory = menuItems.reduce((groups, item) => {
+    const category = item.category || 'Other';
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(item);
+    return groups;
+  }, {});
+
+  return (
+    <div className="staffDashboard truckDashboard">
+      <section className="staffDashboardHero truckStaffHero">
+        <div className="staffHeroBrand">
+          <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" className="staffHeroLogo" />
+          <div>
+            <h2>The Turn Truck — Staff Dashboard</h2>
+            <p>{shortDate()} · Logged in as Truck Staff</p>
+          </div>
+        </div>
+        <div className="staffHeroControls">
+          <span className="refreshStatus"><span></span> Auto-refreshing</span>
+          <button
+            className={truckOrderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateTruckOrderingOpen(!truckOrderingOpen)}
+            disabled={updatingSetting}
+          >
+            {updatingSetting ? 'Saving...' : truckOrderingOpen ? 'Truck Ordering Open' : 'Truck Ordering Closed'}
+          </button>
+          <button className="staffRefreshButton" onClick={loadTruckOrders} disabled={loading}><RefreshCcw className={loading ? 'spin' : ''} size={18} /> Refresh</button>
+          <button className="staffOrderPageButton" onClick={() => { clearTruckToken(); setLoggedIn(false); }}>Sign out</button>
+          <strong>{activeCount} active orders</strong>
+        </div>
+      </section>
+
+      {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
+      {newOrderAlert && <div className="staffNewOrderAlert"><AlertTriangle size={18} /> New truck order received</div>}
+
+      <section className="staffStats truckStats">
+        <div className="staffStat new"><strong>{activeCount}</strong><span>Active truck orders</span></div>
+        <div className="staffStat ready"><strong>{readyCount}</strong><span>Ready for pickup</span></div>
+        <div className="staffStat completed"><strong>{completedToday}</strong><span>Completed today</span></div>
+        <div className="staffStat pos"><strong>{needsPosCount}</strong><span>Need POS posting · {currency(needsPosTotal)}</span></div>
+        <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's truck subtotal</span></div>
+      </section>
+
+      <section className="staffBoard truckBoard">
+        {TRUCK_COLUMNS.map(column => {
+          const columnOrders = truckOrdersForColumn(column);
+          return (
+            <div className={`staffColumn ${column.tone}`} key={column.id}>
+              <div className="staffColumnHead">
+                <h3>{column.title}</h3>
+                <span>{columnOrders.length}</span>
+              </div>
+              <div className="staffColumnBody">
+                {columnOrders.length
+                  ? columnOrders.map(order => renderTruckOrderCard(order, column.tone))
+                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+
+      <section className="managerPanels">
+        <div className="managerPanel">
+          <div className="managerPanelHead">
+            <h3>Truck POS Reconciliation</h3>
+            <span>{shortDate()}</span>
+          </div>
+          <div className="closingGrid">
+            <div><strong>{completedToday}</strong><span>Completed</span></div>
+            <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
+            <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
+          </div>
+          {needsPosCount > 0
+            ? <p className="closingNote">Closing check: mark all completed truck orders as POS posted.</p>
+            : <p className="closingNote good">Truck POS reconciliation is clear.</p>}
+        </div>
+
+        <div className="managerPanel">
+          <div className="managerPanelHead">
+            <h3>Truck Menu Availability</h3>
+            <span>{menuItems.filter(item => !item.available).length} unavailable</span>
+          </div>
+          <div className="menuAvailabilityList">
+            {Object.entries(menuItemsByCategory).map(([category, items]) => (
+              <div className="menuAvailabilityGroup" key={category}>
+                <div className="menuAvailabilityGroupHead">
+                  <strong>{category}</strong>
+                  <span>{items.filter(item => !item.available).length} sold out</span>
+                </div>
+                {items.map(item => (
+                  <div className={item.available ? 'menuAvailabilityItem' : 'menuAvailabilityItem unavailable'} key={item.itemId}>
+                    <div>
+                      <strong>{item.itemName}</strong>
+                      <span>{currency(item.price)}</span>
+                    </div>
+                    <button
+                      className={item.available ? 'availabilityButton available' : 'availabilityButton unavailable'}
+                      onClick={() => updateTruckMenuAvailability(item.itemId, !item.available)}
+                      disabled={updatingMenuItem === item.itemId}
+                    >
+                      {updatingMenuItem === item.itemId ? 'Saving...' : item.available ? 'Available' : 'Sold Out'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
-  const initialMode = window.location.pathname.includes('/admin') ? 'admin' : 'order';
+  const initialMode = window.location.pathname.includes('/truck-admin')
+    ? 'truck-admin'
+    : window.location.pathname.includes('/truck')
+      ? 'truck'
+      : window.location.pathname.includes('/admin')
+        ? 'admin'
+        : 'order';
   const [mode, setMode] = useState(initialMode);
 
   useEffect(() => {
-    const path = mode === 'admin' ? '/admin' : '/order' + window.location.search;
+    const path = mode === 'admin'
+      ? '/admin'
+      : mode === 'truck-admin'
+        ? '/truck-admin'
+        : mode === 'truck'
+          ? '/truck' + window.location.search
+          : '/order' + window.location.search;
     window.history.replaceState(null, '', path);
   }, [mode]);
 
+  const isTruckMode = mode === 'truck' || mode === 'truck-admin';
   return (
-    <main className={mode === 'admin' ? 'app adminApp' : 'app'}>
-      {mode !== 'admin' && <Header mode={mode} setMode={setMode} />}
-      {mode === 'admin' ? <AdminPage onBackToOrder={() => setMode('order')} /> : <OrderPage />}
-      {mode !== 'admin' && <footer>Member-account ordering only. No online payment processing.</footer>}
+    <main className={mode === 'admin' || mode === 'truck-admin' ? 'app adminApp' : 'app'}>
+      {mode === 'order' && <Header mode={mode} setMode={setMode} />}
+      {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
+      {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}
+      {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
+      {mode === 'truck' && <TruckOrderPage />}
+      {mode === 'order' && <OrderPage />}
+      {mode !== 'admin' && mode !== 'truck-admin' && <footer>Member-account ordering only. No online payment processing.</footer>}
     </main>
   );
 }

@@ -1,0 +1,1 @@
+Timestamp,OrderID,Status,MemberName,MemberNumber,Phone,ItemsSummary,ItemsJSON,SubtotalKnownItems,AuthorizationAccepted,StaffNotes,UpdatedAt,CompletedAt,POSPosted,POSPostedAt,POSPostedBy

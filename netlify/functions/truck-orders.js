@@ -1,0 +1,49 @@
+const crypto = require('crypto');
+
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  };
+}
+
+function getSecret() {
+  return process.env.ADMIN_SESSION_SECRET || process.env.APPS_SCRIPT_ADMIN_KEY || process.env.VITE_ADMIN_KEY || 'local-dev-secret';
+}
+
+function verifyToken(authHeader) {
+  const token = String(authHeader || '').replace(/^Bearer\s+/i, '');
+  const [exp, signature] = token.split('.');
+  if (!exp || !signature || Number(exp) < Date.now()) return false;
+  const expected = crypto.createHmac('sha256', getSecret()).update(String(exp)).digest('hex');
+  if (signature.length !== expected.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+
+function getAuthHeader(headers = {}) {
+  return headers.authorization || headers.Authorization || headers.AUTHORIZATION || '';
+}
+
+exports.handler = async (event) => {
+  try {
+    if (!verifyToken(getAuthHeader(event.headers))) {
+      return json(401, { ok: false, error: 'Truck staff session expired. Please sign in again.' });
+    }
+
+    const scriptUrl = process.env.VITE_SCRIPT_URL;
+    const adminKey = process.env.APPS_SCRIPT_ADMIN_KEY || process.env.VITE_ADMIN_KEY;
+    if (!scriptUrl || !adminKey) throw new Error('Missing Netlify admin environment variables.');
+
+    const url = new URL(scriptUrl);
+    url.searchParams.set('action', 'truckOrders');
+    url.searchParams.set('adminKey', adminKey);
+    url.searchParams.set('_', Date.now().toString());
+
+    const response = await fetch(url.toString(), { cache: 'no-store' });
+    const data = await response.json();
+    return json(response.ok && data.ok ? 200 : 502, data);
+  } catch (err) {
+    return json(500, { ok: false, error: err.message || 'Unable to load food truck orders.' });
+  }
+};

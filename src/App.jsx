@@ -1213,21 +1213,6 @@ function TruckOrderPage() {
         </div>
       </section>
 
-      <section className="card statusLookupCard">
-        <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
-        <h2>Check Truck Order</h2>
-        <p className="hint">Enter your member number. Order number is optional if you have it.</p>
-        <div className="lookupGrid">
-          <label>Order Number <span className="optionalText">Optional</span>
-            <input inputMode="numeric" value={lookup.orderId} onChange={event => setLookupField('orderId', event.target.value.replace(/\D/g, ''))} placeholder="Example: 5001" />
-          </label>
-          <label>Member Number
-            <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
-          </label>
-        </div>
-        <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
-      </section>
-
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> Member details</div>
         <h2>Member Information</h2>
@@ -1312,11 +1297,26 @@ function TruckOrderPage() {
           {submitting ? 'Sending Order...' : truckOrderingOpen ? 'Submit Truck Order' : 'Ordering Closed'}
         </button>
       </section>
+
+      <section className="card statusLookupCard">
+        <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
+        <h2>Check Truck Order</h2>
+        <p className="hint">Enter your member number. Order number is optional if you have it.</p>
+        <div className="lookupGrid">
+          <label>Order Number <span className="optionalText">Optional</span>
+            <input inputMode="numeric" value={lookup.orderId} onChange={event => setLookupField('orderId', event.target.value.replace(/\D/g, ''))} placeholder="Example: 5001" />
+          </label>
+          <label>Member Number
+            <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+          </label>
+        </div>
+        <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
+      </section>
     </div>
   );
 }
 
-function Login({ onLogin, onBack, title = 'Staff Dashboard', body = 'Enter the staff password to view orders.', backLabel = 'Back to Order' }) {
+function Login({ onLogin, onBack, title = 'Staff Dashboard', body = 'Enter the staff password to view orders.', backLabel = 'Back to Order', loginFunction = 'admin-login' }) {
   const [pw, setPw] = useState('');
   const [err, setErr] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -1328,7 +1328,7 @@ function Login({ onLogin, onBack, title = 'Staff Dashboard', body = 'Enter the s
     setSubmitting(true);
     setErr('');
     try {
-      const res = await adminFunction('admin-login', {
+      const res = await adminFunction(loginFunction, {
         method: 'POST',
         body: JSON.stringify({ password: pw })
       });
@@ -2115,6 +2115,7 @@ function TruckAdminPage({ onBackToOrder }) {
         title="Truck Staff"
         body="Enter the truck staff password to view orders."
         backLabel="Back to Truck Ordering"
+        loginFunction="truck-login"
         onLogin={(token) => { setTruckToken(token); setLoggedIn(true); }}
         onBack={onBackToOrder}
       />

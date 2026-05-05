@@ -994,7 +994,8 @@ function TruckOrderPage() {
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
-    authorizationAccepted: false
+    authorizationAccepted: false,
+    alcoholVerificationAccepted: false
   });
   const [submitting, setSubmitting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
@@ -1033,6 +1034,7 @@ function TruckOrderPage() {
     .filter(item => Number(quantities[item.itemId] || 0) > 0)
     .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [menu, quantities]);
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
 
   function setField(field, value) {
@@ -1050,6 +1052,7 @@ function TruckOrderPage() {
     if (!form.phone.trim()) return 'Please enter mobile number.';
     if (!selectedItems.length) return 'Please select at least one item.';
     if (!form.authorizationAccepted) return 'Please authorize the charge to the member account.';
+    if (truckHasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
     return '';
   }
 
@@ -1077,7 +1080,8 @@ function TruckOrderPage() {
             quantity: Number(item.quantity || 0)
           })),
           subtotalKnownItems: subtotal,
-          authorizationAccepted: form.authorizationAccepted
+          authorizationAccepted: form.authorizationAccepted,
+          alcoholVerificationAccepted: form.alcoholVerificationAccepted
         }
       });
       const saved = {
@@ -1296,6 +1300,13 @@ function TruckOrderPage() {
           <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />
           <span>I authorize this food truck order to be charged to the member account listed above.</span>
         </label>
+
+        {truckHasAlcohol && (
+          <label className="check alcoholCheck">
+            <input type="checkbox" checked={form.alcoholVerificationAccepted} onChange={event => setField('alcoholVerificationAccepted', event.target.checked)} />
+            <span>I confirm alcoholic items will be picked up by a member or guest of legal drinking age, and ID/member verification may be required.</span>
+          </label>
+        )}
 
         <button className="primaryButton" onClick={submitTruckOrder} disabled={submitting}>
           {submitting ? 'Sending Order...' : truckOrderingOpen ? 'Submit Truck Order' : 'Ordering Closed'}
@@ -2034,7 +2045,7 @@ function TruckAdminPage({ onBackToOrder }) {
     const action = truckAction(order);
     const isUpdating = updatingStatus?.orderId === order.orderId;
     return (
-      <article className={`staffOrderCard truckOrderCard ${tone}`} key={order.orderId}>
+      <article className={`staffOrderCard truckOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
         <div className="staffOrderHead">
           <strong>#{order.orderId}</strong>
           <span>{ageLabel(order.timestamp || order.updatedAt)}</span>
@@ -2049,9 +2060,15 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
         </div>
+        {order.alcoholIncluded && (
+          <div className="alcoholStaffBanner">
+            <AlertTriangle size={15} />
+            Alcohol order: verify member age/ID at pickup.
+          </div>
+        )}
         <div className="staffOrderFoot">
           <strong>{currency(order.subtotalKnownItems)}</strong>
-          <span>Truck order</span>
+          <span className={order.alcoholIncluded ? 'alcoholPill' : ''}>{order.alcoholIncluded ? 'Alcohol' : 'Truck order'}</span>
         </div>
         <div className="staffTimeLine">
           <span>{order.updatedAt ? `Updated ${timeLabel(order.updatedAt) || order.updatedAt}` : `Placed ${timeLabel(order.timestamp) || order.timestamp}`}</span>

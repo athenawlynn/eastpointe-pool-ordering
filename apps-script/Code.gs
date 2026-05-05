@@ -18,7 +18,7 @@ const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
 const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrderingOpen'];
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
 const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
-const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
+const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'AlcoholIncluded', 'AlcoholVerificationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -556,7 +556,7 @@ function validateTruckItems(items) {
       itemName: menuItem.itemName,
       price: menuItem.price,
       quantity: Number(item.quantity || 0),
-      alcoholic: false
+      alcoholic: Boolean(menuItem.alcoholic)
     };
   }).filter(item => item.quantity > 0);
 }
@@ -574,6 +574,10 @@ function createTruckOrder(order) {
   const incomingItems = Array.isArray(order.items) ? order.items : [];
   const items = validateTruckItems(incomingItems);
   if (!items.length) throw new Error('Please select at least one food truck item.');
+  const alcoholIncluded = items.some(item => item.alcoholic);
+  if (alcoholIncluded && !order.alcoholVerificationAccepted) {
+    throw new Error('Alcohol verification acknowledgement is required.');
+  }
   const summary = itemSummary(items);
   let orderId;
   let timestamp;
@@ -596,6 +600,8 @@ function createTruckOrder(order) {
       JSON.stringify(items),
       Number(order.subtotalKnownItems || 0),
       Boolean(order.authorizationAccepted),
+      alcoholIncluded,
+      Boolean(order.alcoholVerificationAccepted),
       '',
       timestamp,
       '',
@@ -670,6 +676,8 @@ function normalizeTruckOrder(row) {
     items,
     subtotalKnownItems: Number(row.SubtotalKnownItems || 0),
     authorizationAccepted: String(row.AuthorizationAccepted).toUpperCase() === 'TRUE' || row.AuthorizationAccepted === true,
+    alcoholIncluded: String(row.AlcoholIncluded).toUpperCase() === 'TRUE' || row.AlcoholIncluded === true,
+    alcoholVerificationAccepted: String(row.AlcoholVerificationAccepted).toUpperCase() === 'TRUE' || row.AlcoholVerificationAccepted === true,
     staffNotes: String(row.StaffNotes || ''),
     updatedAt: row.UpdatedAt ? new Date(row.UpdatedAt).toLocaleString() : '',
     completedAt: row.CompletedAt ? new Date(row.CompletedAt).toLocaleString() : '',

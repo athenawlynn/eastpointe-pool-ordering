@@ -887,7 +887,7 @@ function updatePosPosted(orderId, posted, postedBy) {
 }
 
 function updateTruckOrderStatus(orderId, status) {
-  const allowed = ['New', 'Ready for Pickup', 'Completed', 'Cancelled'];
+  const allowed = ['New', 'Acknowledged', 'Ready for Pickup', 'Completed', 'Cancelled'];
   if (!allowed.includes(status)) throw new Error('Invalid truck order status.');
 
   const lock = LockService.getScriptLock();

@@ -43,6 +43,7 @@ const STATION_COLUMNS = [
 
 const TRUCK_COLUMNS = [
   { id: 'New', title: 'Order Received', statuses: ['New'], tone: 'new' },
+  { id: 'Acknowledged', title: 'Acknowledged', statuses: ['Acknowledged'], tone: 'preparing' },
   { id: 'Ready', title: 'Ready for Pickup', statuses: ['Ready for Pickup'], tone: 'ready' },
   { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
   { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
@@ -163,17 +164,22 @@ function memberStatusSteps(status, fulfillmentType) {
 }
 
 function truckStatusSteps(status) {
-  const labels = ['Order received', 'Ready for pickup', 'Completed'];
+  const labels = ['Order received', 'Ready for pickup'];
   const statusIndex = {
     New: 0,
+    Acknowledged: 0,
     'Ready for Pickup': 1,
-    Completed: 2
+    Completed: 1
   };
   const activeIndex = statusIndex[status] ?? 0;
   return labels.map((label, index) => ({
     label,
     state: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'
   }));
+}
+
+function memberTruckStatus(status) {
+  return ['Ready for Pickup', 'Completed'].includes(status) ? 'Ready for Pickup' : 'Order received';
 }
 
 function isToday(value) {
@@ -1174,7 +1180,8 @@ function TruckOrderPage() {
   if (loading) return <LoadingCard message="Loading truck menu..." />;
 
   if (confirmation) {
-    const ready = liveStatus === 'Ready for Pickup';
+    const ready = ['Ready for Pickup', 'Completed'].includes(liveStatus);
+    const memberStatus = memberTruckStatus(liveStatus || 'New');
     return (
       <div className="stack memberStack truckMember">
         <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
@@ -1184,11 +1191,11 @@ function TruckOrderPage() {
             <small>The Turn Truck</small>
           </div>
           <CheckCircle size={34} />
-          <h2>{ready ? 'Ready for Pickup' : 'Order Received'}</h2>
+          <h2>{memberStatus}</h2>
           <p>Your order has been received. Please pick up your order at The Turn Truck when this screen shows Ready for Pickup.</p>
           <div className="statusPanel">
             <span>Current Status</span>
-            <strong>{liveStatus || 'New'}</strong>
+            <strong>{memberStatus}</strong>
             {readyAt && <em>Ready at {timeLabel(readyAt) || readyAt}</em>}
             {statusError && <small>{statusError}</small>}
           </div>
@@ -2060,7 +2067,8 @@ function TruckAdminPage({ onBackToOrder }) {
   }
 
   function truckAction(order) {
-    if (order.status === 'New') return { label: 'Mark Ready', status: 'Ready for Pickup' };
+    if (order.status === 'New') return { label: 'Acknowledge Order', status: 'Acknowledged' };
+    if (order.status === 'Acknowledged') return { label: 'Mark Ready', status: 'Ready for Pickup' };
     if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
     return null;
   }

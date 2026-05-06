@@ -43,6 +43,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .hero { background: var(--paper); border-color: var(--line); }
 .memberHero { display: grid; gap: 14px; }
 .truckHero { background: #173323; border-color: #173323; color: white; }
+.truckHeroWithCart { grid-template-columns: minmax(0, 1fr) minmax(120px, 36%); align-items: center; padding: 14px; }
+.truckHeroCartWrap { min-height: 104px; border-radius: 10px; overflow: hidden; background: rgba(255, 255, 255, .92); border: 1px solid rgba(255, 255, 255, .3); display: flex; align-items: center; justify-content: center; }
+.truckHeroCart { width: 100%; height: 100%; max-height: 132px; object-fit: cover; object-position: center; display: block; filter: contrast(1.04); }
 .hero.truckHero h2 { color: #FFFFFF; }
 .hero.truckHero p { color: #E7F0E9; }
 .hero.truckHero .eyebrow { color: #E6D58E; }
@@ -403,6 +406,9 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .eyebrow { font-size: 8px; letter-spacing: .09em; }
   .ghostButton { padding: 8px 10px; border-radius: 12px; font-size: 12px; }
   .hero h2, .card h2 { font-size: 22px; }
+  .truckHeroWithCart { grid-template-columns: 1fr; padding: 12px; }
+  .truckHeroCartWrap { min-height: 92px; }
+  .truckHeroCart { max-height: 112px; }
   .card { padding: 11px; border-radius: 15px; }
   .stack { gap: 10px; }
   .choiceGrid { grid-template-columns: 1fr; gap: 8px; }

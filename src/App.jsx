@@ -1244,11 +1244,14 @@ function TruckOrderPage() {
       {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
       {!truckOrderingOpen && <div className="serviceBanner closed"><AlertTriangle size={18} /> The Turn Truck ordering is currently closed.</div>}
 
-      <section className="card hero memberHero truckHero">
+      <section className="card hero memberHero truckHero truckHeroWithCart">
         <div>
           <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
           <h2>The Turn Truck</h2>
           <p>Order from the golf course and charge it to your member account. Pickup only.</p>
+        </div>
+        <div className="truckHeroCartWrap" aria-hidden="true">
+          <img src="/turn-truck-golf-cart.png" alt="" className="truckHeroCart" />
         </div>
       </section>
 

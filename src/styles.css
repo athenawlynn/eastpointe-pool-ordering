@@ -220,8 +220,10 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .refreshStatus { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .refreshStatus span { width: 8px; height: 8px; border-radius: 999px; background: #5AB87A; box-shadow: none; }
 .staffHeroControls > strong { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 16px; border-radius: 20px; background: rgba(255, 255, 255, .15); color: white; font-size: clamp(14px, 1.1vw, 20px); white-space: nowrap; }
-.staffRefreshButton, .staffOrderPageButton { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: white; border-radius: 8px; padding: 9px 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 850; }
+.staffRefreshButton, .staffOrderPageButton, .staffSoundButton { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: white; border-radius: 8px; padding: 9px 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 850; }
 .staffOrderPageButton { color: rgba(255, 255, 255, .82); }
+.staffSoundButton { background: rgba(255, 255, 255, .12); }
+.staffSoundButton.on { background: #2D6B40; border-color: rgba(255, 255, 255, .28); }
 .staffToggleButton { border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 9px 12px; min-height: 38px; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 900; }
 .staffToggleButton.on { background: #2D6B40; }
 .staffToggleButton.off { background: #8A5A0A; }
@@ -367,7 +369,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .staffDashboardHero p { font-size: 15px; }
   .staffHeroControls { gap: 9px; font-size: 13px; }
   .staffHeroControls > strong { min-height: 36px; padding: 7px 14px; font-size: 15px; }
-  .staffRefreshButton, .staffOrderPageButton { min-height: 36px; padding: 8px 11px; font-size: 12px; }
+  .staffRefreshButton, .staffOrderPageButton, .staffSoundButton { min-height: 36px; padding: 8px 11px; font-size: 12px; }
   .staffStats { grid-template-columns: 1fr; }
   .truckStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .truckStats .staffStat { min-height: 70px; padding: 10px 14px; border-right: 1px solid var(--line-soft); }

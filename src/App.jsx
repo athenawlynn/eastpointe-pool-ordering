@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2 } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -15,6 +15,7 @@ const TRUCK_TOKEN_KEY = 'eastpointeTruckToken';
 const PUBLIC_BASE_URL = 'https://eastpointeordering.netlify.app';
 const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0/edit';
 const NETLIFY_DEPLOYS_URL = 'https://app.netlify.com/projects/eastpointeordering/deploys';
+let notificationAudioContext = null;
 
 function qrUrl(url) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(url)}`;
@@ -406,26 +407,47 @@ function clearSavedTruckConfirmation() {
   sessionStorage.removeItem(TRUCK_CONFIRMATION_KEY);
 }
 
+function getNotificationAudioContext() {
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContext) return null;
+  if (!notificationAudioContext || notificationAudioContext.state === 'closed') {
+    notificationAudioContext = new AudioContext();
+  }
+  return notificationAudioContext;
+}
+
 function playNewOrderSound() {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
+    const ctx = getNotificationAudioContext();
+    if (!ctx || ctx.state !== 'running') return false;
     const oscillator = ctx.createOscillator();
     const gain = ctx.createGain();
     oscillator.type = 'sine';
-    oscillator.frequency.value = 880;
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.18);
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.28);
     oscillator.connect(gain);
     gain.connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.24);
-    setTimeout(() => ctx.close(), 300);
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + 0.3);
+    return true;
   } catch {
-    // Some browsers block notification sounds until user interaction.
+    return false;
   }
+}
+
+async function enableNotificationSound() {
+  const ctx = getNotificationAudioContext();
+  if (!ctx) throw new Error('Audio is not supported in this browser.');
+  if (ctx.state === 'suspended') {
+    await ctx.resume();
+  }
+  if (!playNewOrderSound()) {
+    throw new Error('Tap Enable Sound again. iPad may need one more tap to allow audio.');
+  }
+  return true;
 }
 
 function Header({ mode, setMode }) {
@@ -1396,6 +1418,18 @@ function AdminPage({ onBackToOrder }) {
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [activeStationId, setActiveStationId] = useState('all');
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundError, setSoundError] = useState('');
+
+  async function handleEnableSound() {
+    try {
+      await enableNotificationSound();
+      setSoundEnabled(true);
+      setSoundError('');
+    } catch (e) {
+      setSoundError(e.message || 'Unable to enable sound on this device.');
+    }
+  }
 
   async function loadOrders() {
     setLoading(true);
@@ -1807,6 +1841,14 @@ function AdminPage({ onBackToOrder }) {
         <div className="staffHeroControls">
           <span className="refreshStatus"><span></span> Auto-refreshing</span>
           <button
+            className={soundEnabled ? 'staffSoundButton on' : 'staffSoundButton'}
+            onClick={handleEnableSound}
+            type="button"
+            title="Tap once on this device so new orders can make a sound"
+          >
+            <Volume2 size={18} /> {soundEnabled ? 'Sound On' : 'Enable Sound'}
+          </button>
+          <button
             className={orderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
             onClick={() => updateOrderingOpen(!orderingOpen)}
             disabled={Boolean(updatingSetting)}
@@ -1829,6 +1871,7 @@ function AdminPage({ onBackToOrder }) {
       </section>
 
       {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
+      {soundError && <div className="alert staffAlert"><AlertTriangle size={18} />{soundError}</div>}
       {newOrderAlert && <div className="staffNewOrderAlert"><AlertTriangle size={18} /> New order received</div>}
 
       <section className="stationTabs" aria-label="Staff station views">
@@ -1943,6 +1986,18 @@ function TruckAdminPage({ onBackToOrder }) {
   const [updatingSetting, setUpdatingSetting] = useState(false);
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundError, setSoundError] = useState('');
+
+  async function handleEnableSound() {
+    try {
+      await enableNotificationSound();
+      setSoundEnabled(true);
+      setSoundError('');
+    } catch (e) {
+      setSoundError(e.message || 'Unable to enable sound on this device.');
+    }
+  }
 
   async function loadTruckOrders() {
     setLoading(true);
@@ -2191,6 +2246,14 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffHeroControls">
           <span className="refreshStatus"><span></span> Auto-refreshing</span>
           <button
+            className={soundEnabled ? 'staffSoundButton on' : 'staffSoundButton'}
+            onClick={handleEnableSound}
+            type="button"
+            title="Tap once on this device so new truck orders can make a sound"
+          >
+            <Volume2 size={18} /> {soundEnabled ? 'Sound On' : 'Enable Sound'}
+          </button>
+          <button
             className={truckOrderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
             onClick={() => updateTruckOrderingOpen(!truckOrderingOpen)}
             disabled={updatingSetting}
@@ -2204,6 +2267,7 @@ function TruckAdminPage({ onBackToOrder }) {
       </section>
 
       {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
+      {soundError && <div className="alert staffAlert"><AlertTriangle size={18} />{soundError}</div>}
       {newOrderAlert && <div className="staffNewOrderAlert"><AlertTriangle size={18} /> New truck order received</div>}
 
       <section className="staffStats truckStats">

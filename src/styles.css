@@ -43,8 +43,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .hero { background: var(--paper); border-color: var(--line); }
 .memberHero { display: grid; gap: 14px; }
 .truckHero { background: #173323; border-color: #173323; color: white; }
-.truckHero h2, .truckHero p { color: white; }
-.truckHero .eyebrow { color: #C5B06F; }
+.hero.truckHero h2 { color: #FFFFFF; }
+.hero.truckHero p { color: #E7F0E9; }
+.hero.truckHero .eyebrow { color: #E6D58E; }
 .hero h2, .card h2 { margin: 0 0 6px; font-size: clamp(19px, 5.5vw, 24px); line-height: 1.08; letter-spacing: 0; color: var(--ink); overflow-wrap: anywhere; font-weight: 650; }
 .hero p, .hint, .finePrint, footer { color: var(--muted); }
 .hero p { margin: 0; font-size: 14px; line-height: 1.35; }

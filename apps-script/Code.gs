@@ -193,10 +193,7 @@ function getTruckMenu() {
   const items = rowsToObjects(sheet)
     .map(normalizeMenuItem)
     .filter(i => i.itemId && i.itemName)
-    .sort((a, b) => {
-      if (a.category === b.category) return a.sortOrder - b.sortOrder;
-      return a.category.localeCompare(b.category);
-    });
+    .sort((a, b) => a.sortOrder - b.sortOrder);
   return items;
 }
 

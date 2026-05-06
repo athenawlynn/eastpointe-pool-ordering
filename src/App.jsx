@@ -1022,17 +1022,18 @@ function TruckOrderPage() {
     load();
   }, []);
 
+  const orderedTruckMenu = useMemo(() => [...menu].sort((a, b) => Number(a.sortOrder || 9999) - Number(b.sortOrder || 9999)), [menu]);
   const categories = useMemo(() => {
-    const itemCategories = [...new Set(menu.filter(i => i.available).map(i => i.category))];
+    const itemCategories = [...new Set(orderedTruckMenu.filter(i => i.available).map(i => i.category))];
     return itemCategories.length ? ['All Items', ...itemCategories] : [];
-  }, [menu]);
+  }, [orderedTruckMenu]);
   const visibleItems = useMemo(() => {
-    if (activeCat === 'All Items') return menu.filter(i => i.available);
-    return menu.filter(i => i.available && i.category === activeCat);
-  }, [menu, activeCat]);
-  const selectedItems = useMemo(() => menu
+    if (activeCat === 'All Items') return orderedTruckMenu.filter(i => i.available);
+    return orderedTruckMenu.filter(i => i.available && i.category === activeCat);
+  }, [orderedTruckMenu, activeCat]);
+  const selectedItems = useMemo(() => orderedTruckMenu
     .filter(item => Number(quantities[item.itemId] || 0) > 0)
-    .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [menu, quantities]);
+    .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [orderedTruckMenu, quantities]);
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);

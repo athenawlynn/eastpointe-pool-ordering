@@ -175,9 +175,12 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .opsSectionHead > p { margin: 4px 0 0; max-width: 430px; color: var(--muted); font-weight: 650; }
 .opsLinkGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .opsLinkCard { display: grid; gap: 12px; align-content: start; min-height: 100%; padding: 14px; border: 1px solid var(--line-soft); border-radius: 12px; background: #FFFDF9; }
+.opsLinkCard.staffArea { background: #EEF7EF; border-color: #B8DCC3; }
+.opsLinkCard.staffArea .opsLinkIcon { background: #D8EEDC; color: #1F5A35; }
+.opsLinkCard.staffArea a { background: #2D6B40; }
 .opsLinkIcon { width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: #EAF5EE; color: var(--deep-green); }
-.opsLinkCard h3, .opsInfoGrid h3 { margin: 0; color: var(--deep-green); font-size: 17px; line-height: 1.12; }
-.opsLinkCard p, .opsInfoGrid p, .opsInfoGrid li, .opsFooterCard p { margin: 6px 0 0; color: var(--muted); font-weight: 620; line-height: 1.4; }
+.opsLinkCard h3, .opsInfoGrid h3, .opsRolesGrid h3 { margin: 0; color: var(--deep-green); font-size: 17px; line-height: 1.12; }
+.opsLinkCard p, .opsInfoGrid p, .opsInfoGrid li, .opsFooterCard p, .opsRolesGrid li { margin: 6px 0 0; color: var(--muted); font-weight: 620; line-height: 1.4; }
 .opsQr { width: 100%; max-width: 150px; justify-self: center; border-radius: 10px; border: 1px solid var(--line-soft); background: white; padding: 8px; }
 .opsLinkCard a, .opsBackendLinks a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border-radius: 8px; color: white; background: var(--deep-green); text-decoration: none; font-weight: 900; font-size: 13px; }
 .opsTwoCol { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; padding: 0; background: transparent; border: 0; box-shadow: none; }
@@ -189,6 +192,13 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .opsBackendLinks { display: grid; gap: 10px; margin-top: 14px; }
 .opsBackendLinks a { justify-content: space-between; min-height: 64px; padding: 12px; background: #173323; text-align: left; }
 .opsBackendLinks a span { display: block; color: #DCE8DE; font-size: 12px; font-weight: 700; }
+.opsRolesGrid { display: grid; gap: 10px; margin-top: 14px; }
+.opsRolesGrid div { border: 1px solid var(--line-soft); border-radius: 10px; background: #FFFDF9; padding: 13px; }
+.opsRolesGrid .serviceRole { background: #EEF7EF; border-color: #B8DCC3; }
+.opsRolesGrid .doNotEditRole { background: #FFF2ED; border-color: #E7B8AA; }
+.opsRolesGrid .doNotEditRole h3 { color: var(--danger); }
+.opsRolesGrid ul { margin: 10px 0 0; padding-left: 18px; }
+.ownerToolsPanel { box-shadow: none; border: 0; padding: 0; }
 .opsInfoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .opsInfoGrid article { border: 1px solid var(--line-soft); background: #FFFDF9; border-radius: 12px; padding: 16px; }
 .opsInfoGrid ul { margin: 12px 0 0; padding-left: 18px; }

@@ -2291,30 +2291,34 @@ function OperationsGuide() {
       title: 'Pool Member Ordering',
       body: 'Member-facing pool bar ordering page.',
       href: `${PUBLIC_BASE_URL}/order`,
-      Icon: ShoppingCart
+      Icon: ShoppingCart,
+      type: 'member'
     },
     {
       title: 'Pool Staff Dashboard',
       body: 'Bar, kitchen, wait station, availability, and POS reconciliation.',
       href: `${PUBLIC_BASE_URL}/admin`,
-      Icon: ClipboardList
+      Icon: ClipboardList,
+      type: 'staff'
     },
     {
       title: 'Turn Truck Ordering',
       body: 'Member-facing pickup-only ordering for golfers at the turn.',
       href: `${PUBLIC_BASE_URL}/truck`,
-      Icon: Truck
+      Icon: Truck,
+      type: 'member'
     },
     {
       title: 'Truck Staff Dashboard',
       body: 'Truck order flow, sold-out controls, and POS reconciliation.',
       href: `${PUBLIC_BASE_URL}/truck-admin`,
-      Icon: ChefHat
+      Icon: ChefHat,
+      type: 'staff'
     }
   ];
 
   const backendLinks = [
-    { title: 'Google Sheet Backend', href: GOOGLE_SHEET_URL, detail: 'Menus, members, settings, and order logs' },
+    { title: 'Menu & Member Update Sheet', href: GOOGLE_SHEET_URL, detail: 'Menus, member numbers, settings, and order logs' },
     { title: 'Netlify Deploys', href: NETLIFY_DEPLOYS_URL, detail: 'Live site publishing status' }
   ];
 
@@ -2345,8 +2349,8 @@ function OperationsGuide() {
           <p>Use these for QR codes, training, iPads, and manager bookmarks.</p>
         </div>
         <div className="opsLinkGrid">
-          {links.map(({ title, body, href, Icon }) => (
-            <article className="opsLinkCard" key={title}>
+          {links.map(({ title, body, href, Icon, type }) => (
+            <article className={`opsLinkCard ${type === 'staff' ? 'staffArea' : ''}`} key={title}>
               <div className="opsLinkIcon"><Icon size={22} /></div>
               <div>
                 <h3>{title}</h3>
@@ -2370,7 +2374,43 @@ function OperationsGuide() {
           </div>
         </div>
 
-        <div className="opsPanel">
+        <div className="opsPanel opsRolesPanel">
+          <p className="sectionKicker"><Users size={15} /> Staff roles</p>
+          <h2>Who Does What</h2>
+          <div className="opsRolesGrid">
+            <div>
+              <h3>Managers / Admin</h3>
+              <ul>
+                <li>Update menu items and prices</li>
+                <li>Add or deactivate member numbers</li>
+                <li>Review order logs</li>
+                <li>Handle POS reconciliation</li>
+              </ul>
+            </div>
+            <div className="serviceRole">
+              <h3>Service Staff</h3>
+              <ul>
+                <li>Open or close ordering</li>
+                <li>Mark sold-out items</li>
+                <li>Complete orders</li>
+                <li>Mark POS posted</li>
+              </ul>
+            </div>
+            <div className="doNotEditRole">
+              <h3>Do Not Edit During Service</h3>
+              <ul>
+                <li>Menu rows</li>
+                <li>Member list</li>
+                <li>Pricing</li>
+                <li>Sort order</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsPanel ownerToolsPanel">
           <p className="sectionKicker"><ExternalLink size={15} /> Backend links</p>
           <h2>Owner Tools</h2>
           <div className="opsBackendLinks">

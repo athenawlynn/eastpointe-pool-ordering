@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -12,6 +12,13 @@ const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
 const TRUCK_CONFIRMATION_KEY = 'eastpointeLastTruckConfirmation';
 const ADMIN_TOKEN_KEY = 'eastpointeAdminToken';
 const TRUCK_TOKEN_KEY = 'eastpointeTruckToken';
+const PUBLIC_BASE_URL = 'https://eastpointeordering.netlify.app';
+const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0/edit';
+const NETLIFY_DEPLOYS_URL = 'https://app.netlify.com/projects/eastpointeordering/deploys';
+
+function qrUrl(url) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=12&data=${encodeURIComponent(url)}`;
+}
 
 const ALL_ORDER_COLUMNS = [
   { id: 'Active', title: 'Active Orders', statuses: ['New', 'Accepted', 'Preparing'], tone: 'new' },
@@ -2270,14 +2277,166 @@ function TruckAdminPage({ onBackToOrder }) {
   );
 }
 
+function OperationsGuide() {
+  const links = [
+    {
+      title: 'Pool Member Ordering',
+      body: 'Member-facing pool bar ordering page.',
+      href: `${PUBLIC_BASE_URL}/order`,
+      Icon: ShoppingCart
+    },
+    {
+      title: 'Pool Staff Dashboard',
+      body: 'Bar, kitchen, wait station, availability, and POS reconciliation.',
+      href: `${PUBLIC_BASE_URL}/admin`,
+      Icon: ClipboardList
+    },
+    {
+      title: 'Turn Truck Ordering',
+      body: 'Member-facing pickup-only ordering for golfers at the turn.',
+      href: `${PUBLIC_BASE_URL}/truck`,
+      Icon: Truck
+    },
+    {
+      title: 'Truck Staff Dashboard',
+      body: 'Truck order flow, sold-out controls, and POS reconciliation.',
+      href: `${PUBLIC_BASE_URL}/truck-admin`,
+      Icon: ChefHat
+    }
+  ];
+
+  const backendLinks = [
+    { title: 'Google Sheet Backend', href: GOOGLE_SHEET_URL, detail: 'Menus, members, settings, and order logs' },
+    { title: 'Netlify Deploys', href: NETLIFY_DEPLOYS_URL, detail: 'Live site publishing status' }
+  ];
+
+  return (
+    <div className="opsGuide">
+      <section className="opsHero">
+        <div className="opsHeroBrand">
+          <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" />
+          <div>
+            <p className="eyebrow">Eastpointe Country Club</p>
+            <h1>Ordering Operations Guide</h1>
+            <p>A simple staff-friendly guide for running pool and Turn Truck ordering.</p>
+          </div>
+        </div>
+        <div className="opsMotifs" aria-label="Ordering highlights">
+          <span><Flag size={15} /> Golf course ready</span>
+          <span><QrCode size={15} /> QR ordering</span>
+          <span><TableProperties size={15} /> Sheet-managed</span>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><QrCode size={15} /> QR-ready links</p>
+            <h2>Front-End & Staff Links</h2>
+          </div>
+          <p>Use these for QR codes, training, iPads, and manager bookmarks.</p>
+        </div>
+        <div className="opsLinkGrid">
+          {links.map(({ title, body, href, Icon }) => (
+            <article className="opsLinkCard" key={title}>
+              <div className="opsLinkIcon"><Icon size={22} /></div>
+              <div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
+              <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
+              <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="opsSection opsTwoCol">
+        <div className="opsPanel">
+          <p className="sectionKicker"><BookOpen size={15} /> Simple backend</p>
+          <h2>Best Staff Workflow</h2>
+          <div className="opsSteps">
+            <div><strong>1</strong><span>Use the staff dashboards during service to open or close ordering and mark items sold out.</span></div>
+            <div><strong>2</strong><span>Use the Google Sheet for bigger menu edits: item names, prices, categories, sort order, and member numbers.</span></div>
+            <div><strong>3</strong><span>Use Orders and TruckOrders as the permanent log for reviewing completed orders and POS reconciliation.</span></div>
+          </div>
+        </div>
+
+        <div className="opsPanel">
+          <p className="sectionKicker"><ExternalLink size={15} /> Backend links</p>
+          <h2>Owner Tools</h2>
+          <div className="opsBackendLinks">
+            {backendLinks.map(link => (
+              <a href={link.href} target="_blank" rel="noreferrer" key={link.title}>
+                <strong>{link.title}</strong>
+                <span>{link.detail}</span>
+                <ExternalLink size={16} />
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><PencilLine size={15} /> Updating data</p>
+            <h2>Menu & Member Updates</h2>
+          </div>
+        </div>
+        <div className="opsInfoGrid">
+          <article>
+            <h3>Menu Items</h3>
+            <p>For pool menu edits, use the <strong>MenuItems</strong> tab. For Turn Truck menu edits, use <strong>TruckMenuItems</strong>.</p>
+            <ul>
+              <li><strong>Bulk upload</strong>: paste new rows into the Sheet from a CSV or spreadsheet export.</li>
+              <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
+              <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
+              <li><strong>SortOrder</strong>: controls the order members see.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Member Numbers</h3>
+            <p>Use the <strong>Members</strong> tab as the allowed-member list.</p>
+            <ul>
+              <li>Add one member number per row.</li>
+              <li>Use <strong>Active</strong> for allowed accounts.</li>
+              <li>Use <strong>Inactive</strong> to block ordering without deleting history.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Daily Service</h3>
+            <p>Use dashboards instead of the Sheet while service is live.</p>
+            <ul>
+              <li>Toggle ordering open or closed.</li>
+              <li>Mark sold-out items without touching rows.</li>
+              <li>Complete orders and mark POS posted at closing.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="opsFooterCard">
+        <img src="/eastpointe-logo-tight.png" alt="" />
+        <div>
+          <h2>Recommended setup</h2>
+          <p>Print QR codes for member ordering, bookmark staff dashboards on iPads, and keep menu/member edits inside the Google Sheet. This keeps the system simple, low-cost, and easy for club staff to maintain.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   const initialMode = window.location.pathname.includes('/truck-admin')
     ? 'truck-admin'
-    : window.location.pathname.includes('/truck')
-      ? 'truck'
-      : window.location.pathname.includes('/admin')
-        ? 'admin'
-        : 'order';
+    : window.location.pathname.includes('/operations-guide')
+      ? 'operations-guide'
+      : window.location.pathname.includes('/truck')
+        ? 'truck'
+        : window.location.pathname.includes('/admin')
+          ? 'admin'
+          : 'order';
   const [mode, setMode] = useState(initialMode);
 
   useEffect(() => {
@@ -2285,15 +2444,23 @@ export default function App() {
       ? '/admin'
       : mode === 'truck-admin'
         ? '/truck-admin'
-        : mode === 'truck'
-          ? '/truck' + window.location.search
-          : '/order' + window.location.search;
+        : mode === 'operations-guide'
+          ? '/operations-guide'
+          : mode === 'truck'
+            ? '/truck' + window.location.search
+            : '/order' + window.location.search;
     window.history.replaceState(null, '', path);
   }, [mode]);
 
   const isTruckMode = mode === 'truck' || mode === 'truck-admin';
+  const mainClass = mode === 'admin' || mode === 'truck-admin'
+    ? 'app adminApp'
+    : mode === 'operations-guide'
+      ? 'app opsApp'
+      : 'app';
   return (
-    <main className={mode === 'admin' || mode === 'truck-admin' ? 'app adminApp' : 'app'}>
+    <main className={mainClass}>
+      {mode === 'operations-guide' && <OperationsGuide />}
       {mode === 'order' && <Header mode={mode} setMode={setMode} />}
       {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
       {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}

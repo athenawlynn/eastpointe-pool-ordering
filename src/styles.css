@@ -157,6 +157,45 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--muted); }
 .spin { animation: spin 1s linear infinite; }
 
+/* Operations guide */
+.opsApp { max-width: none; padding: 0; background: #F5F3EE; }
+.opsGuide { width: min(1180px, 100%); margin: 0 auto; padding: 24px; display: grid; gap: 18px; }
+.opsHero { position: relative; overflow: hidden; display: grid; gap: 22px; padding: 28px; border-radius: 18px; background: #173323; color: white; border: 1px solid rgba(255,255,255,.12); }
+.opsHero::after { content: ''; position: absolute; right: -70px; bottom: -88px; width: 260px; height: 260px; border-radius: 50%; border: 34px solid rgba(230,213,142,.13); box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); }
+.opsHeroBrand { position: relative; z-index: 1; display: flex; align-items: center; gap: 18px; }
+.opsHeroBrand img { width: 72px; height: 72px; border-radius: 999px; background: white; object-fit: cover; flex: 0 0 auto; }
+.opsHero h1 { margin: 0; font-size: clamp(30px, 5vw, 56px); line-height: .96; color: white; letter-spacing: 0; }
+.opsHero p { margin: 6px 0 0; color: #DCE8DE; max-width: 650px; font-size: clamp(15px, 2vw, 20px); font-weight: 650; }
+.opsHero .eyebrow { color: #E6D58E; }
+.opsMotifs { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 10px; }
+.opsMotifs span { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 11px; border-radius: 999px; background: rgba(255,255,255,.10); color: #F7F1DF; font-weight: 850; font-size: 12px; }
+.opsSection { background: white; border: 1px solid var(--line-soft); border-radius: 14px; padding: 20px; box-shadow: 0 2px 18px rgba(28,42,30,.05); }
+.opsSectionHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 16px; }
+.opsSectionHead h2, .opsPanel h2, .opsFooterCard h2 { margin: 0; color: var(--ink); font-size: clamp(22px, 3vw, 32px); line-height: 1.03; }
+.opsSectionHead > p { margin: 4px 0 0; max-width: 430px; color: var(--muted); font-weight: 650; }
+.opsLinkGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.opsLinkCard { display: grid; gap: 12px; align-content: start; min-height: 100%; padding: 14px; border: 1px solid var(--line-soft); border-radius: 12px; background: #FFFDF9; }
+.opsLinkIcon { width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: #EAF5EE; color: var(--deep-green); }
+.opsLinkCard h3, .opsInfoGrid h3 { margin: 0; color: var(--deep-green); font-size: 17px; line-height: 1.12; }
+.opsLinkCard p, .opsInfoGrid p, .opsInfoGrid li, .opsFooterCard p { margin: 6px 0 0; color: var(--muted); font-weight: 620; line-height: 1.4; }
+.opsQr { width: 100%; max-width: 150px; justify-self: center; border-radius: 10px; border: 1px solid var(--line-soft); background: white; padding: 8px; }
+.opsLinkCard a, .opsBackendLinks a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border-radius: 8px; color: white; background: var(--deep-green); text-decoration: none; font-weight: 900; font-size: 13px; }
+.opsTwoCol { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; padding: 0; background: transparent; border: 0; box-shadow: none; }
+.opsPanel { background: white; border: 1px solid var(--line-soft); border-radius: 14px; padding: 20px; box-shadow: 0 2px 18px rgba(28,42,30,.05); }
+.opsSteps { display: grid; gap: 10px; margin-top: 14px; }
+.opsSteps div { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; padding: 12px; border-radius: 10px; background: #F9F8F5; }
+.opsSteps strong { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #D8C27D; color: #173323; }
+.opsSteps span { color: var(--muted); font-weight: 700; line-height: 1.38; }
+.opsBackendLinks { display: grid; gap: 10px; margin-top: 14px; }
+.opsBackendLinks a { justify-content: space-between; min-height: 64px; padding: 12px; background: #173323; text-align: left; }
+.opsBackendLinks a span { display: block; color: #DCE8DE; font-size: 12px; font-weight: 700; }
+.opsInfoGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.opsInfoGrid article { border: 1px solid var(--line-soft); background: #FFFDF9; border-radius: 12px; padding: 16px; }
+.opsInfoGrid ul { margin: 12px 0 0; padding-left: 18px; }
+.opsInfoGrid li { margin-top: 7px; }
+.opsFooterCard { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 14px; background: #FBF7EC; border: 1px solid #E3D7B7; }
+.opsFooterCard img { width: 58px; height: 58px; border-radius: 999px; background: white; object-fit: cover; flex: 0 0 auto; }
+
 /* Desktop staff dashboard */
 .adminApp { max-width: none; padding: 0; min-height: 100vh; background: #F5F3EE; }
 .staffDashboard { width: min(1600px, 100%); margin: 0 auto; background: #fff; min-height: 100vh; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
@@ -279,6 +318,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffEmpty { min-height: 180px; border: 1px dashed #d8d0c2; border-radius: 16px; display: grid; place-items: center; color: #9a9488; font-weight: 850; text-align: center; padding: 20px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 1100px) {
+  .opsLinkGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .opsInfoGrid { grid-template-columns: 1fr; }
   .staffDashboardHero { align-items: flex-start; flex-direction: column; }
   .staffHeroControls { justify-content: flex-start; }
   .staffStats { grid-template-columns: repeat(2, 1fr); }
@@ -289,6 +330,20 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 }
 @media (max-width: 620px) {
   .app { padding: 8px; max-width: 100%; }
+  .opsApp { padding: 0; }
+  .opsGuide { padding: 10px; gap: 12px; }
+  .opsHero { padding: 18px; border-radius: 14px; }
+  .opsHeroBrand { align-items: flex-start; }
+  .opsHeroBrand img { width: 54px; height: 54px; }
+  .opsHero h1 { font-size: 30px; }
+  .opsHero p { font-size: 14px; }
+  .opsSection, .opsPanel, .opsFooterCard { padding: 14px; border-radius: 12px; }
+  .opsSectionHead { display: grid; gap: 6px; }
+  .opsLinkGrid, .opsTwoCol, .opsInfoGrid { grid-template-columns: 1fr; }
+  .opsLinkCard { grid-template-columns: 42px 1fr; align-items: start; }
+  .opsLinkCard .opsQr, .opsLinkCard a { grid-column: 1 / -1; }
+  .opsQr { max-width: 132px; }
+  .opsFooterCard { align-items: flex-start; }
   .adminApp { padding: 0; max-width: none; width: 100%; }
   .staffDashboardHero { padding: 22px 18px; gap: 18px; }
   .staffDashboardHero h2 { font-size: 24px; }

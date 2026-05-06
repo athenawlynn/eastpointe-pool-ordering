@@ -334,6 +334,12 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .staffDashboardHero { align-items: flex-start; flex-direction: column; }
   .staffHeroControls { justify-content: flex-start; }
   .staffStats { grid-template-columns: repeat(2, 1fr); }
+  .truckStats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .truckStats .staffStat { min-height: 72px; padding: 10px 16px; }
+  .truckStats .staffStat strong { font-size: 30px; }
+  .truckStats .staffStat span { margin-top: 4px; font-size: 12px; line-height: 1.15; }
+  .truckStats .staffStat.revenue strong { font-size: 28px; }
+  .truckStats .staffStat.revenue span { font-size: 11px; }
   .managerPanels { grid-template-columns: 1fr; }
   .staffStat { min-height: 104px; }
   .staffBoard { grid-template-columns: repeat(5, minmax(300px, 340px)); }
@@ -363,6 +369,12 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .staffHeroControls > strong { min-height: 36px; padding: 7px 14px; font-size: 15px; }
   .staffRefreshButton, .staffOrderPageButton { min-height: 36px; padding: 8px 11px; font-size: 12px; }
   .staffStats { grid-template-columns: 1fr; }
+  .truckStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .truckStats .staffStat { min-height: 70px; padding: 10px 14px; border-right: 1px solid var(--line-soft); }
+  .truckStats .staffStat:nth-child(even) { border-right: 0; }
+  .truckStats .staffStat strong { font-size: 30px; }
+  .truckStats .staffStat.revenue { grid-column: 1 / -1; }
+  .truckStats .staffStat.revenue strong { font-size: 34px; }
   .managerPanels { grid-template-columns: 1fr; padding: 14px; }
   .closingGrid { grid-template-columns: repeat(2, 1fr); }
   .staffStat { min-height: 88px; padding: 18px 20px; border-right: 0; }

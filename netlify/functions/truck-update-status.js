@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const STATUSES = ['New', 'Ready for Pickup', 'Completed', 'Cancelled'];
+const STATUSES = ['New', 'Acknowledged', 'Ready for Pickup', 'Completed', 'Cancelled'];
 
 function json(statusCode, body) {
   return {

@@ -165,16 +165,16 @@ function memberStatusSteps(status, fulfillmentType) {
 
 function truckStatusSteps(status) {
   const labels = ['Order received', 'Ready for pickup'];
-  const statusIndex = {
-    New: 0,
-    Acknowledged: 0,
-    'Ready for Pickup': 1,
-    Completed: 1
+  const stateByStatus = {
+    New: ['active', 'pending'],
+    Acknowledged: ['done', 'pending'],
+    'Ready for Pickup': ['done', 'done'],
+    Completed: ['done', 'done']
   };
-  const activeIndex = statusIndex[status] ?? 0;
+  const states = stateByStatus[status] || stateByStatus.New;
   return labels.map((label, index) => ({
     label,
-    state: index < activeIndex ? 'done' : index === activeIndex ? 'active' : 'pending'
+    state: states[index] || 'pending'
   }));
 }
 

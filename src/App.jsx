@@ -2353,6 +2353,7 @@ function OperationsGuide() {
             <article className={`opsLinkCard ${type === 'staff' ? 'staffArea' : ''}`} key={title}>
               <div className="opsLinkIcon"><Icon size={22} /></div>
               <div>
+                {type === 'staff' && <span className="opsStaffBadge">Staff area</span>}
                 <h3>{title}</h3>
                 <p>{body}</p>
               </div>

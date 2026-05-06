@@ -1178,7 +1178,7 @@ function TruckOrderPage() {
           </div>
           <CheckCircle size={34} />
           <h2>{ready ? 'Ready for Pickup' : 'Order Received'}</h2>
-          <p>Thank you. Your truck order status updates automatically.</p>
+          <p>Your order has been received. Please pick up your order at The Turn Truck when this screen shows Ready for Pickup.</p>
           <div className="statusPanel">
             <span>Current Status</span>
             <strong>{liveStatus || 'New'}</strong>
@@ -1229,17 +1229,9 @@ function TruckOrderPage() {
           <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 917-207-6562" />
           <span className="fieldHint">Required so truck staff can contact you if there is a question.</span>
         </label>
-        <label>Special Instructions <span className="optionalText">Optional</span>
-          <textarea
-            value={form.specialInstructions}
-            onChange={event => setField('specialInstructions', event.target.value)}
-            placeholder="Allergies, dietary restrictions, or preparation notes"
-            rows="3"
-          />
-        </label>
         <div className="notice dietaryNotice">
           <strong>Dietary & Allergy Note</strong>
-          Please include any allergies or dietary restrictions in the special instructions field. While our team will do its best to accommodate requests, The Turn Truck may handle common allergens and cannot guarantee an allergen-free preparation environment.
+          Please include any allergies or dietary restrictions in the special instructions field at checkout. While our team will do its best to accommodate requests, The Turn Truck may handle common allergens and cannot guarantee an allergen-free preparation environment.
         </div>
       </section>
 
@@ -1248,6 +1240,7 @@ function TruckOrderPage() {
           <div>
             <div className="sectionKicker"><Utensils size={15} /> The turn menu</div>
             <h2>Food Truck Menu</h2>
+            <p className="hint">Use the + button to add items to your order.</p>
           </div>
           <span className="pill">Pickup only</span>
         </div>
@@ -1295,6 +1288,15 @@ function TruckOrderPage() {
             </div>
           </div>
         )}
+
+        <label>Special Instructions <span className="optionalText">Optional</span>
+          <textarea
+            value={form.specialInstructions}
+            onChange={event => setField('specialInstructions', event.target.value)}
+            placeholder="Allergies, dietary restrictions, or preparation notes"
+            rows="3"
+          />
+        </label>
 
         <label className="check">
           <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />

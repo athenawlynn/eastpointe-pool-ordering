@@ -98,6 +98,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .success svg { color: var(--success); }
 .big { font-size: 22px; font-weight: 900; color: var(--green); }
 .notice { background: #F9F8F5; border-radius: 10px; padding: 12px; margin-top: 8px; text-align: left; font-size: 13px; border: 1px solid var(--line-soft); }
+.dietaryNotice { display: grid; gap: 4px; background: #FBF7EC; color: #6C5C3F; line-height: 1.4; }
+.dietaryNotice strong { color: #173323; text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
 .pickupNotice { background: #fff2ed; border-color: #e7b8aa; color: var(--danger); font-weight: 850; }
 .pickupNotice strong { color: var(--danger); }
 .login { width: min(420px, 100%); margin: 28px auto; text-align: center; }

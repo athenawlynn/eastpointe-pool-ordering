@@ -994,6 +994,7 @@ function TruckOrderPage() {
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
+    specialInstructions: '',
     authorizationAccepted: false,
     alcoholVerificationAccepted: false
   });
@@ -1081,6 +1082,7 @@ function TruckOrderPage() {
             quantity: Number(item.quantity || 0)
           })),
           subtotalKnownItems: subtotal,
+          specialInstructions: form.specialInstructions.trim(),
           authorizationAccepted: form.authorizationAccepted,
           alcoholVerificationAccepted: form.alcoholVerificationAccepted
         }
@@ -1210,7 +1212,7 @@ function TruckOrderPage() {
         <div>
           <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
           <h2>The Turn Truck</h2>
-          <p>Order on the golf course and charge it to your member account. Pickup only.</p>
+          <p>Order from the golf course and charge it to your member account. Pickup only.</p>
         </div>
       </section>
 
@@ -1227,6 +1229,18 @@ function TruckOrderPage() {
           <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 917-207-6562" />
           <span className="fieldHint">Required so truck staff can contact you if there is a question.</span>
         </label>
+        <label>Special Instructions <span className="optionalText">Optional</span>
+          <textarea
+            value={form.specialInstructions}
+            onChange={event => setField('specialInstructions', event.target.value)}
+            placeholder="Allergies, dietary restrictions, or preparation notes"
+            rows="3"
+          />
+        </label>
+        <div className="notice dietaryNotice">
+          <strong>Dietary & Allergy Note</strong>
+          Please include any allergies or dietary restrictions in the special instructions field. While our team will do its best to accommodate requests, The Turn Truck may handle common allergens and cannot guarantee an allergen-free preparation environment.
+        </div>
       </section>
 
       <section className="card">
@@ -2061,6 +2075,12 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
         </div>
+        {order.staffNotes && (
+          <div className="barRequestBox">
+            <span>Special Instructions</span>
+            <p>{order.staffNotes}</p>
+          </div>
+        )}
         {order.alcoholIncluded && (
           <div className="alcoholStaffBanner">
             <AlertTriangle size={15} />

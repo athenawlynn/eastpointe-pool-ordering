@@ -599,7 +599,7 @@ function createTruckOrder(order) {
       Boolean(order.authorizationAccepted),
       alcoholIncluded,
       Boolean(order.alcoholVerificationAccepted),
-      '',
+      String(order.specialInstructions || '').trim(),
       timestamp,
       '',
       false,

@@ -2068,7 +2068,7 @@ function TruckAdminPage({ onBackToOrder }) {
 
   function truckAction(order) {
     if (order.status === 'New') return { label: 'Acknowledge Order', status: 'Acknowledged' };
-    if (order.status === 'Acknowledged') return { label: 'Mark Ready', status: 'Ready for Pickup' };
+    if (order.status === 'Acknowledged') return { label: 'Ready for Pick Up', status: 'Ready for Pickup' };
     if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
     return null;
   }

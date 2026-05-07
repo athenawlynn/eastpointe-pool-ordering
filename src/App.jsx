@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2 } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -53,6 +53,78 @@ const TRUCK_COLUMNS = [
 function currency(value) {
   const n = Number(value || 0);
   return n.toLocaleString(undefined, { style: 'currency', currency: 'USD' });
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function printableItems(order) {
+  if (Array.isArray(order.items) && order.items.length) return order.items;
+  return String(order.itemsSummary || '')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => ({ itemName: line, quantity: '', price: '' }));
+}
+
+function printCustomerChit(order, onBlocked) {
+  const w = window.open('', '_blank');
+  if (!w) {
+    if (onBlocked) onBlocked('Pop-up blocked. Please allow pop-ups to print the customer chit.');
+    return;
+  }
+  const items = printableItems(order);
+  const rows = items.length
+    ? items.map(item => {
+      const qty = Number(item.quantity || 0);
+      const lineTotal = Number(item.price || 0) * qty;
+      const hasKnownPrice = Number(item.price || 0) > 0 && qty > 0;
+      return `
+        <tr>
+          <td>${escapeHtml(qty ? `${qty}x` : '')}</td>
+          <td>${escapeHtml(item.itemName || item.name || '')}</td>
+          <td>${hasKnownPrice ? escapeHtml(currency(lineTotal)) : ''}</td>
+        </tr>`;
+    }).join('')
+    : '<tr><td colspan="3">No standard items listed.</td></tr>';
+  const customRequest = order.barRequest || order.specialInstructions || '';
+  const customLabel = order.barRequest ? 'Bar / Cocktail Request' : 'Special Instructions';
+  w.document.write(`
+    <html>
+      <head>
+        <title>Customer Chit ${escapeHtml(order.orderId || '')}</title>
+        <style>
+          body{font-family:Arial,sans-serif;color:#111;padding:18px;max-width:360px}
+          h1{font-size:22px;margin:0 0 6px} h2{font-size:15px;margin:18px 0 8px;border-top:1px solid #ddd;padding-top:12px}
+          p{margin:4px 0;font-size:14px}.meta{margin:12px 0}.muted{color:#555;font-size:12px}
+          table{width:100%;border-collapse:collapse;margin-top:8px}td{padding:6px 0;border-bottom:1px solid #eee;font-size:14px;vertical-align:top}
+          td:first-child{width:42px}td:last-child{text-align:right;white-space:nowrap}.total{font-size:17px;font-weight:700;text-align:right;margin-top:12px}
+        </style>
+      </head>
+      <body>
+        <h1>Customer Chit</h1>
+        <p><strong>Order #${escapeHtml(order.orderId || '')}</strong></p>
+        <div class="meta">
+          <p>${escapeHtml(order.memberName || 'Member')}${order.memberNumber ? ` · Member #${escapeHtml(order.memberNumber)}` : ''}</p>
+          <p>${escapeHtml(order.fulfillmentType || 'Pickup')}${order.tableNumber ? ` · Table ${escapeHtml(order.tableNumber)}` : ''}</p>
+          <p class="muted">${escapeHtml(order.timestamp ? new Date(order.timestamp).toLocaleString() : new Date().toLocaleString())}</p>
+        </div>
+        <h2>Items</h2>
+        <table>${rows}</table>
+        ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
+        <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
+        <p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>
+      </body>
+    </html>
+  `);
+  w.document.close();
+  w.print();
 }
 
 function getQueryParam(name) {
@@ -563,7 +635,8 @@ function OrderPage() {
   const [lookingUp, setLookingUp] = useState(false);
   const [confirmation, setConfirmation] = useState(savedConfirmation ? {
     orderId: savedConfirmation.orderId,
-    pickupLocation: savedConfirmation.pickupLocation || 'Pool Bar'
+    pickupLocation: savedConfirmation.pickupLocation || 'Pool Bar',
+    chit: savedConfirmation.chit || null
   } : null);
   const [liveStatus, setLiveStatus] = useState(savedConfirmation?.status || '');
   const [readyAt, setReadyAt] = useState(savedConfirmation?.readyAt || '');
@@ -692,7 +765,12 @@ function OrderPage() {
         }
       };
       const res = await apiPost('createOrder', payload);
-      const nextConfirmation = { orderId: res.orderId, pickupLocation: settings.PickupLocation || 'Pool Bar' };
+      const chit = {
+        ...payload.order,
+        orderId: res.orderId,
+        pickupLocation: settings.PickupLocation || 'Pool Bar'
+      };
+      const nextConfirmation = { orderId: res.orderId, pickupLocation: settings.PickupLocation || 'Pool Bar', chit };
       setConfirmation(nextConfirmation);
       setLiveStatus('New');
       sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify({
@@ -701,7 +779,8 @@ function OrderPage() {
         memberName: form.memberName.trim(),
         memberNumber: form.memberNumber.trim(),
         fulfillmentType: form.fulfillmentType,
-        tableNumber: form.tableNumber.trim()
+        tableNumber: form.tableNumber.trim(),
+        chit
       }));
     } catch (e) {
       setErr(e.message);
@@ -733,12 +812,25 @@ function OrderPage() {
         pickupLocation: settings.PickupLocation || 'Pool Bar',
         status: res.status || 'New',
         memberNumber,
+        memberName: res.memberName || '',
         fulfillmentType: res.fulfillmentType || 'Pickup',
         tableNumber: res.tableNumber || '',
-        readyAt: nextReadyAt
+        readyAt: nextReadyAt,
+        chit: res.items || res.itemsSummary || res.subtotalKnownItems ? {
+          orderId: resolvedOrderId,
+          timestamp: res.timestamp || res.updatedAt || todayISO(),
+          fulfillmentType: res.fulfillmentType || 'Pickup',
+          memberName: res.memberName || '',
+          memberNumber,
+          tableNumber: res.tableNumber || '',
+          items: res.items || [],
+          itemsSummary: res.itemsSummary || '',
+          barRequest: res.barRequest || '',
+          subtotalKnownItems: res.subtotalKnownItems || 0
+        } : null
       };
-      setForm(prev => ({ ...prev, memberNumber, fulfillmentType: restored.fulfillmentType, tableNumber: restored.tableNumber }));
-      setConfirmation({ orderId: resolvedOrderId, pickupLocation: restored.pickupLocation });
+      setForm(prev => ({ ...prev, memberName: restored.memberName || prev.memberName, memberNumber, fulfillmentType: restored.fulfillmentType, tableNumber: restored.tableNumber }));
+      setConfirmation({ orderId: resolvedOrderId, pickupLocation: restored.pickupLocation, chit: restored.chit });
       setLiveStatus(restored.status);
       setReadyAt(nextReadyAt);
       sessionStorage.setItem(CONFIRMATION_KEY, JSON.stringify(restored));
@@ -780,8 +872,10 @@ function OrderPage() {
 
   if (confirmation) {
     const ready = liveStatus === 'Ready for Pickup';
+    const chit = confirmation.chit || readSavedConfirmation()?.chit;
     return (
       <div className="stack memberStack">
+        {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
         <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
           <div className="orderNumHeader">
             <span>Order confirmed</span>
@@ -826,7 +920,16 @@ function OrderPage() {
             </div>
           )}
         </div>
-        <button className="primaryButton" onClick={() => { clearSavedConfirmation(); window.location.reload(); }}>Start New Order</button>
+        <div className="confirmationActions">
+          {chit && (
+            <button className="secondaryButton" onClick={() => printCustomerChit(chit, setErr)} type="button">
+              <Printer size={16} /> Print Customer Chit
+            </button>
+          )}
+          <button className="primaryButton" onClick={() => { clearSavedConfirmation(); window.location.reload(); }} type="button">
+            <Home size={16} /> Home / New Order
+          </button>
+        </div>
       </div>
     );
   }
@@ -1035,7 +1138,7 @@ function TruckOrderPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
-  const [confirmation, setConfirmation] = useState(savedConfirmation ? { orderId: savedConfirmation.orderId } : null);
+  const [confirmation, setConfirmation] = useState(savedConfirmation ? { orderId: savedConfirmation.orderId, chit: savedConfirmation.chit || null } : null);
   const [liveStatus, setLiveStatus] = useState(savedConfirmation?.status || '');
   const [readyAt, setReadyAt] = useState(savedConfirmation?.readyAt || '');
 
@@ -1122,13 +1225,30 @@ function TruckOrderPage() {
           alcoholVerificationAccepted: form.alcoholVerificationAccepted
         }
       });
+      const chit = {
+        orderId: res.orderId,
+        timestamp: todayISO(),
+        fulfillmentType: 'Pickup',
+        memberName: form.memberName.trim(),
+        memberNumber: form.memberNumber.trim(),
+        items: selectedItems.map(item => ({
+          itemId: item.itemId,
+          category: item.category,
+          itemName: item.itemName,
+          price: Number(item.price || 0),
+          quantity: Number(item.quantity || 0)
+        })),
+        specialInstructions: form.specialInstructions.trim(),
+        subtotalKnownItems: subtotal
+      };
       const saved = {
         orderId: res.orderId,
         status: 'New',
         memberName: form.memberName.trim(),
-        memberNumber: form.memberNumber.trim()
+        memberNumber: form.memberNumber.trim(),
+        chit
       };
-      setConfirmation({ orderId: res.orderId });
+      setConfirmation({ orderId: res.orderId, chit });
       setLiveStatus('New');
       sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
     } catch (e) {
@@ -1159,10 +1279,22 @@ function TruckOrderPage() {
         orderId: resolvedOrderId,
         status: res.status || 'New',
         memberNumber,
-        readyAt: nextReadyAt
+        memberName: res.memberName || '',
+        readyAt: nextReadyAt,
+        chit: res.items || res.itemsSummary || res.subtotalKnownItems ? {
+          orderId: resolvedOrderId,
+          timestamp: res.timestamp || res.updatedAt || todayISO(),
+          fulfillmentType: 'Pickup',
+          memberName: res.memberName || '',
+          memberNumber,
+          items: res.items || [],
+          itemsSummary: res.itemsSummary || '',
+          specialInstructions: res.specialInstructions || res.staffNotes || '',
+          subtotalKnownItems: res.subtotalKnownItems || 0
+        } : null
       };
-      setForm(prev => ({ ...prev, memberNumber }));
-      setConfirmation({ orderId: resolvedOrderId });
+      setForm(prev => ({ ...prev, memberName: saved.memberName || prev.memberName, memberNumber }));
+      setConfirmation({ orderId: resolvedOrderId, chit: saved.chit });
       setLiveStatus(saved.status);
       setReadyAt(nextReadyAt);
       sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
@@ -1204,8 +1336,10 @@ function TruckOrderPage() {
   if (confirmation) {
     const ready = ['Ready for Pickup', 'Completed'].includes(liveStatus);
     const memberStatus = memberTruckStatus(liveStatus || 'New');
+    const chit = confirmation.chit || readSavedTruckConfirmation()?.chit;
     return (
       <div className="stack memberStack truckMember">
+        {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
         <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
           <div className="orderNumHeader truckOrderHeader">
             <span>Truck order confirmed</span>
@@ -1234,7 +1368,16 @@ function TruckOrderPage() {
             Please keep this screen open. We will update this screen when your order is ready.
           </div>
         </div>
-        <button className="primaryButton" onClick={() => { clearSavedTruckConfirmation(); window.location.reload(); }}>Start New Truck Order</button>
+        <div className="confirmationActions">
+          {chit && (
+            <button className="secondaryButton" onClick={() => printCustomerChit(chit, setErr)} type="button">
+              <Printer size={16} /> Print Customer Chit
+            </button>
+          )}
+          <button className="primaryButton" onClick={() => { clearSavedTruckConfirmation(); window.location.reload(); }} type="button">
+            <Home size={16} /> Home / New Truck Order
+          </button>
+        </div>
       </div>
     );
   }
@@ -1826,6 +1969,7 @@ function AdminPage({ onBackToOrder }) {
             </button>
           )}
           <button className="staffPrintButton" onClick={() => printOrder(order)}><Printer size={16} /> Ticket</button>
+          <button className="staffPrintButton" onClick={() => printCustomerChit(order, setErr)}><Printer size={16} /> Customer Chit</button>
         </div>
       </article>
     );
@@ -2200,6 +2344,7 @@ function TruckAdminPage({ onBackToOrder }) {
               <Undo2 size={15} /> Restore
             </button>
           )}
+          <button className="staffPrintButton" onClick={() => printCustomerChit(order, setErr)}><Printer size={16} /> Customer Chit</button>
         </div>
       </article>
     );

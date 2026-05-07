@@ -226,6 +226,18 @@ function isGuestOrder(order) {
   return order?.paymentType === 'Guest Pay at Pickup' || order?.paymentStatus === 'Due at Pickup';
 }
 
+function guestTipOrdersToday(orders) {
+  return orders.filter(order =>
+    isGuestOrder(order) &&
+    isOrderToday(order) &&
+    order.status !== 'Cancelled'
+  );
+}
+
+function sumGuestTips(orders) {
+  return orders.reduce((sum, order) => sum + Number(order.tipAmount || 0), 0);
+}
+
 function tipDetails(subtotal, tipChoice, customTip) {
   if (tipChoice === 'custom') {
     const custom = Math.max(0, Number(customTip || 0) || 0);
@@ -2034,6 +2046,10 @@ function AdminPage({ onBackToOrder }) {
   const todaysPostedCount = todaysCompletedOrders.filter(o => o.posPosted).length;
   const todaysAlcoholCount = orders.filter(o => o.alcoholIncluded && isOrderToday(o) && o.status !== 'Cancelled').length;
   const todaysDeliveryCount = orders.filter(o => o.fulfillmentType === 'Delivery' && isOrderToday(o) && o.status !== 'Cancelled').length;
+  const todaysGuestTipOrders = guestTipOrdersToday(orders);
+  const todaysGuestTipTotal = sumGuestTips(todaysGuestTipOrders);
+  const todaysGuestTipPostedTotal = sumGuestTips(todaysGuestTipOrders.filter(order => order.posPosted));
+  const todaysGuestTipOpenTotal = sumGuestTips(todaysGuestTipOrders.filter(order => !order.posPosted));
   const menuItemsByCategory = menuItems.reduce((groups, item) => {
     const category = item.category || 'Other';
     if (!groups[category]) groups[category] = [];
@@ -2321,6 +2337,28 @@ function AdminPage({ onBackToOrder }) {
             <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
             <div><strong>{todaysAlcoholCount}</strong><span>Alcohol orders</span></div>
             <div><strong>{todaysDeliveryCount}</strong><span>Deliveries</span></div>
+          </div>
+          <div className="tipReconciliation">
+            <div className="tipReconciliationHead">
+              <h4>Guest Tip Reconciliation</h4>
+              <strong>{currency(todaysGuestTipTotal)}</strong>
+            </div>
+            <div className="tipSummaryGrid">
+              <div><strong>{todaysGuestTipOrders.length}</strong><span>Guest orders</span></div>
+              <div><strong>{currency(todaysGuestTipPostedTotal)}</strong><span>POS posted tips</span></div>
+              <div className={todaysGuestTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysGuestTipOpenTotal)}</strong><span>Open tips</span></div>
+            </div>
+            <div className="tipOrderList">
+              {todaysGuestTipOrders.length
+                ? todaysGuestTipOrders.map(order => (
+                  <div className="tipOrderRow" key={`tip-${order.orderId}`}>
+                    <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
+                    <strong>{currency(order.tipAmount)}</strong>
+                    <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
+                  </div>
+                ))
+                : <p>No guest tips recorded today.</p>}
+            </div>
           </div>
           {needsPosCount > 0
             ? <p className="closingNote">Closing check: mark all completed orders as POS posted before end of shift.</p>
@@ -2614,6 +2652,10 @@ function TruckAdminPage({ onBackToOrder }) {
   const needsPosTotal = orders
     .filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const todaysGuestTipOrders = guestTipOrdersToday(orders);
+  const todaysGuestTipTotal = sumGuestTips(todaysGuestTipOrders);
+  const todaysGuestTipPostedTotal = sumGuestTips(todaysGuestTipOrders.filter(order => order.posPosted));
+  const todaysGuestTipOpenTotal = sumGuestTips(todaysGuestTipOrders.filter(order => !order.posPosted));
   const subtotalToday = orders
     .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
@@ -2698,6 +2740,28 @@ function TruckAdminPage({ onBackToOrder }) {
             <div><strong>{completedToday}</strong><span>Completed</span></div>
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
             <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
+          </div>
+          <div className="tipReconciliation">
+            <div className="tipReconciliationHead">
+              <h4>Guest Tip Reconciliation</h4>
+              <strong>{currency(todaysGuestTipTotal)}</strong>
+            </div>
+            <div className="tipSummaryGrid">
+              <div><strong>{todaysGuestTipOrders.length}</strong><span>Guest orders</span></div>
+              <div><strong>{currency(todaysGuestTipPostedTotal)}</strong><span>POS posted tips</span></div>
+              <div className={todaysGuestTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysGuestTipOpenTotal)}</strong><span>Open tips</span></div>
+            </div>
+            <div className="tipOrderList">
+              {todaysGuestTipOrders.length
+                ? todaysGuestTipOrders.map(order => (
+                  <div className="tipOrderRow" key={`truck-tip-${order.orderId}`}>
+                    <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
+                    <strong>{currency(order.tipAmount)}</strong>
+                    <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
+                  </div>
+                ))
+                : <p>No guest tips recorded today.</p>}
+            </div>
           </div>
           {needsPosCount > 0
             ? <p className="closingNote">Closing check: mark all completed truck orders as POS posted.</p>

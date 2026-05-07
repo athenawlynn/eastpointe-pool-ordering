@@ -96,6 +96,8 @@ function printCustomerChit(order, onBlocked) {
   const customRequest = order.barRequest || order.specialInstructions || '';
   const customLabel = order.barRequest ? 'Bar / Cocktail Request' : 'Special Instructions';
   const isGuestPayment = order.paymentType === 'Guest Pay at Pickup';
+  const tipAmount = Number(order.tipAmount || 0);
+  const totalWithTip = Number(order.subtotalKnownItems || 0) + tipAmount;
   w.document.write(`
     <html>
       <head>
@@ -120,7 +122,7 @@ function printCustomerChit(order, onBlocked) {
         <table>${rows}</table>
         ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
         <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
-        ${isGuestPayment ? '<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p>' : ''}
+        ${isGuestPayment ? `<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p><p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p><p><strong>Estimated total: ${escapeHtml(currency(totalWithTip))}</strong></p>` : ''}
         <p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>
       </body>
     </html>
@@ -222,6 +224,16 @@ function displayPhone(phone) {
 
 function isGuestOrder(order) {
   return order?.paymentType === 'Guest Pay at Pickup' || order?.paymentStatus === 'Due at Pickup';
+}
+
+function tipDetails(subtotal, tipChoice, customTip) {
+  if (tipChoice === 'custom') {
+    const custom = Math.max(0, Number(customTip || 0) || 0);
+    return { amount: custom, label: custom > 0 ? 'Custom' : 'No tip' };
+  }
+  const percent = Number(tipChoice || 0);
+  const amount = percent > 0 ? Number(subtotal || 0) * (percent / 100) : 0;
+  return { amount, label: percent > 0 ? `${percent}%` : 'No tip' };
 }
 
 function memberStatusSteps(status, fulfillmentType) {
@@ -630,6 +642,9 @@ function OrderPage() {
   const [form, setForm] = useState({
     fulfillmentType: savedConfirmation?.fulfillmentType || 'Pickup',
     paymentType: savedConfirmation?.paymentType || 'Member Account',
+    guestCardType: savedConfirmation?.guestCardType || '',
+    tipChoice: savedConfirmation?.tipChoice || '20',
+    customTip: '',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
@@ -702,6 +717,8 @@ function OrderPage() {
   const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
+  const guestTip = tipDetails(subtotal, form.tipChoice, form.customTip);
+  const guestTotal = subtotal + guestTip.amount;
 
   useEffect(() => {
     if (!loading && !confirmation && !deliveryAvailable && form.fulfillmentType === 'Delivery') {
@@ -734,9 +751,10 @@ function OrderPage() {
     if (selectedItems.length === 0 && !form.barRequest.trim()) return 'Please select at least one item or enter a bar/cocktail request.';
     if (!form.authorizationAccepted) {
       return isGuestPayment
-        ? 'Please acknowledge that payment will be collected at pickup.'
+        ? 'Please acknowledge that a physical credit card must be provided at pickup.'
         : 'Please authorize the charge to the member account.';
     }
+    if (isGuestPayment && !form.guestCardType) return 'Please choose the card type you will provide at pickup.';
     if (hasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
     return '';
   }
@@ -758,6 +776,10 @@ function OrderPage() {
           fulfillmentType: form.fulfillmentType,
           paymentType: form.paymentType,
           paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
+          guestCardType: isGuestPayment ? form.guestCardType : '',
+          tipAmount: isGuestPayment ? guestTip.amount : 0,
+          tipLabel: isGuestPayment ? guestTip.label : '',
+          estimatedTotal: isGuestPayment ? guestTotal : subtotal,
           memberName: form.memberName.trim(),
           memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
@@ -793,6 +815,8 @@ function OrderPage() {
         memberName: form.memberName.trim(),
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         paymentType: form.paymentType,
+        guestCardType: isGuestPayment ? form.guestCardType : '',
+        tipChoice: isGuestPayment ? form.tipChoice : '0',
         fulfillmentType: form.fulfillmentType,
         tableNumber: form.tableNumber.trim(),
         chit
@@ -1039,10 +1063,63 @@ function OrderPage() {
             type="button"
           >
             <strong>Guest - Pay at Pickup</strong>
-            <span>Staff will collect credit card payment before handing off the order.</span>
+            <span>A credit card must be provided at pickup before the order is released.</span>
           </button>
         </div>
       </section>
+
+      {isGuestPayment && (
+        <section className="card guestPaymentCard">
+          <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
+          <h2>Card at Pickup</h2>
+          <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
+          <label>Card Type
+            <div className="segmentedOptions">
+              {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                <button
+                  key={type}
+                  className={form.guestCardType === type ? 'segment active' : 'segment'}
+                  onClick={() => setField('guestCardType', type)}
+                  type="button"
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </label>
+          <label>Tip <span className="optionalText">Optional</span>
+            <div className="segmentedOptions">
+              {[
+                { label: '18%', value: '18' },
+                { label: '20%', value: '20' },
+                { label: '22%', value: '22' },
+                { label: 'Custom', value: 'custom' },
+                { label: 'No Tip', value: '0' }
+              ].map(option => (
+                <button
+                  key={option.value}
+                  className={form.tipChoice === option.value ? 'segment active' : 'segment'}
+                  onClick={() => setField('tipChoice', option.value)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </label>
+          {form.tipChoice === 'custom' && (
+            <label>Custom Tip
+              <input inputMode="decimal" value={form.customTip} onChange={e => setField('customTip', e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
+            </label>
+          )}
+          <div className="guestTotalBox">
+            <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+            <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
+            <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+          </div>
+          <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
+        </section>
+      )}
 
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
@@ -1142,7 +1219,7 @@ function OrderPage() {
         <label className="check">
           <input type="checkbox" checked={form.authorizationAccepted} onChange={e => setField('authorizationAccepted', e.target.checked)} />
           <span>{isGuestPayment
-            ? 'I understand this guest order requires credit card payment at pickup or handoff before the order is released.'
+            ? 'I understand a valid credit card must be provided to staff at pickup or handoff before this guest order is released.'
             : 'I authorize this order to be charged to the member account listed above. I understand the club will verify the member number against its member list and may confirm my name at pickup or delivery.'}</span>
         </label>
 
@@ -1176,6 +1253,9 @@ function TruckOrderPage() {
   });
   const [form, setForm] = useState({
     paymentType: savedConfirmation?.paymentType || 'Member Account',
+    guestCardType: savedConfirmation?.guestCardType || '',
+    tipChoice: savedConfirmation?.tipChoice || '20',
+    customTip: '',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
@@ -1224,6 +1304,8 @@ function TruckOrderPage() {
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
+  const guestTip = tipDetails(subtotal, form.tipChoice, form.customTip);
+  const guestTotal = subtotal + guestTip.amount;
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -1241,9 +1323,10 @@ function TruckOrderPage() {
     if (!selectedItems.length) return 'Please select at least one item.';
     if (!form.authorizationAccepted) {
       return isGuestPayment
-        ? 'Please acknowledge that payment will be collected at pickup.'
+        ? 'Please acknowledge that a physical credit card must be provided at pickup.'
         : 'Please authorize the charge to the member account.';
     }
+    if (isGuestPayment && !form.guestCardType) return 'Please choose the card type you will provide at pickup.';
     if (truckHasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
     return '';
   }
@@ -1263,6 +1346,10 @@ function TruckOrderPage() {
           timestamp: todayISO(),
           paymentType: form.paymentType,
           paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
+          guestCardType: isGuestPayment ? form.guestCardType : '',
+          tipAmount: isGuestPayment ? guestTip.amount : 0,
+          tipLabel: isGuestPayment ? guestTip.label : '',
+          estimatedTotal: isGuestPayment ? guestTotal : subtotal,
           memberName: form.memberName.trim(),
           memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
@@ -1285,6 +1372,10 @@ function TruckOrderPage() {
         fulfillmentType: 'Pickup',
         paymentType: form.paymentType,
         paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
+        guestCardType: isGuestPayment ? form.guestCardType : '',
+        tipAmount: isGuestPayment ? guestTip.amount : 0,
+        tipLabel: isGuestPayment ? guestTip.label : '',
+        estimatedTotal: isGuestPayment ? guestTotal : subtotal,
         memberName: form.memberName.trim(),
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         items: selectedItems.map(item => ({
@@ -1303,6 +1394,8 @@ function TruckOrderPage() {
         memberName: form.memberName.trim(),
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         paymentType: form.paymentType,
+        guestCardType: isGuestPayment ? form.guestCardType : '',
+        tipChoice: isGuestPayment ? form.tipChoice : '0',
         chit
       };
       setConfirmation({ orderId: res.orderId, chit });
@@ -1477,10 +1570,63 @@ function TruckOrderPage() {
             type="button"
           >
             <strong>Guest - Pay at Pickup</strong>
-            <span>Staff will collect credit card payment before handing off the order.</span>
+            <span>A credit card must be provided at pickup before the order is released.</span>
           </button>
         </div>
       </section>
+
+      {isGuestPayment && (
+        <section className="card guestPaymentCard">
+          <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
+          <h2>Card at Pickup</h2>
+          <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
+          <label>Card Type
+            <div className="segmentedOptions">
+              {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                <button
+                  key={type}
+                  className={form.guestCardType === type ? 'segment active' : 'segment'}
+                  onClick={() => setField('guestCardType', type)}
+                  type="button"
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </label>
+          <label>Tip <span className="optionalText">Optional</span>
+            <div className="segmentedOptions">
+              {[
+                { label: '18%', value: '18' },
+                { label: '20%', value: '20' },
+                { label: '22%', value: '22' },
+                { label: 'Custom', value: 'custom' },
+                { label: 'No Tip', value: '0' }
+              ].map(option => (
+                <button
+                  key={option.value}
+                  className={form.tipChoice === option.value ? 'segment active' : 'segment'}
+                  onClick={() => setField('tipChoice', option.value)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </label>
+          {form.tipChoice === 'custom' && (
+            <label>Custom Tip
+              <input inputMode="decimal" value={form.customTip} onChange={event => setField('customTip', event.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
+            </label>
+          )}
+          <div className="guestTotalBox">
+            <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+            <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
+            <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+          </div>
+          <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
+        </section>
+      )}
 
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
@@ -1569,7 +1715,7 @@ function TruckOrderPage() {
         <label className="check">
           <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />
           <span>{isGuestPayment
-            ? 'I understand this guest order requires credit card payment at pickup before the order is released.'
+            ? 'I understand a valid credit card must be provided to staff at pickup before this guest order is released.'
             : 'I authorize this food truck order to be charged to the member account listed above.'}</span>
         </label>
 
@@ -1866,6 +2012,9 @@ function AdminPage({ onBackToOrder }) {
       ``,
       `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
       guestPayment ? `Payment Status: ${order.paymentStatus || 'Due at Pickup'}` : '',
+      guestPayment ? `Card Type: ${order.guestCardType || 'Not selected'}` : '',
+      guestPayment ? `Tip: ${order.tipLabel || 'No tip'}${Number(order.tipAmount || 0) > 0 ? ` (${currency(order.tipAmount)})` : ''}` : '',
+      guestPayment ? `Estimated Total: ${currency(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0))}` : '',
       `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`,
       `POS Posted: ${order.posPosted ? 'YES' : 'No'}`
     ].join('\n');
@@ -1987,7 +2136,7 @@ function AdminPage({ onBackToOrder }) {
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
-          {guestPayment && <div className="paymentDueBadge">Collect card payment at pickup</div>}
+          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
         </div>
 
         <div className="staffItems">
@@ -2383,7 +2532,7 @@ function TruckAdminPage({ onBackToOrder }) {
             <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
-          {guestPayment && <div className="paymentDueBadge">Collect card payment at pickup</div>}
+          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
         </div>
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}

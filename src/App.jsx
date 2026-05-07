@@ -2708,7 +2708,7 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffStat ready"><strong>{readyCount}</strong><span>Ready for pickup</span></div>
         <div className="staffStat completed"><strong>{completedToday}</strong><span>Completed today</span></div>
         <div className="staffStat pos"><strong>{needsPosCount}</strong><span>Need POS posting · {currency(needsPosTotal)}</span></div>
-        <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Today's truck subtotal</span></div>
+        <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Truck subtotal</span></div>
       </section>
 
       <section className="staffBoard truckBoard">
@@ -2736,6 +2736,7 @@ function TruckAdminPage({ onBackToOrder }) {
             <h3>Truck POS Reconciliation</h3>
             <span>{shortDate()}</span>
           </div>
+          <p className="managerHint">At pickup, collect card payment, complete the order, then mark POS posted after it is entered in the register.</p>
           <div className="closingGrid">
             <div><strong>{completedToday}</strong><span>Completed</span></div>
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
@@ -2773,6 +2774,7 @@ function TruckAdminPage({ onBackToOrder }) {
             <h3>Truck Menu Availability</h3>
             <span>{menuItems.filter(item => !item.available).length} unavailable</span>
           </div>
+          <p className="managerHint">Tap an item button to mark it sold out or available again.</p>
           <div className="menuAvailabilityList">
             {Object.entries(menuItemsByCategory).map(([category, items]) => (
               <div className="menuAvailabilityGroup" key={category}>

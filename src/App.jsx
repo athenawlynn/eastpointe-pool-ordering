@@ -1170,7 +1170,7 @@ function OrderPage() {
             <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
             <label>Card Type
               <div className="segmentedOptions">
-                {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                {['Visa', 'Mastercard', 'Amex'].map(type => (
                   <button
                     key={type}
                     className={form.guestCardType === type ? 'segment active' : 'segment'}
@@ -1657,7 +1657,7 @@ function TruckOrderPage() {
             <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
             <label>Card Type
               <div className="segmentedOptions">
-                {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                {['Visa', 'Mastercard', 'Amex'].map(type => (
                   <button
                     key={type}
                     className={form.guestCardType === type ? 'segment active' : 'segment'}

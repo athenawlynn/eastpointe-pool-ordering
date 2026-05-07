@@ -95,6 +95,7 @@ function printCustomerChit(order, onBlocked) {
     : '<tr><td colspan="3">No standard items listed.</td></tr>';
   const customRequest = order.barRequest || order.specialInstructions || '';
   const customLabel = order.barRequest ? 'Bar / Cocktail Request' : 'Special Instructions';
+  const isGuestPayment = order.paymentType === 'Guest Pay at Pickup';
   w.document.write(`
     <html>
       <head>
@@ -119,6 +120,7 @@ function printCustomerChit(order, onBlocked) {
         <table>${rows}</table>
         ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
         <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
+        ${isGuestPayment ? '<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p>' : ''}
         <p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>
       </body>
     </html>
@@ -216,6 +218,10 @@ function displayPhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
   if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
   return String(phone || '').trim();
+}
+
+function isGuestOrder(order) {
+  return order?.paymentType === 'Guest Pay at Pickup' || order?.paymentStatus === 'Due at Pickup';
 }
 
 function memberStatusSteps(status, fulfillmentType) {
@@ -454,7 +460,7 @@ function clearTruckToken() {
 function readSavedConfirmation() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(CONFIRMATION_KEY) || 'null');
-    if (!saved?.orderId || !saved?.memberNumber) return null;
+    if (!saved?.orderId) return null;
     return saved;
   } catch {
     return null;
@@ -464,7 +470,7 @@ function readSavedConfirmation() {
 function readSavedTruckConfirmation() {
   try {
     const saved = JSON.parse(sessionStorage.getItem(TRUCK_CONFIRMATION_KEY) || 'null');
-    if (!saved?.orderId || !saved?.memberNumber) return null;
+    if (!saved?.orderId) return null;
     return saved;
   } catch {
     return null;
@@ -623,6 +629,7 @@ function OrderPage() {
   });
   const [form, setForm] = useState({
     fulfillmentType: savedConfirmation?.fulfillmentType || 'Pickup',
+    paymentType: savedConfirmation?.paymentType || 'Member Account',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
@@ -694,6 +701,7 @@ function OrderPage() {
   const hasBarRequest = form.barRequest.trim().length > 0;
   const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
+  const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
 
   useEffect(() => {
     if (!loading && !confirmation && !deliveryAvailable && form.fulfillmentType === 'Delivery') {
@@ -713,8 +721,8 @@ function OrderPage() {
     if (!['Pickup', 'Delivery'].includes(form.fulfillmentType)) return 'Please choose pickup or delivery.';
     if (!orderingOpen) return 'Pool ordering is currently closed. Please order directly at the Pool Bar.';
     if (form.fulfillmentType === 'Delivery' && !deliveryAvailable) return 'Delivery is currently unavailable. Please choose pickup at the Pool Bar.';
-    if (!form.memberName.trim()) return 'Please enter member name.';
-    if (!/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter member name.';
+    if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
     const t = Number(form.tableNumber);
     if (form.fulfillmentType === 'Delivery' && (!Number.isInteger(t) || t < 1 || t > 100)) {
@@ -724,7 +732,11 @@ function OrderPage() {
       return 'Table number must be between 1 and 100.';
     }
     if (selectedItems.length === 0 && !form.barRequest.trim()) return 'Please select at least one item or enter a bar/cocktail request.';
-    if (!form.authorizationAccepted) return 'Please authorize the charge to the member account.';
+    if (!form.authorizationAccepted) {
+      return isGuestPayment
+        ? 'Please acknowledge that payment will be collected at pickup.'
+        : 'Please authorize the charge to the member account.';
+    }
     if (hasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
     return '';
   }
@@ -744,8 +756,10 @@ function OrderPage() {
           timestamp: todayISO(),
           status: 'New',
           fulfillmentType: form.fulfillmentType,
+          paymentType: form.paymentType,
+          paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
           memberName: form.memberName.trim(),
-          memberNumber: form.memberNumber.trim(),
+          memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
           tableNumber: form.tableNumber.trim(),
           items: selectedItems.map(i => ({
@@ -777,7 +791,8 @@ function OrderPage() {
         ...nextConfirmation,
         status: 'New',
         memberName: form.memberName.trim(),
-        memberNumber: form.memberNumber.trim(),
+        memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
+        paymentType: form.paymentType,
         fulfillmentType: form.fulfillmentType,
         tableNumber: form.tableNumber.trim(),
         chit
@@ -813,6 +828,7 @@ function OrderPage() {
         status: res.status || 'New',
         memberNumber,
         memberName: res.memberName || '',
+        paymentType: res.paymentType || 'Member Account',
         fulfillmentType: res.fulfillmentType || 'Pickup',
         tableNumber: res.tableNumber || '',
         readyAt: nextReadyAt,
@@ -821,6 +837,7 @@ function OrderPage() {
           timestamp: res.timestamp || res.updatedAt || todayISO(),
           fulfillmentType: res.fulfillmentType || 'Pickup',
           memberName: res.memberName || '',
+          paymentType: res.paymentType || 'Member Account',
           memberNumber,
           tableNumber: res.tableNumber || '',
           items: res.items || [],
@@ -829,7 +846,7 @@ function OrderPage() {
           subtotalKnownItems: res.subtotalKnownItems || 0
         } : null
       };
-      setForm(prev => ({ ...prev, memberName: restored.memberName || prev.memberName, memberNumber, fulfillmentType: restored.fulfillmentType, tableNumber: restored.tableNumber }));
+      setForm(prev => ({ ...prev, memberName: restored.memberName || prev.memberName, memberNumber, paymentType: restored.paymentType, fulfillmentType: restored.fulfillmentType, tableNumber: restored.tableNumber }));
       setConfirmation({ orderId: resolvedOrderId, pickupLocation: restored.pickupLocation, chit: restored.chit });
       setLiveStatus(restored.status);
       setReadyAt(nextReadyAt);
@@ -873,6 +890,7 @@ function OrderPage() {
   if (confirmation) {
     const ready = liveStatus === 'Ready for Pickup';
     const chit = confirmation.chit || readSavedConfirmation()?.chit;
+    const confirmationIsGuest = form.paymentType === 'Guest Pay at Pickup' || chit?.paymentType === 'Guest Pay at Pickup';
     return (
       <div className="stack memberStack">
         {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
@@ -884,7 +902,8 @@ function OrderPage() {
           </div>
           <CheckCircle size={34} />
           <h2>{ready ? (form.fulfillmentType === 'Delivery' ? 'Order Ready for Delivery' : 'Ready for Pickup') : 'Order Sent'}</h2>
-          <p>Thank you, {form.memberName}. Your order status updates automatically.</p>
+          <p>Thank you, {form.memberName}. {confirmationIsGuest ? 'Please keep this screen for pickup.' : 'Your order status updates automatically.'}</p>
+          {confirmationIsGuest && <div className="paymentDueNotice"><strong>Guest payment required at pickup.</strong> Staff will collect payment before handing off the order.</div>}
           <div className="statusPanel">
             <span>Current Status</span>
             <strong>{liveStatus || 'New'}</strong>
@@ -903,12 +922,12 @@ function OrderPage() {
             {form.fulfillmentType === 'Delivery' ? (
               <>
                 <strong>Delivery:</strong> Table {form.tableNumber}<br />
-                Please keep this screen open. The order status will update automatically.
+                {confirmationIsGuest ? 'Staff will collect guest payment before handoff.' : 'Please keep this screen open. The order status will update automatically.'}
               </>
             ) : (
               <>
                 <strong>Pickup:</strong> {confirmation.pickupLocation}<br />
-                Please keep this screen open. We will update this screen when your order is ready for pickup.
+                {confirmationIsGuest ? 'Staff will collect guest payment before handing off the order.' : 'Please keep this screen open. We will update this screen when your order is ready for pickup.'}
               </>
             )}
           </div>
@@ -916,7 +935,7 @@ function OrderPage() {
             <div className="readyNotice">
               {form.fulfillmentType === 'Delivery'
                 ? `Your order was ready at ${timeLabel(readyAt) || 'the time shown above'} and will be delivered to your table.`
-                : `Your order was ready at ${timeLabel(readyAt) || 'the time shown above'}. Please pick it up at the Pool Bar and provide your name/member number.`}
+                : `Your order was ready at ${timeLabel(readyAt) || 'the time shown above'}. Please pick it up at the Pool Bar and provide your name${confirmationIsGuest ? '' : '/member number'}.`}
             </div>
           )}
         </div>
@@ -944,7 +963,7 @@ function OrderPage() {
         <div>
           <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
           <h2>Poolside food & beverage</h2>
-          <p>Order from your table and charge it to your member account. No app download needed.</p>
+          <p>Order from your table. Members can charge their account, and guests can pay at pickup.</p>
         </div>
         {form.tableNumber ? (
           <div className="tableHighlight">
@@ -1003,14 +1022,39 @@ function OrderPage() {
       </section>
 
       <section className="card">
-        <div className="sectionKicker"><UserRound size={15} /> Member details</div>
-        <h2>Member Information</h2>
-        <label>Member Name
+        <div className="sectionKicker"><ShieldCheck size={15} /> Payment</div>
+        <h2>How will this be paid?</h2>
+        <div className="choiceGrid">
+          <button
+            className={form.paymentType === 'Member Account' ? 'choiceCard activeChoice' : 'choiceCard'}
+            onClick={() => setField('paymentType', 'Member Account')}
+            type="button"
+          >
+            <strong>Member Account</strong>
+            <span>Charge this order to a verified member account.</span>
+          </button>
+          <button
+            className={form.paymentType === 'Guest Pay at Pickup' ? 'choiceCard activeChoice guestChoice' : 'choiceCard guestChoice'}
+            onClick={() => setField('paymentType', 'Guest Pay at Pickup')}
+            type="button"
+          >
+            <strong>Guest - Pay at Pickup</strong>
+            <span>Staff will collect credit card payment before handing off the order.</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
+        <h2>{isGuestPayment ? 'Guest Information' : 'Member Information'}</h2>
+        <label>{isGuestPayment ? 'Guest Name' : 'Member Name'}
           <input value={form.memberName} onChange={e => setField('memberName', e.target.value)} placeholder="First and last name" />
         </label>
-        <label>Member Number
-          <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={e => setField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
-        </label>
+        {!isGuestPayment && (
+          <label>Member Number
+            <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={e => setField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+          </label>
+        )}
         <label>Mobile Number
           <input inputMode="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="Example: 917-207-6562" />
           <span className="fieldHint">For staff to contact you if there is a question about your order.</span>
@@ -1061,7 +1105,7 @@ function OrderPage() {
           onChange={e => setField('barRequest', e.target.value)}
           placeholder="Example: 2 Tito’s sodas with lime, 1 margarita, 1 bourbon rocks, 1 Transfusion"
         />
-        <p className="finePrint">Custom bar requests will be priced according to standard club bar pricing and charged to your member account.</p>
+        <p className="finePrint">Custom bar requests will be priced according to standard club bar pricing and {isGuestPayment ? 'collected at pickup.' : 'charged to your member account.'}</p>
       </section>
 
       <section className="card">
@@ -1097,7 +1141,9 @@ function OrderPage() {
 
         <label className="check">
           <input type="checkbox" checked={form.authorizationAccepted} onChange={e => setField('authorizationAccepted', e.target.checked)} />
-          <span>I authorize this order to be charged to the member account listed above. I understand the club will verify the member number against its member list and may confirm my name at pickup or delivery.</span>
+          <span>{isGuestPayment
+            ? 'I understand this guest order requires credit card payment at pickup or handoff before the order is released.'
+            : 'I authorize this order to be charged to the member account listed above. I understand the club will verify the member number against its member list and may confirm my name at pickup or delivery.'}</span>
         </label>
 
         {hasAlcohol && (
@@ -1129,6 +1175,7 @@ function TruckOrderPage() {
     memberNumber: savedConfirmation?.memberNumber || ''
   });
   const [form, setForm] = useState({
+    paymentType: savedConfirmation?.paymentType || 'Member Account',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
     phone: '',
@@ -1176,6 +1223,7 @@ function TruckOrderPage() {
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+  const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -1187,11 +1235,15 @@ function TruckOrderPage() {
 
   function validateTruckOrder() {
     if (!truckOrderingOpen) return 'The Turn Truck ordering is currently closed.';
-    if (!form.memberName.trim()) return 'Please enter member name.';
-    if (!/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter member name.';
+    if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
     if (!selectedItems.length) return 'Please select at least one item.';
-    if (!form.authorizationAccepted) return 'Please authorize the charge to the member account.';
+    if (!form.authorizationAccepted) {
+      return isGuestPayment
+        ? 'Please acknowledge that payment will be collected at pickup.'
+        : 'Please authorize the charge to the member account.';
+    }
     if (truckHasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
     return '';
   }
@@ -1209,8 +1261,10 @@ function TruckOrderPage() {
       const res = await apiPost('createTruckOrder', {
         order: {
           timestamp: todayISO(),
+          paymentType: form.paymentType,
+          paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
           memberName: form.memberName.trim(),
-          memberNumber: form.memberNumber.trim(),
+          memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
           items: selectedItems.map(item => ({
             itemId: item.itemId,
@@ -1229,8 +1283,10 @@ function TruckOrderPage() {
         orderId: res.orderId,
         timestamp: todayISO(),
         fulfillmentType: 'Pickup',
+        paymentType: form.paymentType,
+        paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
         memberName: form.memberName.trim(),
-        memberNumber: form.memberNumber.trim(),
+        memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         items: selectedItems.map(item => ({
           itemId: item.itemId,
           category: item.category,
@@ -1245,7 +1301,8 @@ function TruckOrderPage() {
         orderId: res.orderId,
         status: 'New',
         memberName: form.memberName.trim(),
-        memberNumber: form.memberNumber.trim(),
+        memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
+        paymentType: form.paymentType,
         chit
       };
       setConfirmation({ orderId: res.orderId, chit });
@@ -1280,12 +1337,14 @@ function TruckOrderPage() {
         status: res.status || 'New',
         memberNumber,
         memberName: res.memberName || '',
+        paymentType: res.paymentType || 'Member Account',
         readyAt: nextReadyAt,
         chit: res.items || res.itemsSummary || res.subtotalKnownItems ? {
           orderId: resolvedOrderId,
           timestamp: res.timestamp || res.updatedAt || todayISO(),
           fulfillmentType: 'Pickup',
           memberName: res.memberName || '',
+          paymentType: res.paymentType || 'Member Account',
           memberNumber,
           items: res.items || [],
           itemsSummary: res.itemsSummary || '',
@@ -1293,7 +1352,7 @@ function TruckOrderPage() {
           subtotalKnownItems: res.subtotalKnownItems || 0
         } : null
       };
-      setForm(prev => ({ ...prev, memberName: saved.memberName || prev.memberName, memberNumber }));
+      setForm(prev => ({ ...prev, memberName: saved.memberName || prev.memberName, memberNumber, paymentType: saved.paymentType }));
       setConfirmation({ orderId: resolvedOrderId, chit: saved.chit });
       setLiveStatus(saved.status);
       setReadyAt(nextReadyAt);
@@ -1337,6 +1396,7 @@ function TruckOrderPage() {
     const ready = ['Ready for Pickup', 'Completed'].includes(liveStatus);
     const memberStatus = memberTruckStatus(liveStatus || 'New');
     const chit = confirmation.chit || readSavedTruckConfirmation()?.chit;
+    const confirmationIsGuest = form.paymentType === 'Guest Pay at Pickup' || chit?.paymentType === 'Guest Pay at Pickup';
     return (
       <div className="stack memberStack truckMember">
         {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
@@ -1348,7 +1408,8 @@ function TruckOrderPage() {
           </div>
           <CheckCircle size={34} />
           <h2>{memberStatus}</h2>
-          <p>Your order has been received. Please pick up your order at The Turn Truck when this screen shows Ready for Pickup.</p>
+          <p>{confirmationIsGuest ? 'Your guest order has been received. Staff will collect payment at pickup.' : 'Your order has been received. Please pick up your order at The Turn Truck when this screen shows Ready for Pickup.'}</p>
+          {confirmationIsGuest && <div className="paymentDueNotice"><strong>Guest payment required at pickup.</strong> Staff will collect payment before handing off the order.</div>}
           <div className="statusPanel">
             <span>Current Status</span>
             <strong>{memberStatus}</strong>
@@ -1391,7 +1452,7 @@ function TruckOrderPage() {
         <div>
           <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
           <h2>The Turn Truck</h2>
-          <p>Order from the golf course and charge it to your member account. Pickup only.</p>
+          <p>Order from the golf course. Members can charge their account, and guests can pay at pickup.</p>
         </div>
         <div className="truckHeroCartWrap" aria-hidden="true">
           <img src="/turn-truck-golf-cart.png" alt="" className="truckHeroCart" />
@@ -1399,14 +1460,39 @@ function TruckOrderPage() {
       </section>
 
       <section className="card">
-        <div className="sectionKicker"><UserRound size={15} /> Member details</div>
-        <h2>Member Information</h2>
-        <label>Member Name
+        <div className="sectionKicker"><ShieldCheck size={15} /> Payment</div>
+        <h2>How will this be paid?</h2>
+        <div className="choiceGrid">
+          <button
+            className={form.paymentType === 'Member Account' ? 'choiceCard activeChoice' : 'choiceCard'}
+            onClick={() => setField('paymentType', 'Member Account')}
+            type="button"
+          >
+            <strong>Member Account</strong>
+            <span>Charge this order to a verified member account.</span>
+          </button>
+          <button
+            className={form.paymentType === 'Guest Pay at Pickup' ? 'choiceCard activeChoice guestChoice' : 'choiceCard guestChoice'}
+            onClick={() => setField('paymentType', 'Guest Pay at Pickup')}
+            type="button"
+          >
+            <strong>Guest - Pay at Pickup</strong>
+            <span>Staff will collect credit card payment before handing off the order.</span>
+          </button>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
+        <h2>{isGuestPayment ? 'Guest Information' : 'Member Information'}</h2>
+        <label>{isGuestPayment ? 'Guest Name' : 'Member Name'}
           <input value={form.memberName} onChange={event => setField('memberName', event.target.value)} placeholder="First and last name" />
         </label>
-        <label>Member Number
-          <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
-        </label>
+        {!isGuestPayment && (
+          <label>Member Number
+            <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+          </label>
+        )}
         <label>Mobile Number
           <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 917-207-6562" />
           <span className="fieldHint">Required so truck staff can contact you if there is a question.</span>
@@ -1482,7 +1568,9 @@ function TruckOrderPage() {
 
         <label className="check">
           <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />
-          <span>I authorize this food truck order to be charged to the member account listed above.</span>
+          <span>{isGuestPayment
+            ? 'I understand this guest order requires credit card payment at pickup before the order is released.'
+            : 'I authorize this food truck order to be charged to the member account listed above.'}</span>
         </label>
 
         {truckHasAlcohol && (
@@ -1762,13 +1850,14 @@ function AdminPage({ onBackToOrder }) {
   }
 
   function formatOrder(order) {
+    const guestPayment = isGuestOrder(order);
     return [
       `Status: ${order.status}`,
       `Time: ${order.timestamp}`,
       `Service: ${order.fulfillmentType || 'Pickup'}`,
       `Table: ${order.tableNumber || '—'}`,
-      `Member: ${order.memberName}`,
-      `Member #: ${order.memberNumber}`,
+      `${guestPayment ? 'Guest' : 'Member'}: ${order.memberName}`,
+      guestPayment ? `Payment: GUEST PAYMENT REQUIRED AT PICKUP` : `Member #: ${order.memberNumber}`,
       `Phone: ${order.phone}`,
       ``,
       `Items:`,
@@ -1776,6 +1865,7 @@ function AdminPage({ onBackToOrder }) {
       order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
       ``,
       `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
+      guestPayment ? `Payment Status: ${order.paymentStatus || 'Due at Pickup'}` : '',
       `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`,
       `POS Posted: ${order.posPosted ? 'YES' : 'No'}`
     ].join('\n');
@@ -1882,6 +1972,7 @@ function AdminPage({ onBackToOrder }) {
           ? `Pickup · Table ${order.tableNumber}`
           : 'Pickup at Bar';
     const lines = itemLines(order);
+    const guestPayment = isGuestOrder(order);
 
     return (
       <article className={`staffOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
@@ -1892,10 +1983,11 @@ function AdminPage({ onBackToOrder }) {
         <div className="staffOrderMember">
           <h3>{order.memberName || 'Member'}</h3>
           <div className="staffMemberLine">
-            <span>Member #{order.memberNumber}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
+          {guestPayment && <div className="paymentDueBadge">Collect card payment at pickup</div>}
         </div>
 
         <div className="staffItems">
@@ -2278,6 +2370,7 @@ function TruckAdminPage({ onBackToOrder }) {
   function renderTruckOrderCard(order, tone) {
     const action = truckAction(order);
     const isUpdating = updatingStatus?.orderId === order.orderId;
+    const guestPayment = isGuestOrder(order);
     return (
       <article className={`staffOrderCard truckOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
         <div className="staffOrderHead">
@@ -2287,9 +2380,10 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffOrderMember">
           <h3>{order.memberName || 'Member'}</h3>
           <div className="staffMemberLine">
-            <span>Member #{order.memberNumber}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
+          {guestPayment && <div className="paymentDueBadge">Collect card payment at pickup</div>}
         </div>
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
@@ -2728,7 +2822,7 @@ export default function App() {
       {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
       {mode === 'truck' && <TruckOrderPage />}
       {mode === 'order' && <OrderPage />}
-      {mode !== 'admin' && mode !== 'truck-admin' && <footer>Member-account ordering only. No online payment processing.</footer>}
+      {mode !== 'admin' && mode !== 'truck-admin' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
     </main>
   );
 }

@@ -126,6 +126,7 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .choiceCard strong { color: var(--green); font-size: 17px; }
 .choiceCard span { color: var(--muted); line-height: 1.28; font-size: 13px; }
 .activeChoice { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 61, 45, .10); background: #f4f8f1; }
+.guestChoice.activeChoice { border-color: #8A5A0A; background: #FEF3E2; box-shadow: 0 0 0 3px rgba(138, 90, 10, .12); }
 .serviceNotice { margin-top: 10px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.35; font-weight: 750; }
 .serviceBanner { display: flex; align-items: center; gap: 9px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 12px; padding: 11px 12px; font-size: 13px; line-height: 1.35; font-weight: 850; }
 .serviceBanner.closed { border-color: #e7b8aa; background: #fff2ed; color: var(--danger); }
@@ -137,6 +138,9 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .statusCard { gap: 12px; }
 .confirmationActions { display: grid; gap: 8px; }
 .confirmationActions .primaryButton { margin-top: 0; }
+.paymentDueNotice, .paymentDueBadge { border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; font-weight: 900; }
+.paymentDueNotice { width: 100%; padding: 11px 12px; font-size: 13px; text-align: left; }
+.paymentDueBadge { display: inline-flex; width: fit-content; margin-top: 9px; padding: 5px 9px; font-size: 11px; }
 .orderNumHeader { background: #F2F9F4; border-radius: 10px; padding: 14px; text-align: center; display: grid; gap: 2px; width: 100%; margin-bottom: 2px; }
 .orderNumHeader span { color: #5A9B6A; font-size: 11px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
 .orderNumHeader strong { color: var(--deep-green); font-size: 28px; line-height: 1; }

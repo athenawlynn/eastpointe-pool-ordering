@@ -1,1 +1,1 @@
-Timestamp,OrderID,Status,MemberName,MemberNumber,Phone,ItemsSummary,ItemsJSON,SubtotalKnownItems,AuthorizationAccepted,AlcoholIncluded,AlcoholVerificationAccepted,StaffNotes,UpdatedAt,CompletedAt,POSPosted,POSPostedAt,POSPostedBy
+Timestamp,OrderID,Status,MemberName,MemberNumber,Phone,ItemsSummary,ItemsJSON,SubtotalKnownItems,AuthorizationAccepted,AlcoholIncluded,AlcoholVerificationAccepted,StaffNotes,UpdatedAt,CompletedAt,POSPosted,POSPostedAt,POSPostedBy,PaymentType,PaymentStatus

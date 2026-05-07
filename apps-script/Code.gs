@@ -18,7 +18,8 @@ const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
 const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrderingOpen'];
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
 const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
-const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'AlcoholIncluded', 'AlcoholVerificationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
+const PAYMENT_COLUMNS = ['PaymentType', 'PaymentStatus'];
+const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'AlcoholIncluded', 'AlcoholVerificationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy', 'PaymentType', 'PaymentStatus'];
 
 /**
  * Optional SMS texting through Twilio.
@@ -279,7 +280,7 @@ function routeOrder(order, items) {
 function ensureOrderColumns(sheet) {
   const values = sheet.getDataRange().getValues();
   const headers = values[0].map(h => String(h).trim());
-  STATION_COLUMNS.forEach(column => {
+  STATION_COLUMNS.concat(PAYMENT_COLUMNS).forEach(column => {
     if (!headers.includes(column)) {
       sheet.getRange(1, headers.length + 1).setValue(column);
       headers.push(column);
@@ -447,10 +448,12 @@ function createOrder(order) {
   if (!isOrderingOpen()) {
     throw new Error('Pool ordering is currently closed. Please order directly at the Pool Bar.');
   }
-  validateMemberNumber(order.memberNumber);
-  if (!String(order.memberName || '').trim()) throw new Error('Member name is required.');
+  const paymentType = order.paymentType === 'Guest Pay at Pickup' ? 'Guest Pay at Pickup' : 'Member Account';
+  const paymentStatus = paymentType === 'Guest Pay at Pickup' ? 'Due at Pickup' : 'Member Account';
+  if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
+  if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
-  if (!order.authorizationAccepted) throw new Error('Charge authorization is required.');
+  if (!order.authorizationAccepted) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest payment acknowledgement is required.' : 'Charge authorization is required.');
   if (order.alcoholIncluded && !order.alcoholVerificationAccepted) {
     throw new Error('Alcohol verification acknowledgement is required.');
   }
@@ -518,7 +521,9 @@ function createOrder(order) {
       '',
       false,
       '',
-      ''
+      '',
+      paymentType,
+      paymentStatus
     ]);
   } finally {
     lock.releaseLock();
@@ -563,10 +568,12 @@ function createTruckOrder(order) {
   if (!isTruckOrderingOpen()) {
     throw new Error('Food truck ordering is currently closed. Please order directly at the truck.');
   }
-  validateMemberNumber(order.memberNumber);
-  if (!String(order.memberName || '').trim()) throw new Error('Member name is required.');
+  const paymentType = order.paymentType === 'Guest Pay at Pickup' ? 'Guest Pay at Pickup' : 'Member Account';
+  const paymentStatus = paymentType === 'Guest Pay at Pickup' ? 'Due at Pickup' : 'Member Account';
+  if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
+  if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
-  if (!order.authorizationAccepted) throw new Error('Charge authorization is required.');
+  if (!order.authorizationAccepted) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest payment acknowledgement is required.' : 'Charge authorization is required.');
 
   const incomingItems = Array.isArray(order.items) ? order.items : [];
   const items = validateTruckItems(incomingItems);
@@ -604,7 +611,9 @@ function createTruckOrder(order) {
       '',
       false,
       '',
-      ''
+      '',
+      paymentType,
+      paymentStatus
     ]);
   } finally {
     lock.releaseLock();
@@ -632,6 +641,8 @@ function getOrders() {
       orderId: String(row.OrderID || ''),
       status: derivedStatus,
       fulfillmentType: String(row.FulfillmentType || 'Pickup'),
+      paymentType: String(row.PaymentType || 'Member Account'),
+      paymentStatus: String(row.PaymentStatus || ''),
       memberName: String(row.MemberName || ''),
       memberNumber: String(row.MemberNumber || ''),
       phone: String(row.Phone || ''),
@@ -666,6 +677,8 @@ function normalizeTruckOrder(row) {
     timestamp: row.Timestamp ? new Date(row.Timestamp).toLocaleString() : '',
     orderId: String(row.OrderID || ''),
     status: String(row.Status || 'New'),
+    paymentType: String(row.PaymentType || 'Member Account'),
+    paymentStatus: String(row.PaymentStatus || ''),
     memberName: String(row.MemberName || ''),
     memberNumber: String(row.MemberNumber || ''),
     phone: String(row.Phone || ''),
@@ -706,6 +719,9 @@ function getOrderStatus(orderId, memberNumber) {
     orderId: String(order.OrderID || ''),
     status: derivedStatus,
     fulfillmentType: String(order.FulfillmentType || 'Pickup'),
+    paymentType: String(order.PaymentType || 'Member Account'),
+    paymentStatus: String(order.PaymentStatus || ''),
+    memberName: String(order.MemberName || ''),
     tableNumber: String(order.TableNumber || ''),
     updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
     completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
@@ -727,6 +743,9 @@ function orderStatusPayload(order) {
     orderId: String(order.OrderID || ''),
     status: derivedStatus,
     fulfillmentType: String(order.FulfillmentType || 'Pickup'),
+    paymentType: String(order.PaymentType || 'Member Account'),
+    paymentStatus: String(order.PaymentStatus || ''),
+    memberName: String(order.MemberName || ''),
     tableNumber: String(order.TableNumber || ''),
     updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
     completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
@@ -761,6 +780,9 @@ function truckStatusPayload(order) {
   return {
     orderId: String(order.OrderID || ''),
     status: String(order.Status || 'New'),
+    paymentType: String(order.PaymentType || 'Member Account'),
+    paymentStatus: String(order.PaymentStatus || ''),
+    memberName: String(order.MemberName || ''),
     updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
     completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
   };
@@ -1083,14 +1105,15 @@ function normalizePhoneNumber(phone) {
 function sendOrderEmail(order) {
   const settings = getSettingsObject();
   const staffEmail = settings.StaffEmail || STAFF_EMAIL_FALLBACK;
+  const guestPayment = order.paymentType === 'Guest Pay at Pickup';
   const subject = `New Pool Order #${order.orderId} — Table ${order.tableNumber}`;
   const body = [
     `New Pool Order #${order.orderId}`,
     ``,
     `Service: ${order.fulfillmentType || 'Pickup'}`,
     `Table: ${order.tableNumber || '—'}`,
-    `Member: ${order.memberName}`,
-    `Member #: ${order.memberNumber}`,
+    `${guestPayment ? 'Guest' : 'Member'}: ${order.memberName}`,
+    guestPayment ? `Payment: GUEST PAYMENT REQUIRED AT PICKUP` : `Member #: ${order.memberNumber}`,
     `Phone: ${order.phone}`,
     ``,
     `Items:`,
@@ -1098,6 +1121,7 @@ function sendOrderEmail(order) {
     order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
     ``,
     `Known subtotal: $${Number(order.subtotalKnownItems || 0).toFixed(2)}`,
+    guestPayment ? `Collect card payment before handoff.` : '',
     order.hasCustomBarRequest ? `Custom bar request pricing to be entered in club POS.` : '',
     `Alcohol included: ${order.alcoholIncluded ? 'YES' : 'No'}`,
     ``,

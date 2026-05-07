@@ -138,10 +138,12 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .statusCard { gap: 12px; }
 .confirmationActions { display: grid; gap: 8px; }
 .confirmationActions .primaryButton { margin-top: 0; }
-.paymentDueNotice, .paymentDueBadge { border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; font-weight: 900; }
+.paymentDueNotice { border: 1px solid #e7b8aa; background: #fff2ed; color: var(--danger); border-radius: 10px; font-weight: 900; }
+.paymentDueBadge { border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; font-weight: 900; }
 .paymentDueNotice { width: 100%; padding: 11px 12px; font-size: 13px; text-align: left; }
 .paymentDueBadge { display: inline-flex; width: fit-content; margin-top: 9px; padding: 5px 9px; font-size: 11px; }
-.guestPaymentCard { border-color: #E8C36F; background: #FFFDF9; }
+.guestPaymentCheckout { display: grid; gap: 10px; margin: 14px 0 4px; padding: 13px; border: 1px solid #E8C36F; border-radius: 10px; background: #FFFDF9; }
+.guestPaymentCheckout h3 { margin: 0; color: var(--ink); font-size: 17px; }
 .segmentedOptions { display: flex; flex-wrap: wrap; gap: 7px; }
 .segment { min-height: 36px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--muted); padding: 8px 11px; font-size: 12px; font-weight: 900; }
 .segment.active { border-color: var(--deep-green); background: var(--deep-green); color: white; }

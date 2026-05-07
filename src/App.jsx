@@ -1068,59 +1068,6 @@ function OrderPage() {
         </div>
       </section>
 
-      {isGuestPayment && (
-        <section className="card guestPaymentCard">
-          <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
-          <h2>Card at Pickup</h2>
-          <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
-          <label>Card Type
-            <div className="segmentedOptions">
-              {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
-                <button
-                  key={type}
-                  className={form.guestCardType === type ? 'segment active' : 'segment'}
-                  onClick={() => setField('guestCardType', type)}
-                  type="button"
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </label>
-          <label>Tip <span className="optionalText">Optional</span>
-            <div className="segmentedOptions">
-              {[
-                { label: '18%', value: '18' },
-                { label: '20%', value: '20' },
-                { label: '22%', value: '22' },
-                { label: 'Custom', value: 'custom' },
-                { label: 'No Tip', value: '0' }
-              ].map(option => (
-                <button
-                  key={option.value}
-                  className={form.tipChoice === option.value ? 'segment active' : 'segment'}
-                  onClick={() => setField('tipChoice', option.value)}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </label>
-          {form.tipChoice === 'custom' && (
-            <label>Custom Tip
-              <input inputMode="decimal" value={form.customTip} onChange={e => setField('customTip', e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
-            </label>
-          )}
-          <div className="guestTotalBox">
-            <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
-            <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
-            <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
-          </div>
-          <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
-        </section>
-      )}
-
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
         <h2>{isGuestPayment ? 'Guest Information' : 'Member Information'}</h2>
@@ -1213,6 +1160,59 @@ function OrderPage() {
               <span>Known subtotal</span>
               <strong>{currency(subtotal)}</strong>
             </div>
+          </div>
+        )}
+
+        {isGuestPayment && (
+          <div className="guestPaymentCheckout">
+            <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
+            <h3>Card at Pickup</h3>
+            <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
+            <label>Card Type
+              <div className="segmentedOptions">
+                {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                  <button
+                    key={type}
+                    className={form.guestCardType === type ? 'segment active' : 'segment'}
+                    onClick={() => setField('guestCardType', type)}
+                    type="button"
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <label>Tip <span className="optionalText">Optional</span>
+              <div className="segmentedOptions">
+                {[
+                  { label: '18%', value: '18' },
+                  { label: '20%', value: '20' },
+                  { label: '22%', value: '22' },
+                  { label: 'Custom', value: 'custom' },
+                  { label: 'No Tip', value: '0' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    className={form.tipChoice === option.value ? 'segment active' : 'segment'}
+                    onClick={() => setField('tipChoice', option.value)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+            {form.tipChoice === 'custom' && (
+              <label>Custom Tip
+                <input inputMode="decimal" value={form.customTip} onChange={e => setField('customTip', e.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
+              </label>
+            )}
+            <div className="guestTotalBox">
+              <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+              <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
+              <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+            </div>
+            <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
           </div>
         )}
 
@@ -1575,59 +1575,6 @@ function TruckOrderPage() {
         </div>
       </section>
 
-      {isGuestPayment && (
-        <section className="card guestPaymentCard">
-          <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
-          <h2>Card at Pickup</h2>
-          <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
-          <label>Card Type
-            <div className="segmentedOptions">
-              {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
-                <button
-                  key={type}
-                  className={form.guestCardType === type ? 'segment active' : 'segment'}
-                  onClick={() => setField('guestCardType', type)}
-                  type="button"
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </label>
-          <label>Tip <span className="optionalText">Optional</span>
-            <div className="segmentedOptions">
-              {[
-                { label: '18%', value: '18' },
-                { label: '20%', value: '20' },
-                { label: '22%', value: '22' },
-                { label: 'Custom', value: 'custom' },
-                { label: 'No Tip', value: '0' }
-              ].map(option => (
-                <button
-                  key={option.value}
-                  className={form.tipChoice === option.value ? 'segment active' : 'segment'}
-                  onClick={() => setField('tipChoice', option.value)}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </label>
-          {form.tipChoice === 'custom' && (
-            <label>Custom Tip
-              <input inputMode="decimal" value={form.customTip} onChange={event => setField('customTip', event.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
-            </label>
-          )}
-          <div className="guestTotalBox">
-            <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
-            <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
-            <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
-          </div>
-          <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
-        </section>
-      )}
-
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
         <h2>{isGuestPayment ? 'Guest Information' : 'Member Information'}</h2>
@@ -1700,6 +1647,59 @@ function TruckOrderPage() {
               <span>Known subtotal</span>
               <strong>{currency(subtotal)}</strong>
             </div>
+          </div>
+        )}
+
+        {isGuestPayment && (
+          <div className="guestPaymentCheckout">
+            <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
+            <h3>Card at Pickup</h3>
+            <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
+            <label>Card Type
+              <div className="segmentedOptions">
+                {['Visa', 'Mastercard', 'Amex', 'Other'].map(type => (
+                  <button
+                    key={type}
+                    className={form.guestCardType === type ? 'segment active' : 'segment'}
+                    onClick={() => setField('guestCardType', type)}
+                    type="button"
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </label>
+            <label>Tip <span className="optionalText">Optional</span>
+              <div className="segmentedOptions">
+                {[
+                  { label: '18%', value: '18' },
+                  { label: '20%', value: '20' },
+                  { label: '22%', value: '22' },
+                  { label: 'Custom', value: 'custom' },
+                  { label: 'No Tip', value: '0' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    className={form.tipChoice === option.value ? 'segment active' : 'segment'}
+                    onClick={() => setField('tipChoice', option.value)}
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </label>
+            {form.tipChoice === 'custom' && (
+              <label>Custom Tip
+                <input inputMode="decimal" value={form.customTip} onChange={event => setField('customTip', event.target.value.replace(/[^\d.]/g, ''))} placeholder="0.00" />
+              </label>
+            )}
+            <div className="guestTotalBox">
+              <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+              <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
+              <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+            </div>
+            <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
           </div>
         )}
 

@@ -15,7 +15,7 @@
 const SPREADSHEET_ID = '1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0';
 const ADMIN_KEY = 'EastpointeTest2026!';
 const STAFF_EMAIL_FALLBACK = 'athenawlynn@gmail.com';
-const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrderingOpen'];
+const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrderingOpen', 'MemberTipsEnabled', 'TruckMemberTipsEnabled', 'OrderingScheduleEnabled', 'OrderingOpenTime', 'OrderingCloseTime', 'TruckOrderingScheduleEnabled', 'TruckOrderingOpenTime', 'TruckOrderingCloseTime'];
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
 const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
 const PAYMENT_COLUMNS = ['PaymentType', 'PaymentStatus', 'GuestCardType', 'TipLabel', 'TipAmount', 'EstimatedTotal'];
@@ -93,12 +93,34 @@ function isDeliveryAvailable() {
 
 function isOrderingOpen() {
   const settings = getSettingsObject();
+  const scheduled = scheduleOpenNow(settings, '');
+  if (scheduled !== null) return scheduled;
   return String(settings.OrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
 }
 
 function isTruckOrderingOpen() {
   const settings = getSettingsObject();
+  const scheduled = scheduleOpenNow(settings, 'Truck');
+  if (scheduled !== null) return scheduled;
   return String(settings.TruckOrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
+}
+
+function normalizeTimeSetting(value, fallback) {
+  const raw = String(value || fallback || '').trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  return match[1].padStart(2, '0') + ':' + match[2];
+}
+
+function scheduleOpenNow(settings, prefix) {
+  const enabledKey = prefix ? prefix + 'OrderingScheduleEnabled' : 'OrderingScheduleEnabled';
+  if (String(settings[enabledKey] || 'TRUE').toUpperCase() === 'FALSE') return null;
+  const openKey = prefix ? prefix + 'OrderingOpenTime' : 'OrderingOpenTime';
+  const closeKey = prefix ? prefix + 'OrderingCloseTime' : 'OrderingCloseTime';
+  const open = normalizeTimeSetting(settings[openKey], '08:30');
+  const close = normalizeTimeSetting(settings[closeKey], '16:30');
+  const now = Utilities.formatDate(new Date(), 'America/New_York', 'HH:mm');
+  return now >= open && now < close;
 }
 
 function updateSetting(key, value) {
@@ -450,10 +472,12 @@ function createOrder(order) {
   }
   const paymentType = order.paymentType === 'Guest Pay at Pickup' ? 'Guest Pay at Pickup' : 'Member Account';
   const paymentStatus = paymentType === 'Guest Pay at Pickup' ? 'Due at Pickup' : 'Member Account';
+  const settings = getSettingsObject();
+  const tipsEnabled = paymentType === 'Guest Pay at Pickup' || String(settings.MemberTipsEnabled || 'TRUE').toUpperCase() !== 'FALSE';
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
-  const tipAmount = paymentType === 'Guest Pay at Pickup' ? Math.max(0, Number(order.tipAmount || 0)) : 0;
-  const tipLabel = paymentType === 'Guest Pay at Pickup' ? String(order.tipLabel || 'No tip').trim() : '';
-  const estimatedTotal = paymentType === 'Guest Pay at Pickup' ? Number(order.subtotalKnownItems || 0) + tipAmount : Number(order.subtotalKnownItems || 0);
+  const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
+  const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
+  const estimatedTotal = Number(order.subtotalKnownItems || 0) + tipAmount;
   if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
   if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
@@ -579,10 +603,12 @@ function createTruckOrder(order) {
   }
   const paymentType = order.paymentType === 'Guest Pay at Pickup' ? 'Guest Pay at Pickup' : 'Member Account';
   const paymentStatus = paymentType === 'Guest Pay at Pickup' ? 'Due at Pickup' : 'Member Account';
+  const settings = getSettingsObject();
+  const tipsEnabled = paymentType === 'Guest Pay at Pickup' || String(settings.TruckMemberTipsEnabled || 'TRUE').toUpperCase() !== 'FALSE';
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
-  const tipAmount = paymentType === 'Guest Pay at Pickup' ? Math.max(0, Number(order.tipAmount || 0)) : 0;
-  const tipLabel = paymentType === 'Guest Pay at Pickup' ? String(order.tipLabel || 'No tip').trim() : '';
-  const estimatedTotal = paymentType === 'Guest Pay at Pickup' ? Number(order.subtotalKnownItems || 0) + tipAmount : Number(order.subtotalKnownItems || 0);
+  const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
+  const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
+  const estimatedTotal = Number(order.subtotalKnownItems || 0) + tipAmount;
   if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
   if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
@@ -1160,8 +1186,8 @@ function sendOrderEmail(order) {
     ``,
     `Known subtotal: $${Number(order.subtotalKnownItems || 0).toFixed(2)}`,
     guestPayment ? `Card type: ${order.guestCardType || 'Not selected'}` : '',
-    guestPayment ? `Tip: ${order.tipLabel || 'No tip'}${Number(order.tipAmount || 0) > 0 ? ' ($' + Number(order.tipAmount || 0).toFixed(2) + ')' : ''}` : '',
-    guestPayment ? `Estimated total: $${Number(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0)).toFixed(2)}` : '',
+    Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} ($${Number(order.tipAmount || 0).toFixed(2)})` : '',
+    Number(order.tipAmount || 0) > 0 || guestPayment ? `${guestPayment ? 'Estimated total' : 'Total with tip'}: $${Number(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0)).toFixed(2)}` : '',
     guestPayment ? `Collect physical credit card before handoff. Do not release without payment.` : '',
     order.hasCustomBarRequest ? `Custom bar request pricing to be entered in club POS.` : '',
     `Alcohol included: ${order.alcoholIncluded ? 'YES' : 'No'}`,

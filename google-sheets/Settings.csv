@@ -2,6 +2,10 @@ SettingKey,SettingValue
 ClubName,Eastpointe Country Club
 OrderingOpen,TRUE
 DeliveryAvailable,TRUE
+MemberTipsEnabled,TRUE
+OrderingScheduleEnabled,TRUE
+OrderingOpenTime,08:30
+OrderingCloseTime,16:30
 PickupLocation,Pool Bar
 StaffEmail,athenawlynn@gmail.com
 MaxTableNumber,100
@@ -9,3 +13,7 @@ CustomBarPricingNotice,Custom bar requests will be priced according to standard 
 SendReadyTexts,FALSE
 ReadyTextMessage,Eastpointe Country Club: Your pool order #{{ORDER_ID}} is ready for pickup at {{PICKUP_LOCATION}}. Please provide your name/member number at pickup.
 TruckOrderingOpen,TRUE
+TruckMemberTipsEnabled,TRUE
+TruckOrderingScheduleEnabled,TRUE
+TruckOrderingOpenTime,08:30
+TruckOrderingCloseTime,16:30

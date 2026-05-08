@@ -98,6 +98,7 @@ function printCustomerChit(order, onBlocked) {
   const isGuestPayment = order.paymentType === 'Guest Pay at Pickup';
   const tipAmount = Number(order.tipAmount || 0);
   const totalWithTip = Number(order.subtotalKnownItems || 0) + tipAmount;
+  const hasTip = tipAmount > 0;
   w.document.write(`
     <html>
       <head>
@@ -122,7 +123,7 @@ function printCustomerChit(order, onBlocked) {
         <table>${rows}</table>
         ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
         <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
-        ${isGuestPayment ? `<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p><p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p><p><strong>Estimated total: ${escapeHtml(currency(totalWithTip))}</strong></p>` : ''}
+        ${isGuestPayment ? `<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p><p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p><p><strong>Estimated total: ${escapeHtml(currency(totalWithTip))}</strong></p>` : hasTip ? `<h2>Tip</h2><p>Tip: ${escapeHtml(order.tipLabel || 'Custom')} (${escapeHtml(currency(tipAmount))})</p><p><strong>Total with tip: ${escapeHtml(currency(totalWithTip))}</strong></p>` : ''}
         <p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>
       </body>
     </html>
@@ -226,15 +227,15 @@ function isGuestOrder(order) {
   return order?.paymentType === 'Guest Pay at Pickup' || order?.paymentStatus === 'Due at Pickup';
 }
 
-function guestTipOrdersToday(orders) {
+function tipOrdersToday(orders) {
   return orders.filter(order =>
-    isGuestOrder(order) &&
+    Number(order.tipAmount || 0) > 0 &&
     isOrderToday(order) &&
     order.status !== 'Cancelled'
   );
 }
 
-function sumGuestTips(orders) {
+function sumTips(orders) {
   return orders.reduce((sum, order) => sum + Number(order.tipAmount || 0), 0);
 }
 
@@ -302,6 +303,38 @@ function settingEnabled(settings, key, fallback = true) {
   const value = settings?.[key];
   if (value === undefined || value === null || value === '') return fallback;
   return String(value).toUpperCase() !== 'FALSE';
+}
+
+function settingValue(settings, key, fallback = '') {
+  const value = settings?.[key];
+  return value === undefined || value === null || value === '' ? fallback : String(value);
+}
+
+function timeInputValue(settings, key, fallback) {
+  const raw = settingValue(settings, key, fallback);
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return fallback;
+  return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+function scheduleIsOpen(settings, prefix = '') {
+  const enabled = settingEnabled(settings, `${prefix}OrderingScheduleEnabled`, true);
+  if (!enabled) return null;
+  const open = timeInputValue(settings, `${prefix}OrderingOpenTime`, '08:30');
+  const close = timeInputValue(settings, `${prefix}OrderingCloseTime`, '16:30');
+  const now = new Date().toLocaleTimeString('en-US', {
+    timeZone: 'America/New_York',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  return now >= open && now < close;
+}
+
+function effectiveOrderingOpen(settings, key = 'OrderingOpen', prefix = '') {
+  const scheduledOpen = scheduleIsOpen(settings, prefix);
+  if (scheduledOpen !== null) return scheduledOpen;
+  return settingEnabled(settings, key, true);
 }
 
 function sleep(ms) {
@@ -726,11 +759,13 @@ function OrderPage() {
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const hasAlcohol = selectedItems.some(i => i.alcoholic) || form.barRequest.trim().length > 0;
   const hasBarRequest = form.barRequest.trim().length > 0;
-  const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
+  const orderingOpen = effectiveOrderingOpen(settings, 'OrderingOpen', '');
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
-  const guestTip = tipDetails(subtotal, form.tipChoice, form.customTip);
-  const guestTotal = subtotal + guestTip.amount;
+  const memberTipsEnabled = settingEnabled(settings, 'MemberTipsEnabled', true);
+  const showTipSection = isGuestPayment || memberTipsEnabled;
+  const checkoutTip = tipDetails(subtotal, form.tipChoice, form.customTip);
+  const checkoutTotal = subtotal + checkoutTip.amount;
 
   useEffect(() => {
     if (!loading && !confirmation && !deliveryAvailable && form.fulfillmentType === 'Delivery') {
@@ -789,9 +824,9 @@ function OrderPage() {
           paymentType: form.paymentType,
           paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
           guestCardType: isGuestPayment ? form.guestCardType : '',
-          tipAmount: isGuestPayment ? guestTip.amount : 0,
-          tipLabel: isGuestPayment ? guestTip.label : '',
-          estimatedTotal: isGuestPayment ? guestTotal : subtotal,
+          tipAmount: showTipSection ? checkoutTip.amount : 0,
+          tipLabel: showTipSection ? checkoutTip.label : '',
+          estimatedTotal: showTipSection ? checkoutTotal : subtotal,
           memberName: form.memberName.trim(),
           memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
@@ -828,7 +863,7 @@ function OrderPage() {
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         paymentType: form.paymentType,
         guestCardType: isGuestPayment ? form.guestCardType : '',
-        tipChoice: isGuestPayment ? form.tipChoice : '0',
+        tipChoice: showTipSection ? form.tipChoice : '0',
         fulfillmentType: form.fulfillmentType,
         tableNumber: form.tableNumber.trim(),
         chit
@@ -1175,25 +1210,29 @@ function OrderPage() {
           </div>
         )}
 
-        {isGuestPayment && (
+        {showTipSection && (
           <div className="guestPaymentCheckout">
-            <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
-            <h3>Card at Pickup</h3>
-            <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
-            <label>Card Type
-              <div className="segmentedOptions">
-                {['Visa', 'Mastercard', 'Amex'].map(type => (
-                  <button
-                    key={type}
-                    className={form.guestCardType === type ? 'segment active' : 'segment'}
-                    onClick={() => setField('guestCardType', type)}
-                    type="button"
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </label>
+            <div className="sectionKicker"><ShieldCheck size={15} /> {isGuestPayment ? 'Guest payment' : 'Tip'}</div>
+            <h3>{isGuestPayment ? 'Card at Pickup' : 'Add a Tip'}</h3>
+            {isGuestPayment
+              ? <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup or handoff.</p>
+              : <p className="hint">Optional tip to add to the member account charge.</p>}
+            {isGuestPayment && (
+              <label>Card Type
+                <div className="segmentedOptions">
+                  {['Visa', 'Mastercard', 'Amex'].map(type => (
+                    <button
+                      key={type}
+                      className={form.guestCardType === type ? 'segment active' : 'segment'}
+                      onClick={() => setField('guestCardType', type)}
+                      type="button"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </label>
+            )}
             <label>Tip <span className="optionalText">Optional</span>
               <div className="segmentedOptions">
                 {[
@@ -1221,10 +1260,10 @@ function OrderPage() {
             )}
             <div className="guestTotalBox">
               <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
-              <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
-              <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+              <span>Tip</span><strong>{currency(checkoutTip.amount)}</strong>
+              <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
             </div>
-            <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
+            {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
           </div>
         )}
 
@@ -1314,10 +1353,12 @@ function TruckOrderPage() {
     .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [orderedTruckMenu, quantities]);
   const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
-  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+  const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
-  const guestTip = tipDetails(subtotal, form.tipChoice, form.customTip);
-  const guestTotal = subtotal + guestTip.amount;
+  const memberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
+  const showTipSection = isGuestPayment || memberTipsEnabled;
+  const checkoutTip = tipDetails(subtotal, form.tipChoice, form.customTip);
+  const checkoutTotal = subtotal + checkoutTip.amount;
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -1359,9 +1400,9 @@ function TruckOrderPage() {
           paymentType: form.paymentType,
           paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
           guestCardType: isGuestPayment ? form.guestCardType : '',
-          tipAmount: isGuestPayment ? guestTip.amount : 0,
-          tipLabel: isGuestPayment ? guestTip.label : '',
-          estimatedTotal: isGuestPayment ? guestTotal : subtotal,
+          tipAmount: showTipSection ? checkoutTip.amount : 0,
+          tipLabel: showTipSection ? checkoutTip.label : '',
+          estimatedTotal: showTipSection ? checkoutTotal : subtotal,
           memberName: form.memberName.trim(),
           memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
@@ -1385,9 +1426,9 @@ function TruckOrderPage() {
         paymentType: form.paymentType,
         paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
         guestCardType: isGuestPayment ? form.guestCardType : '',
-        tipAmount: isGuestPayment ? guestTip.amount : 0,
-        tipLabel: isGuestPayment ? guestTip.label : '',
-        estimatedTotal: isGuestPayment ? guestTotal : subtotal,
+        tipAmount: showTipSection ? checkoutTip.amount : 0,
+        tipLabel: showTipSection ? checkoutTip.label : '',
+        estimatedTotal: showTipSection ? checkoutTotal : subtotal,
         memberName: form.memberName.trim(),
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         items: selectedItems.map(item => ({
@@ -1407,7 +1448,7 @@ function TruckOrderPage() {
         memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
         paymentType: form.paymentType,
         guestCardType: isGuestPayment ? form.guestCardType : '',
-        tipChoice: isGuestPayment ? form.tipChoice : '0',
+        tipChoice: showTipSection ? form.tipChoice : '0',
         chit
       };
       setConfirmation({ orderId: res.orderId, chit });
@@ -1662,25 +1703,29 @@ function TruckOrderPage() {
           </div>
         )}
 
-        {isGuestPayment && (
+        {showTipSection && (
           <div className="guestPaymentCheckout">
-            <div className="sectionKicker"><ShieldCheck size={15} /> Guest payment</div>
-            <h3>Card at Pickup</h3>
-            <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
-            <label>Card Type
-              <div className="segmentedOptions">
-                {['Visa', 'Mastercard', 'Amex'].map(type => (
-                  <button
-                    key={type}
-                    className={form.guestCardType === type ? 'segment active' : 'segment'}
-                    onClick={() => setField('guestCardType', type)}
-                    type="button"
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </label>
+            <div className="sectionKicker"><ShieldCheck size={15} /> {isGuestPayment ? 'Guest payment' : 'Tip'}</div>
+            <h3>{isGuestPayment ? 'Card at Pickup' : 'Add a Tip'}</h3>
+            {isGuestPayment
+              ? <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
+              : <p className="hint">Optional tip to add to the member account charge.</p>}
+            {isGuestPayment && (
+              <label>Card Type
+                <div className="segmentedOptions">
+                  {['Visa', 'Mastercard', 'Amex'].map(type => (
+                    <button
+                      key={type}
+                      className={form.guestCardType === type ? 'segment active' : 'segment'}
+                      onClick={() => setField('guestCardType', type)}
+                      type="button"
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </label>
+            )}
             <label>Tip <span className="optionalText">Optional</span>
               <div className="segmentedOptions">
                 {[
@@ -1708,10 +1753,10 @@ function TruckOrderPage() {
             )}
             <div className="guestTotalBox">
               <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
-              <span>Tip</span><strong>{currency(guestTip.amount)}</strong>
-              <span>Estimated total</span><strong>{currency(guestTotal)}</strong>
+              <span>Tip</span><strong>{currency(checkoutTip.amount)}</strong>
+              <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
             </div>
-            <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>
+            {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
           </div>
         )}
 
@@ -2025,8 +2070,8 @@ function AdminPage({ onBackToOrder }) {
       `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
       guestPayment ? `Payment Status: ${order.paymentStatus || 'Due at Pickup'}` : '',
       guestPayment ? `Card Type: ${order.guestCardType || 'Not selected'}` : '',
-      guestPayment ? `Tip: ${order.tipLabel || 'No tip'}${Number(order.tipAmount || 0) > 0 ? ` (${currency(order.tipAmount)})` : ''}` : '',
-      guestPayment ? `Estimated Total: ${currency(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0))}` : '',
+      Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} (${currency(order.tipAmount)})` : '',
+      Number(order.tipAmount || 0) > 0 || guestPayment ? `${guestPayment ? 'Estimated Total' : 'Total with Tip'}: ${currency(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0))}` : '',
       `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`,
       `POS Posted: ${order.posPosted ? 'YES' : 'No'}`
     ].join('\n');
@@ -2046,10 +2091,10 @@ function AdminPage({ onBackToOrder }) {
   const todaysPostedCount = todaysCompletedOrders.filter(o => o.posPosted).length;
   const todaysAlcoholCount = orders.filter(o => o.alcoholIncluded && isOrderToday(o) && o.status !== 'Cancelled').length;
   const todaysDeliveryCount = orders.filter(o => o.fulfillmentType === 'Delivery' && isOrderToday(o) && o.status !== 'Cancelled').length;
-  const todaysGuestTipOrders = guestTipOrdersToday(orders);
-  const todaysGuestTipTotal = sumGuestTips(todaysGuestTipOrders);
-  const todaysGuestTipPostedTotal = sumGuestTips(todaysGuestTipOrders.filter(order => order.posPosted));
-  const todaysGuestTipOpenTotal = sumGuestTips(todaysGuestTipOrders.filter(order => !order.posPosted));
+  const todaysTipOrders = tipOrdersToday(orders);
+  const todaysTipTotal = sumTips(todaysTipOrders);
+  const todaysTipPostedTotal = sumTips(todaysTipOrders.filter(order => order.posPosted));
+  const todaysTipOpenTotal = sumTips(todaysTipOrders.filter(order => !order.posPosted));
   const menuItemsByCategory = menuItems.reduce((groups, item) => {
     const category = item.category || 'Other';
     if (!groups[category]) groups[category] = [];
@@ -2059,8 +2104,12 @@ function AdminPage({ onBackToOrder }) {
   const subtotalToday = orders
     .filter(o => o.status !== 'Cancelled' && isOrderToday(o))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
-  const orderingOpen = settingEnabled(settings, 'OrderingOpen', true);
+  const orderingOpen = effectiveOrderingOpen(settings, 'OrderingOpen', '');
   const deliveryAvailable = settingEnabled(settings, 'DeliveryAvailable', true);
+  const memberTipsEnabled = settingEnabled(settings, 'MemberTipsEnabled', true);
+  const orderingScheduleEnabled = settingEnabled(settings, 'OrderingScheduleEnabled', true);
+  const orderingOpenTime = timeInputValue(settings, 'OrderingOpenTime', '08:30');
+  const orderingCloseTime = timeInputValue(settings, 'OrderingCloseTime', '16:30');
   const activeStation = STATION_TABS.find(tab => tab.id === activeStationId) || STATION_TABS[0];
   const boardColumns = activeStation.id === 'all' ? ALL_ORDER_COLUMNS : STATION_COLUMNS;
   const statOrders = activeStation.id === 'all'
@@ -2153,6 +2202,7 @@ function AdminPage({ onBackToOrder }) {
           </div>
           <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
+          {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
         </div>
 
         <div className="staffItems">
@@ -2268,6 +2318,28 @@ function AdminPage({ onBackToOrder }) {
           >
             <Truck size={18} /> {updatingSetting === 'DeliveryAvailable' ? 'Saving...' : deliveryAvailable ? 'Delivery On' : 'Pickup Only'}
           </button>
+          <button
+            className={memberTipsEnabled ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateSetting('MemberTipsEnabled', memberTipsEnabled ? 'FALSE' : 'TRUE')}
+            disabled={Boolean(updatingSetting)}
+            title="Show or hide member tip options"
+          >
+            {updatingSetting === 'MemberTipsEnabled' ? 'Saving...' : memberTipsEnabled ? 'Tips On' : 'Tips Off'}
+          </button>
+          <button
+            className={orderingScheduleEnabled ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateSetting('OrderingScheduleEnabled', orderingScheduleEnabled ? 'FALSE' : 'TRUE')}
+            disabled={Boolean(updatingSetting)}
+            title="Use automatic ordering hours"
+          >
+            {updatingSetting === 'OrderingScheduleEnabled' ? 'Saving...' : orderingScheduleEnabled ? 'Schedule On' : 'Schedule Off'}
+          </button>
+          <label className="scheduleField">Open
+            <input type="time" value={orderingOpenTime} onChange={event => updateSetting('OrderingOpenTime', event.target.value)} disabled={Boolean(updatingSetting)} />
+          </label>
+          <label className="scheduleField">Close
+            <input type="time" value={orderingCloseTime} onChange={event => updateSetting('OrderingCloseTime', event.target.value)} disabled={Boolean(updatingSetting)} />
+          </label>
           <button className="staffRefreshButton" onClick={loadOrders} disabled={loading}><RefreshCcw className={loading ? 'spin' : ''} size={18} /> Refresh</button>
           <button className="staffOrderPageButton" onClick={() => { clearAdminToken(); setLoggedIn(false); }}>Sign out</button>
           <strong>{activeCount} active orders</strong>
@@ -2340,24 +2412,24 @@ function AdminPage({ onBackToOrder }) {
           </div>
           <div className="tipReconciliation">
             <div className="tipReconciliationHead">
-              <h4>Guest Tip Reconciliation</h4>
-              <strong>{currency(todaysGuestTipTotal)}</strong>
+              <h4>Tip Reconciliation</h4>
+              <strong>{currency(todaysTipTotal)}</strong>
             </div>
             <div className="tipSummaryGrid">
-              <div><strong>{todaysGuestTipOrders.length}</strong><span>Guest orders</span></div>
-              <div><strong>{currency(todaysGuestTipPostedTotal)}</strong><span>POS posted tips</span></div>
-              <div className={todaysGuestTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysGuestTipOpenTotal)}</strong><span>Open tips</span></div>
+              <div><strong>{todaysTipOrders.length}</strong><span>Tip orders</span></div>
+              <div><strong>{currency(todaysTipPostedTotal)}</strong><span>POS posted tips</span></div>
+              <div className={todaysTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysTipOpenTotal)}</strong><span>Open tips</span></div>
             </div>
             <div className="tipOrderList">
-              {todaysGuestTipOrders.length
-                ? todaysGuestTipOrders.map(order => (
+              {todaysTipOrders.length
+                ? todaysTipOrders.map(order => (
                   <div className="tipOrderRow" key={`tip-${order.orderId}`}>
                     <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
                     <strong>{currency(order.tipAmount)}</strong>
                     <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
                   </div>
                 ))
-                : <p>No guest tips recorded today.</p>}
+                : <p>No tips recorded today.</p>}
             </div>
           </div>
           {needsPosCount > 0
@@ -2409,7 +2481,7 @@ function TruckAdminPage({ onBackToOrder }) {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(null);
-  const [updatingSetting, setUpdatingSetting] = useState(false);
+  const [updatingSetting, setUpdatingSetting] = useState('');
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
@@ -2502,23 +2574,27 @@ function TruckAdminPage({ onBackToOrder }) {
     }
   }
 
-  async function updateTruckOrderingOpen(nextOpen) {
-    setUpdatingSetting(true);
+  async function updateTruckSetting(key, value) {
+    setUpdatingSetting(key);
     const previousSettings = settings;
-    setSettings(prev => ({ ...prev, TruckOrderingOpen: nextOpen ? 'TRUE' : 'FALSE' }));
+    setSettings(prev => ({ ...prev, [key]: value }));
     try {
       const res = await adminFunction('truck-update-setting', {
         method: 'POST',
         headers: { Authorization: `Bearer ${getTruckToken()}` },
-        body: JSON.stringify({ key: 'TruckOrderingOpen', value: nextOpen ? 'TRUE' : 'FALSE' })
+        body: JSON.stringify({ key, value })
       });
       if (res.settings) setSettings(res.settings);
     } catch (e) {
       setSettings(previousSettings);
       setErr(e.message);
     } finally {
-      setUpdatingSetting(false);
+      setUpdatingSetting('');
     }
+  }
+
+  function updateTruckOrderingOpen(nextOpen) {
+    updateTruckSetting('TruckOrderingOpen', nextOpen ? 'TRUE' : 'FALSE');
   }
 
   async function updateTruckMenuAvailability(itemId, available) {
@@ -2571,6 +2647,7 @@ function TruckAdminPage({ onBackToOrder }) {
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
+          {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
         </div>
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
@@ -2644,18 +2721,23 @@ function TruckAdminPage({ onBackToOrder }) {
     );
   }
 
-  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+  const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
+  const truckMemberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
+  const truckScheduleEnabled = settingEnabled(settings, 'TruckOrderingScheduleEnabled', true);
+  const truckOpenTime = timeInputValue(settings, 'TruckOrderingOpenTime', '08:30');
+  const truckCloseTime = timeInputValue(settings, 'TruckOrderingCloseTime', '16:30');
   const activeCount = orders.filter(order => !['Completed', 'Cancelled'].includes(order.status)).length;
   const readyCount = orders.filter(order => order.status === 'Ready for Pickup').length;
   const completedToday = orders.filter(order => order.status === 'Completed' && isOrderToday(order)).length;
+  const postedToday = orders.filter(order => order.status === 'Completed' && order.posPosted && isOrderToday(order)).length;
   const needsPosCount = orders.filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order)).length;
   const needsPosTotal = orders
     .filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
-  const todaysGuestTipOrders = guestTipOrdersToday(orders);
-  const todaysGuestTipTotal = sumGuestTips(todaysGuestTipOrders);
-  const todaysGuestTipPostedTotal = sumGuestTips(todaysGuestTipOrders.filter(order => order.posPosted));
-  const todaysGuestTipOpenTotal = sumGuestTips(todaysGuestTipOrders.filter(order => !order.posPosted));
+  const todaysTipOrders = tipOrdersToday(orders);
+  const todaysTipTotal = sumTips(todaysTipOrders);
+  const todaysTipPostedTotal = sumTips(todaysTipOrders.filter(order => order.posPosted));
+  const todaysTipOpenTotal = sumTips(todaysTipOrders.filter(order => !order.posPosted));
   const subtotalToday = orders
     .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
@@ -2689,10 +2771,32 @@ function TruckAdminPage({ onBackToOrder }) {
           <button
             className={truckOrderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
             onClick={() => updateTruckOrderingOpen(!truckOrderingOpen)}
-            disabled={updatingSetting}
+            disabled={Boolean(updatingSetting)}
           >
-            {updatingSetting ? 'Saving...' : truckOrderingOpen ? 'Truck Ordering Open' : 'Truck Ordering Closed'}
+            {updatingSetting === 'TruckOrderingOpen' ? 'Saving...' : truckOrderingOpen ? 'Truck Ordering Open' : 'Truck Ordering Closed'}
           </button>
+          <button
+            className={truckMemberTipsEnabled ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateTruckSetting('TruckMemberTipsEnabled', truckMemberTipsEnabled ? 'FALSE' : 'TRUE')}
+            disabled={Boolean(updatingSetting)}
+            title="Show or hide member tip options"
+          >
+            {updatingSetting === 'TruckMemberTipsEnabled' ? 'Saving...' : truckMemberTipsEnabled ? 'Tips On' : 'Tips Off'}
+          </button>
+          <button
+            className={truckScheduleEnabled ? 'staffToggleButton on' : 'staffToggleButton off'}
+            onClick={() => updateTruckSetting('TruckOrderingScheduleEnabled', truckScheduleEnabled ? 'FALSE' : 'TRUE')}
+            disabled={Boolean(updatingSetting)}
+            title="Use automatic truck ordering hours"
+          >
+            {updatingSetting === 'TruckOrderingScheduleEnabled' ? 'Saving...' : truckScheduleEnabled ? 'Schedule On' : 'Schedule Off'}
+          </button>
+          <label className="scheduleField">Open
+            <input type="time" value={truckOpenTime} onChange={event => updateTruckSetting('TruckOrderingOpenTime', event.target.value)} disabled={Boolean(updatingSetting)} />
+          </label>
+          <label className="scheduleField">Close
+            <input type="time" value={truckCloseTime} onChange={event => updateTruckSetting('TruckOrderingCloseTime', event.target.value)} disabled={Boolean(updatingSetting)} />
+          </label>
           <button className="staffRefreshButton" onClick={loadTruckOrders} disabled={loading}><RefreshCcw className={loading ? 'spin' : ''} size={18} /> Refresh</button>
           <button className="staffOrderPageButton" onClick={() => { clearTruckToken(); setLoggedIn(false); }}>Sign out</button>
           <strong>{activeCount} active orders</strong>
@@ -2739,29 +2843,30 @@ function TruckAdminPage({ onBackToOrder }) {
           <p className="managerHint">At pickup, collect card payment, complete the order, then mark POS posted after it is entered in the register.</p>
           <div className="closingGrid">
             <div><strong>{completedToday}</strong><span>Completed</span></div>
+            <div><strong>{postedToday}</strong><span>POS posted</span></div>
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
             <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
           </div>
           <div className="tipReconciliation">
             <div className="tipReconciliationHead">
-              <h4>Guest Tip Reconciliation</h4>
-              <strong>{currency(todaysGuestTipTotal)}</strong>
+              <h4>Tip Reconciliation</h4>
+              <strong>{currency(todaysTipTotal)}</strong>
             </div>
             <div className="tipSummaryGrid">
-              <div><strong>{todaysGuestTipOrders.length}</strong><span>Guest orders</span></div>
-              <div><strong>{currency(todaysGuestTipPostedTotal)}</strong><span>POS posted tips</span></div>
-              <div className={todaysGuestTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysGuestTipOpenTotal)}</strong><span>Open tips</span></div>
+              <div><strong>{todaysTipOrders.length}</strong><span>Tip orders</span></div>
+              <div><strong>{currency(todaysTipPostedTotal)}</strong><span>POS posted tips</span></div>
+              <div className={todaysTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysTipOpenTotal)}</strong><span>Open tips</span></div>
             </div>
             <div className="tipOrderList">
-              {todaysGuestTipOrders.length
-                ? todaysGuestTipOrders.map(order => (
+              {todaysTipOrders.length
+                ? todaysTipOrders.map(order => (
                   <div className="tipOrderRow" key={`truck-tip-${order.orderId}`}>
                     <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
                     <strong>{currency(order.tipAmount)}</strong>
                     <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
                   </div>
                 ))
-                : <p>No guest tips recorded today.</p>}
+                : <p>No tips recorded today.</p>}
             </div>
           </div>
           {needsPosCount > 0

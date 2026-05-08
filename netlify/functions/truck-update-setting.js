@@ -33,7 +33,8 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || '{}');
-    if (body.key !== 'TruckOrderingOpen') {
+    const editableSettings = ['TruckOrderingOpen', 'TruckMemberTipsEnabled', 'TruckOrderingScheduleEnabled', 'TruckOrderingOpenTime', 'TruckOrderingCloseTime'];
+    if (!editableSettings.includes(body.key)) {
       return json(400, { ok: false, error: 'Invalid truck setting update.' });
     }
 

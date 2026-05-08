@@ -246,6 +246,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffToggleButton { border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 9px 12px; min-height: 38px; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 900; }
 .staffToggleButton.on { background: #2D6B40; }
 .staffToggleButton.off { background: #8A5A0A; }
+.scheduleField { width: auto; min-width: 96px; margin: 0; color: rgba(255,255,255,.72); letter-spacing: 0; text-transform: none; font-size: 10px; gap: 3px; }
+.scheduleField input { min-height: 28px; padding: 5px 7px; border-color: rgba(255,255,255,.24); background: rgba(255,255,255,.10); color: white; font-size: 12px; }
 .staffAlert { margin: 18px 24px 0; }
 .staffNewOrderAlert { margin: 18px 24px 0; display: flex; align-items: center; gap: 9px; border: 1px solid #B5D4F4; background: #E6F1FB; color: #185FA5; border-radius: 14px; padding: 12px 14px; font-weight: 900; }
 .stationTabs { display: flex; gap: 10px; padding: 16px 24px; border-bottom: 1px solid var(--line-soft); background: #FFFDF9; overflow-x: auto; }

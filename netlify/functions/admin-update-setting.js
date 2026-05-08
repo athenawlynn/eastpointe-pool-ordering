@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable'];
+const EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'MemberTipsEnabled', 'OrderingScheduleEnabled', 'OrderingOpenTime', 'OrderingCloseTime'];
 
 function json(statusCode, body) {
   return {

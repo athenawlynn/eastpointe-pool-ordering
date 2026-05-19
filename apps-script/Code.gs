@@ -93,6 +93,9 @@ function isDeliveryAvailable() {
 
 function isOrderingOpen() {
   const settings = getSettingsObject();
+  if (hasExplicitSetting(settings, 'OrderingOpen')) {
+    return String(settings.OrderingOpen).toUpperCase() !== 'FALSE';
+  }
   const scheduled = scheduleOpenNow(settings, '');
   if (scheduled !== null) return scheduled;
   return String(settings.OrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
@@ -100,9 +103,16 @@ function isOrderingOpen() {
 
 function isTruckOrderingOpen() {
   const settings = getSettingsObject();
+  if (hasExplicitSetting(settings, 'TruckOrderingOpen')) {
+    return String(settings.TruckOrderingOpen).toUpperCase() !== 'FALSE';
+  }
   const scheduled = scheduleOpenNow(settings, 'Truck');
   if (scheduled !== null) return scheduled;
   return String(settings.TruckOrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
+}
+
+function hasExplicitSetting(settings, key) {
+  return settings[key] !== undefined && settings[key] !== null && String(settings[key]).trim() !== '';
 }
 
 function normalizeTimeSetting(value, fallback) {
@@ -114,7 +124,7 @@ function normalizeTimeSetting(value, fallback) {
 
 function scheduleOpenNow(settings, prefix) {
   const enabledKey = prefix ? prefix + 'OrderingScheduleEnabled' : 'OrderingScheduleEnabled';
-  if (String(settings[enabledKey] || 'TRUE').toUpperCase() === 'FALSE') return null;
+  if (String(settings[enabledKey] || 'FALSE').toUpperCase() !== 'TRUE') return null;
   const openKey = prefix ? prefix + 'OrderingOpenTime' : 'OrderingOpenTime';
   const closeKey = prefix ? prefix + 'OrderingCloseTime' : 'OrderingCloseTime';
   const open = normalizeTimeSetting(settings[openKey], '08:30');

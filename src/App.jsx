@@ -318,7 +318,7 @@ function timeInputValue(settings, key, fallback) {
 }
 
 function scheduleIsOpen(settings, prefix = '') {
-  const enabled = settingEnabled(settings, `${prefix}OrderingScheduleEnabled`, true);
+  const enabled = settingEnabled(settings, `${prefix}OrderingScheduleEnabled`, false);
   if (!enabled) return null;
   const open = timeInputValue(settings, `${prefix}OrderingOpenTime`, '08:30');
   const close = timeInputValue(settings, `${prefix}OrderingCloseTime`, '16:30');
@@ -332,6 +332,10 @@ function scheduleIsOpen(settings, prefix = '') {
 }
 
 function effectiveOrderingOpen(settings, key = 'OrderingOpen', prefix = '') {
+  const manualValue = settings?.[key];
+  if (manualValue !== undefined && manualValue !== null && manualValue !== '') {
+    return settingEnabled(settings, key, true);
+  }
   const scheduledOpen = scheduleIsOpen(settings, prefix);
   if (scheduledOpen !== null) return scheduledOpen;
   return settingEnabled(settings, key, true);

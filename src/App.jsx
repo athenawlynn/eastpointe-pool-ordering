@@ -805,6 +805,160 @@ function MenuItem({ item, quantity, setQuantity, modifierSelections = {}, setMod
   );
 }
 
+function modifierOptionCount(item) {
+  return modifierGroupsForItem(item).reduce((sum, group) => sum + group.options.length, 0);
+}
+
+function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, onQuantityChange, onCustomize }) {
+  const modifierGroups = modifierGroupsForItem(item);
+  const hasModifiers = modifierGroups.length > 0;
+  const selected = selectedModifierGroups(item, modifierSelections);
+  const previewItem = { ...item, selectedModifiers: selected, quantity };
+  const summaryLines = modifierSummaryLines(previewItem);
+
+  return (
+    <div className={!item.available ? 'menuItem truckMenuItem unavailable' : 'menuItem truckMenuItem'}>
+      <div className="menuText">
+        <div className="menuTitleLine">
+          <h3>{item.itemName}</h3>
+          <strong>{currency(item.price)}</strong>
+        </div>
+        {item.description && <p>{item.description}</p>}
+        <div className="menuPillRow">
+          {item.alcoholic && <span className="pill warning">Alcohol</span>}
+          {hasModifiers && <span className="pill muted">{modifierGroups.length} option group{modifierGroups.length === 1 ? '' : 's'}</span>}
+          {!item.available && <span className="pill muted">Unavailable</span>}
+        </div>
+        {quantity > 0 && (
+          <div className="selectedMenuSummary">
+            <strong>In order: {quantity}</strong>
+            {summaryLines.length > 0
+              ? summaryLines.map(line => <small key={line}>{line}</small>)
+              : hasModifiers && <small>Standard preparation</small>}
+          </div>
+        )}
+      </div>
+      <div className="truckMenuActions">
+        {hasModifiers ? (
+          <>
+            <button className="customizeButton" disabled={!item.available} onClick={onCustomize} type="button">
+              {quantity > 0 ? 'Edit' : modifierOptionCount(item) > 8 ? 'Customize' : 'Choose Options'}
+            </button>
+            {quantity > 0 && (
+              <div className="qty compactQty">
+                <button disabled={!item.available || quantity <= 0} onClick={() => onQuantityChange(Math.max(0, quantity - 1))}>−</button>
+                <span>{quantity}</span>
+                <button disabled={!item.available} onClick={() => onQuantityChange(quantity + 1)}>+</button>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="qty">
+            <button disabled={!item.available || quantity <= 0} onClick={() => onQuantityChange(Math.max(0, quantity - 1))}>−</button>
+            <span>{quantity}</span>
+            <button disabled={!item.available} onClick={onQuickAdd}>+</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TruckItemCustomizer({ item, quantity, modifierSelections = {}, setModifierSelection, setQuantity, onClose }) {
+  const [localError, setLocalError] = useState('');
+  const [draftQuantity, setDraftQuantity] = useState(Math.max(1, Number(quantity || 0) || 1));
+  const modifierGroups = modifierGroupsForItem(item);
+
+  function toggleModifier(group, option) {
+    const current = modifierSelections[group.name];
+    if (group.type === 'multi') {
+      const currentList = Array.isArray(current) ? current : [];
+      const next = currentList.includes(option.name)
+        ? currentList.filter(name => name !== option.name)
+        : [...currentList, option.name];
+      setModifierSelection(group.name, next);
+      return;
+    }
+    setModifierSelection(group.name, current === option.name && !group.required ? '' : option.name);
+  }
+
+  function isModifierSelected(group, option) {
+    const current = modifierSelections[group.name];
+    return Array.isArray(current) ? current.includes(option.name) : current === option.name;
+  }
+
+  function finish() {
+    const missingGroup = modifierGroups.find(group => {
+      if (!group.required) return false;
+      const current = modifierSelections[group.name];
+      return Array.isArray(current) ? current.length === 0 : !current;
+    });
+    if (missingGroup) {
+      setLocalError(`Please choose ${missingGroup.name}.`);
+      return;
+    }
+    setQuantity(draftQuantity);
+    onClose();
+  }
+
+  return (
+    <div className="customizerOverlay" role="presentation" onClick={onClose}>
+      <div className="customizerSheet" role="dialog" aria-modal="true" aria-label={`Customize ${item.itemName}`} onClick={event => event.stopPropagation()}>
+        <div className="customizerHeader">
+          <div>
+            <span>Customize</span>
+            <h2>{item.itemName}</h2>
+            <p>{currency(item.price)} base price</p>
+          </div>
+          <button className="iconCloseButton" onClick={onClose} type="button" aria-label="Close customizer">×</button>
+        </div>
+        {item.description && <p className="customizerDescription">{item.description}</p>}
+        {localError && <div className="inlineAlert"><AlertTriangle size={16} />{localError}</div>}
+        <div className="customizerGroups">
+          {modifierGroups.map(group => (
+            <div className="modifierGroup customizerGroup" key={`${item.itemId}-${group.name}`}>
+              <div className="modifierGroupTitle">
+                <span>{group.name}</span>
+                {group.required ? <em>Required</em> : <em>{group.type === 'multi' ? 'Choose any' : 'Optional'}</em>}
+              </div>
+              <div className={group.type === 'multi' ? 'modifierOptions multi' : 'modifierOptions'}>
+                {group.options.map(option => (
+                  <button
+                    type="button"
+                    key={`${group.name}-${option.name}`}
+                    className={isModifierSelected(group, option) ? 'selected' : ''}
+                    onClick={() => {
+                      setLocalError('');
+                      toggleModifier(group, option);
+                    }}
+                  >
+                    {option.name}{Number(option.priceDelta || 0) ? ` +${currency(option.priceDelta)}` : ''}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="customizerFooter">
+          <div className="qty modalQty">
+            <button onClick={() => setDraftQuantity(prev => Math.max(1, prev - 1))} disabled={draftQuantity <= 1}>−</button>
+            <span>{draftQuantity}</span>
+            <button onClick={() => setDraftQuantity(prev => prev + 1)}>+</button>
+          </div>
+          <button className="primaryButton customizerDoneButton" onClick={finish} type="button">
+            {quantity > 0 ? 'Update Item' : 'Add to Order'}
+          </button>
+          {quantity > 0 && (
+            <button className="removeItemButton" onClick={() => { setQuantity(0); onClose(); }} type="button">
+              Remove from order
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrderPage() {
   const initialTable = getQueryParam('table') || '';
   const savedConfirmation = readSavedConfirmation();
@@ -1434,6 +1588,7 @@ function TruckOrderPage() {
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
   const [modifierSelections, setModifierSelections] = useState({});
+  const [customizingItemId, setCustomizingItemId] = useState('');
   const [lookup, setLookup] = useState({
     orderId: getQueryParam('order') || '',
     memberNumber: savedConfirmation?.memberNumber || ''
@@ -1499,6 +1654,10 @@ function TruckOrderPage() {
   const showTipSection = isGuestPayment || memberTipsEnabled;
   const checkoutTip = tipDetails(subtotal, form.tipChoice, form.customTip);
   const checkoutTotal = subtotal + checkoutTip.amount;
+  const customizingItem = useMemo(() =>
+    orderedTruckMenu.find(item => item.itemId === customizingItemId) || null,
+    [orderedTruckMenu, customizingItemId]
+  );
 
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -1516,6 +1675,18 @@ function TruckOrderPage() {
         [groupName]: value
       }
     }));
+  }
+
+  function setTruckItemQuantity(itemId, quantity) {
+    const nextQuantity = Math.max(0, Number(quantity || 0));
+    setQuantities(prev => ({ ...prev, [itemId]: nextQuantity }));
+    if (nextQuantity === 0) {
+      setModifierSelections(prev => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+    }
   }
 
   function validateTruckOrder() {
@@ -1825,13 +1996,14 @@ function TruckOrderPage() {
             <CategoryTabs categories={categories} active={activeCat} setActive={setActiveCat} />
             <div className="menuList">
               {visibleItems.map(item => (
-                <MenuItem
+                <TruckMenuItem
                   key={item.itemId}
                   item={item}
                   quantity={Number(quantities[item.itemId] || 0)}
-                  setQuantity={(quantity) => setQuantities(prev => ({ ...prev, [item.itemId]: quantity }))}
+                  onQuickAdd={() => setTruckItemQuantity(item.itemId, Number(quantities[item.itemId] || 0) + 1)}
+                  onQuantityChange={(quantity) => setTruckItemQuantity(item.itemId, quantity)}
+                  onCustomize={() => setCustomizingItemId(item.itemId)}
                   modifierSelections={modifierSelections[item.itemId] || {}}
-                  setModifierSelection={(groupName, value) => setItemModifier(item.itemId, groupName, value)}
                 />
               ))}
             </div>
@@ -1840,6 +2012,17 @@ function TruckOrderPage() {
           <EmptyState title="No truck menu available" body="Please add items to the TruckMenuItems Google Sheet." />
         )}
       </section>
+
+      {customizingItem && (
+        <TruckItemCustomizer
+          item={customizingItem}
+          quantity={Number(quantities[customizingItem.itemId] || 0)}
+          modifierSelections={modifierSelections[customizingItem.itemId] || {}}
+          setModifierSelection={(groupName, value) => setItemModifier(customizingItem.itemId, groupName, value)}
+          setQuantity={(quantity) => setTruckItemQuantity(customizingItem.itemId, quantity)}
+          onClose={() => setCustomizingItemId('')}
+        />
+      )}
 
       <section className="card">
         <div className="sectionTitle">

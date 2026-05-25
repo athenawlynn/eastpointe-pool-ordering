@@ -76,6 +76,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .menuTitleLine h3 { margin: 0; font-size: 14px; line-height: 1.22; font-weight: 650; }
 .menuTitleLine strong { font-size: 14px; white-space: nowrap; color: var(--muted); font-weight: 650; }
 .menuText p { margin: 5px 0 0; color: var(--muted); line-height: 1.32; font-size: 12.5px; }
+.menuPillRow { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .modifierGroups { display: grid; gap: 9px; margin-top: 10px; }
 .modifierGroup { display: grid; gap: 6px; padding: 9px; border: 1px solid var(--line-soft); border-radius: 10px; background: #FFFDF9; }
 .modifierGroupTitle { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--soft-muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 900; }
@@ -87,6 +88,31 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .qty button { width: 30px; height: 30px; border-radius: 7px; border: 1px solid var(--deep-green); background: var(--deep-green); color: white; font-weight: 850; font-size: 17px; line-height: 1; }
 .qty button:first-child { background: white; color: var(--green); border-color: var(--line); }
 .qty span { text-align: center; font-weight: 850; font-size: 14px; color: var(--green); }
+.truckMenuItem { align-items: center; }
+.truckMenuActions { display: grid; gap: 8px; justify-items: end; align-self: center; }
+.customizeButton { min-height: 34px; border: 1px solid var(--deep-green); background: var(--deep-green); color: white; border-radius: 8px; padding: 8px 11px; font-weight: 900; font-size: 12px; white-space: nowrap; }
+.compactQty { grid-template-columns: 27px 22px 27px; justify-self: end; }
+.compactQty button { width: 27px; height: 27px; font-size: 15px; }
+.selectedMenuSummary { display: grid; gap: 3px; margin-top: 8px; padding: 8px 10px; border-radius: 9px; background: #F7F4EC; border: 1px solid var(--line-soft); color: var(--muted); }
+.selectedMenuSummary strong { color: var(--green); font-size: 12px; }
+.selectedMenuSummary small { color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.25; }
+.customizerOverlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 12px; background: rgba(24, 36, 28, .48); }
+.customizerSheet { width: min(520px, 100%); max-height: min(84vh, 760px); overflow: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 18px 18px 12px 12px; box-shadow: 0 -10px 30px rgba(0, 0, 0, .18); padding: 14px; }
+.customizerHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }
+.customizerHeader span { display: block; color: var(--soft-muted); font-size: 10px; letter-spacing: .13em; text-transform: uppercase; font-weight: 900; }
+.customizerHeader h2 { margin: 2px 0 3px; color: var(--ink); font-size: 22px; line-height: 1.05; }
+.customizerHeader p, .customizerDescription { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+.customizerDescription { margin: 10px 0 0; }
+.iconCloseButton { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 999px; background: #F9F8F5; color: var(--ink); font-size: 24px; line-height: 1; font-weight: 650; }
+.inlineAlert { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid #e7b8aa; background: #fff2ed; color: var(--danger); font-weight: 850; font-size: 12px; }
+.customizerGroups { display: grid; gap: 10px; margin: 12px 0; }
+.customizerGroup { background: #FBFAF7; padding: 11px; }
+.customizerGroup .modifierOptions button { padding: 9px 10px; font-size: 12px; min-height: 36px; }
+.customizerFooter { position: sticky; bottom: -14px; display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: center; margin: 10px -14px -14px; padding: 11px 14px 14px; background: rgba(255, 255, 255, .96); border-top: 1px solid var(--line-soft); backdrop-filter: blur(8px); }
+.modalQty { grid-template-columns: 34px 28px 34px; }
+.modalQty button { width: 34px; height: 34px; }
+.customizerDoneButton { margin-top: 0; min-height: 38px; }
+.removeItemButton { grid-column: 1 / -1; border: 0; background: transparent; color: var(--danger); font-weight: 900; padding: 4px; }
 .primaryButton, .secondaryButton, .ghostButton { border-radius: 8px; padding: 11px 12px; font-weight: 900; display: inline-flex; gap: 7px; align-items: center; justify-content: center; font-size: 13px; }
 .primaryButton { width: 100%; border: 0; background: var(--deep-green); color: white; margin-top: 11px; box-shadow: none; }
 .secondaryButton { width: 100%; border: 1px solid var(--deep-green); background: white; color: var(--deep-green); }

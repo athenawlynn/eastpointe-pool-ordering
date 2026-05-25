@@ -57,11 +57,11 @@ function currency(value) {
 
 function escapeHtml(value) {
   return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 function normalizeModifierOption(option) {
@@ -111,12 +111,13 @@ function orderItemLineTotal(item) {
 }
 
 function modifierSummaryLines(item) {
-  return (item.selectedModifiers || []).flatMap(group =>
-    (group.selections || []).map(option => {
+  return (item.selectedModifiers || []).reduce((lines, group) => {
+    (group.selections || []).forEach(option => {
       const price = Number(option.priceDelta || 0);
-      return `${group.group}: ${option.name}${price ? ` ${currency(price)}` : ''}`;
-    })
-  );
+      lines.push(`${group.group}: ${option.name}${price ? ` ${currency(price)}` : ''}`);
+    });
+    return lines;
+  }, []);
 }
 
 function printableItems(order) {
@@ -226,11 +227,11 @@ function ageLabel(value) {
 
 function itemLines(order) {
   if (Array.isArray(order.items) && order.items.length) {
-    return order.items.flatMap(item => {
-      const lines = [`${item.quantity || 1}x ${item.itemName}`];
+    return order.items.reduce((lines, item) => {
+      lines.push(`${item.quantity || 1}x ${item.itemName}`);
       modifierSummaryLines(item).forEach(line => lines.push(`  ${line}`));
       return lines;
-    });
+    }, []);
   }
   return String(order.itemsSummary || '')
     .split('\n')
@@ -681,6 +682,30 @@ function TruckHeader({ mode, setMode }) {
       </button>
     </header>
   );
+}
+
+class AppErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="card login">
+          <div className="alert"><AlertTriangle size={18} /> Something on this page did not load correctly.</div>
+          <p className="hint">Please refresh the page. If it stays blank, sign out and sign back in.</p>
+          <button className="primaryButton" onClick={() => window.location.reload()} type="button">Refresh Page</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 function LoadingCard({ message = 'Loading...' }) {
@@ -3276,14 +3301,16 @@ export default function App() {
       : 'app';
   return (
     <main className={mainClass}>
-      {mode === 'operations-guide' && <OperationsGuide />}
-      {mode === 'order' && <Header mode={mode} setMode={setMode} />}
-      {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
-      {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}
-      {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
-      {mode === 'truck' && <TruckOrderPage />}
-      {mode === 'order' && <OrderPage />}
-      {mode !== 'admin' && mode !== 'truck-admin' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
+      <AppErrorBoundary key={mode}>
+        {mode === 'operations-guide' && <OperationsGuide />}
+        {mode === 'order' && <Header mode={mode} setMode={setMode} />}
+        {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
+        {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}
+        {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
+        {mode === 'truck' && <TruckOrderPage />}
+        {mode === 'order' && <OrderPage />}
+        {mode !== 'admin' && mode !== 'truck-admin' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
+      </AppErrorBoundary>
     </main>
   );
 }

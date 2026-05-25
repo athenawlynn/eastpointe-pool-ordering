@@ -93,9 +93,6 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .customizeButton { min-height: 34px; border: 1px solid var(--deep-green); background: var(--deep-green); color: white; border-radius: 8px; padding: 8px 11px; font-weight: 900; font-size: 12px; white-space: nowrap; }
 .compactQty { grid-template-columns: 27px 22px 27px; justify-self: end; }
 .compactQty button { width: 27px; height: 27px; font-size: 15px; }
-.selectedMenuSummary { display: grid; gap: 3px; margin-top: 8px; padding: 8px 10px; border-radius: 9px; background: #F7F4EC; border: 1px solid var(--line-soft); color: var(--muted); }
-.selectedMenuSummary strong { color: var(--green); font-size: 12px; }
-.selectedMenuSummary small { color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.25; }
 .customizerOverlay { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; padding: 12px; background: rgba(24, 36, 28, .48); }
 .customizerSheet { width: min(520px, 100%); max-height: min(84vh, 760px); overflow: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 18px 18px 12px 12px; box-shadow: 0 -10px 30px rgba(0, 0, 0, .18); padding: 14px; }
 .customizerHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line-soft); }

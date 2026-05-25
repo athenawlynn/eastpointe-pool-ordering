@@ -812,9 +812,6 @@ function modifierOptionCount(item) {
 function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, onQuantityChange, onCustomize }) {
   const modifierGroups = modifierGroupsForItem(item);
   const hasModifiers = modifierGroups.length > 0;
-  const selected = selectedModifierGroups(item, modifierSelections);
-  const previewItem = { ...item, selectedModifiers: selected, quantity };
-  const summaryLines = modifierSummaryLines(previewItem);
 
   return (
     <div className={!item.available ? 'menuItem truckMenuItem unavailable' : 'menuItem truckMenuItem'}>
@@ -829,14 +826,6 @@ function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, on
           {hasModifiers && <span className="pill muted">Choose options</span>}
           {!item.available && <span className="pill muted">Unavailable</span>}
         </div>
-        {quantity > 0 && (
-          <div className="selectedMenuSummary">
-            <strong>In order: {quantity}</strong>
-            {summaryLines.length > 0
-              ? summaryLines.map(line => <small key={line}>{line}</small>)
-              : hasModifiers && <small>Standard preparation</small>}
-          </div>
-        )}
       </div>
       <div className="truckMenuActions">
         {hasModifiers ? (

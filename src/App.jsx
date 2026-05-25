@@ -815,7 +815,6 @@ function OrderPage() {
   const [statusError, setStatusError] = useState('');
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
-  const [modifierSelections, setModifierSelections] = useState({});
   const [lookup, setLookup] = useState({
     orderId: getQueryParam('order') || '',
     memberNumber: savedConfirmation?.memberNumber || ''
@@ -1434,6 +1433,7 @@ function TruckOrderPage() {
   const [statusError, setStatusError] = useState('');
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
+  const [modifierSelections, setModifierSelections] = useState({});
   const [lookup, setLookup] = useState({
     orderId: getQueryParam('order') || '',
     memberNumber: savedConfirmation?.memberNumber || ''

@@ -304,7 +304,9 @@ function itemSummary(items) {
     const unitPrice = Number(i.price || 0) + modifierUnitTotal(i);
     const price = unitPrice * Number(i.quantity || 0);
     const modifiers = modifierSummaryLines(i).map(line => `  - ${line}`).join('\n');
-    return `${i.itemName} x${i.quantity} — $${price.toFixed(2)}${modifiers ? '\n' + modifiers : ''}`;
+    const itemNote = String(i.itemNote || '').trim();
+    const note = itemNote ? `\n  - Note: ${itemNote}` : '';
+    return `${i.itemName} x${i.quantity} — $${price.toFixed(2)}${modifiers ? '\n' + modifiers : ''}${note}`;
   }).join('\n');
 }
 
@@ -646,7 +648,8 @@ function validateTruckItems(items) {
       price: menuItem.price,
       quantity: Number(item.quantity || 0),
       alcoholic: Boolean(menuItem.alcoholic),
-      selectedModifiers: validateSelectedModifiers(menuItem, item.selectedModifiers)
+      selectedModifiers: validateSelectedModifiers(menuItem, item.selectedModifiers),
+      itemNote: String(item.itemNote || '').trim()
     };
   }).filter(item => item.quantity > 0);
 }

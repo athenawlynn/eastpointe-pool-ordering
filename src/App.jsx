@@ -111,13 +111,16 @@ function orderItemLineTotal(item) {
 }
 
 function modifierSummaryLines(item) {
-  return (item.selectedModifiers || []).reduce((lines, group) => {
+  const lines = (item.selectedModifiers || []).reduce((acc, group) => {
     (group.selections || []).forEach(option => {
       const price = Number(option.priceDelta || 0);
-      lines.push(`${group.group}: ${option.name}${price ? ` ${currency(price)}` : ''}`);
+      acc.push(`${group.group}: ${option.name}${price ? ` ${currency(price)}` : ''}`);
     });
-    return lines;
+    return acc;
   }, []);
+  const note = String(item.itemNote || '').trim();
+  if (note) lines.push(`Note: ${note}`);
+  return lines;
 }
 
 function printableItems(order) {
@@ -823,7 +826,6 @@ function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, on
         {item.description && <p>{item.description}</p>}
         <div className="menuPillRow">
           {item.alcoholic && <span className="pill warning">Alcohol</span>}
-          {hasModifiers && <span className="pill muted">Choose options</span>}
           {!item.available && <span className="pill muted">Unavailable</span>}
         </div>
       </div>
@@ -853,10 +855,12 @@ function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, on
   );
 }
 
-function TruckItemCustomizer({ item, quantity, modifierSelections = {}, setModifierSelection, setQuantity, onClose }) {
+function TruckItemCustomizer({ item, quantity, modifierSelections = {}, setModifierSelection, itemNote = '', setItemNote, setQuantity, onClose }) {
   const [localError, setLocalError] = useState('');
   const [draftQuantity, setDraftQuantity] = useState(Math.max(1, Number(quantity || 0) || 1));
+  const [draftNote, setDraftNote] = useState(itemNote || '');
   const modifierGroups = modifierGroupsForItem(item);
+  const showItemNote = String(item.category || '').toLowerCase().includes('liquor');
 
   function toggleModifier(group, option) {
     const current = modifierSelections[group.name];
@@ -886,6 +890,7 @@ function TruckItemCustomizer({ item, quantity, modifierSelections = {}, setModif
       setLocalError(`Please choose ${missingGroup.name}.`);
       return;
     }
+    if (setItemNote) setItemNote(draftNote.trim());
     setQuantity(draftQuantity);
     onClose();
   }
@@ -928,6 +933,16 @@ function TruckItemCustomizer({ item, quantity, modifierSelections = {}, setModif
             </div>
           ))}
         </div>
+        {showItemNote && (
+          <label className="itemNoteField">Liquor Notes <span className="optionalText">Optional</span>
+            <textarea
+              value={draftNote}
+              onChange={event => setDraftNote(event.target.value)}
+              placeholder="Example: light ice, lime, splash of cranberry"
+              rows="2"
+            />
+          </label>
+        )}
         <div className="customizerFooter">
           <div className="qty modalQty">
             <button onClick={() => setDraftQuantity(prev => Math.max(1, prev - 1))} disabled={draftQuantity <= 1}>−</button>
@@ -1577,6 +1592,7 @@ function TruckOrderPage() {
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
   const [modifierSelections, setModifierSelections] = useState({});
+  const [itemNotes, setItemNotes] = useState({});
   const [customizingItemId, setCustomizingItemId] = useState('');
   const [lookup, setLookup] = useState({
     orderId: getQueryParam('order') || '',
@@ -1633,8 +1649,9 @@ function TruckOrderPage() {
     .map(item => ({
       ...item,
       quantity: Number(quantities[item.itemId]),
-      selectedModifiers: selectedModifierGroups(item, modifierSelections[item.itemId])
-    })), [orderedTruckMenu, quantities, modifierSelections]);
+      selectedModifiers: selectedModifierGroups(item, modifierSelections[item.itemId]),
+      itemNote: String(itemNotes[item.itemId] || '').trim()
+    })), [orderedTruckMenu, quantities, modifierSelections, itemNotes]);
   const subtotal = selectedItems.reduce((sum, item) => sum + orderItemLineTotal(item), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
@@ -1666,11 +1683,23 @@ function TruckOrderPage() {
     }));
   }
 
+  function setTruckItemNote(itemId, value) {
+    setItemNotes(prev => ({
+      ...prev,
+      [itemId]: value
+    }));
+  }
+
   function setTruckItemQuantity(itemId, quantity) {
     const nextQuantity = Math.max(0, Number(quantity || 0));
     setQuantities(prev => ({ ...prev, [itemId]: nextQuantity }));
     if (nextQuantity === 0) {
       setModifierSelections(prev => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+      setItemNotes(prev => {
         const next = { ...prev };
         delete next[itemId];
         return next;
@@ -1731,7 +1760,8 @@ function TruckOrderPage() {
             itemName: item.itemName,
             price: Number(item.price || 0),
             quantity: Number(item.quantity || 0),
-            selectedModifiers: item.selectedModifiers || []
+            selectedModifiers: item.selectedModifiers || [],
+            itemNote: item.itemNote || ''
           })),
           subtotalKnownItems: subtotal,
           specialInstructions: form.specialInstructions.trim(),
@@ -1757,7 +1787,8 @@ function TruckOrderPage() {
           itemName: item.itemName,
           price: Number(item.price || 0),
           quantity: Number(item.quantity || 0),
-          selectedModifiers: item.selectedModifiers || []
+          selectedModifiers: item.selectedModifiers || [],
+          itemNote: item.itemNote || ''
         })),
         specialInstructions: form.specialInstructions.trim(),
         subtotalKnownItems: subtotal
@@ -2008,6 +2039,8 @@ function TruckOrderPage() {
           quantity={Number(quantities[customizingItem.itemId] || 0)}
           modifierSelections={modifierSelections[customizingItem.itemId] || {}}
           setModifierSelection={(groupName, value) => setItemModifier(customizingItem.itemId, groupName, value)}
+          itemNote={itemNotes[customizingItem.itemId] || ''}
+          setItemNote={(value) => setTruckItemNote(customizingItem.itemId, value)}
           setQuantity={(quantity) => setTruckItemQuantity(customizingItem.itemId, quantity)}
           onClose={() => setCustomizingItemId('')}
         />

@@ -2030,6 +2030,13 @@ function TruckOrderPage() {
                 <span>
                   {item.itemName} × {item.quantity}
                   {modifierSummaryLines(item).map(line => <small key={line}>{line}</small>)}
+                  <button
+                    className="cartRemoveButton"
+                    type="button"
+                    onClick={() => setTruckItemQuantity(item.itemId, 0)}
+                  >
+                    Remove
+                  </button>
                 </span>
                 <strong>{currency(orderItemLineTotal(item))}</strong>
               </div>

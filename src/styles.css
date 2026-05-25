@@ -122,6 +122,7 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .cartRow, .cartTotal { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 8px 0; font-size: 13px; }
 .cartRow span { display: grid; gap: 3px; }
 .cartRow small { color: var(--muted); font-size: 11px; font-weight: 650; }
+.cartRemoveButton { width: fit-content; border: 0; background: transparent; color: var(--danger); padding: 4px 0 0; font-size: 12px; font-weight: 900; text-align: left; }
 .cartRow.barRequest { display: grid; gap: 4px; }
 .cartTotal { font-size: 15px; border-bottom: 0; color: var(--green); }
 .orderTotalPill { align-self: flex-start; white-space: nowrap; border-radius: 999px; background: #EAF5EE; color: var(--green); padding: 5px 10px; font-size: 11px; font-weight: 850; }

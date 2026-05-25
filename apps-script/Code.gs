@@ -72,8 +72,34 @@ function normalizeMenuItem(row) {
     price: Number(row.Price || 0),
     available: String(row.Available).toUpperCase() === 'TRUE' || row.Available === true,
     alcoholic: String(row.Alcoholic).toUpperCase() === 'TRUE' || row.Alcoholic === true,
-    sortOrder: Number(row.SortOrder || 9999)
+    sortOrder: Number(row.SortOrder || 9999),
+    modifierGroups: parseModifierGroups(row.ModifierGroups)
   };
+}
+
+function parseModifierGroups(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return [];
+  try {
+    const groups = JSON.parse(raw);
+    if (!Array.isArray(groups)) return [];
+    return groups.map(group => ({
+      name: String(group.name || '').trim(),
+      type: group.type === 'multi' ? 'multi' : 'single',
+      required: group.required === true || String(group.required).toUpperCase() === 'TRUE',
+      options: Array.isArray(group.options)
+        ? group.options.map(option => {
+          if (typeof option === 'string') return { name: option, priceDelta: 0 };
+          return {
+            name: String(option.name || '').trim(),
+            priceDelta: Number(option.priceDelta || 0)
+          };
+        }).filter(option => option.name)
+        : []
+    })).filter(group => group.name && group.options.length);
+  } catch (err) {
+    return [];
+  }
 }
 
 function getSettingsObject() {
@@ -275,9 +301,28 @@ function makeTruckOrderId() {
 function itemSummary(items) {
   if (!items || !items.length) return '';
   return items.map(i => {
-    const price = Number(i.price || 0) * Number(i.quantity || 0);
-    return `${i.itemName} x${i.quantity} — $${price.toFixed(2)}`;
+    const unitPrice = Number(i.price || 0) + modifierUnitTotal(i);
+    const price = unitPrice * Number(i.quantity || 0);
+    const modifiers = modifierSummaryLines(i).map(line => `  - ${line}`).join('\n');
+    return `${i.itemName} x${i.quantity} — $${price.toFixed(2)}${modifiers ? '\n' + modifiers : ''}`;
   }).join('\n');
+}
+
+function modifierSummaryLines(item) {
+  const groups = Array.isArray(item.selectedModifiers) ? item.selectedModifiers : [];
+  return groups.flatMap(group =>
+    (Array.isArray(group.selections) ? group.selections : []).map(option => {
+      const price = Number(option.priceDelta || 0);
+      return `${group.group}: ${option.name}${price ? ` +$${price.toFixed(2)}` : ''}`;
+    })
+  );
+}
+
+function modifierUnitTotal(item) {
+  const groups = Array.isArray(item.selectedModifiers) ? item.selectedModifiers : [];
+  return groups.reduce((sum, group) =>
+    sum + (Array.isArray(group.selections) ? group.selections : []).reduce((groupSum, option) =>
+      groupSum + Number(option.priceDelta || 0), 0), 0);
 }
 
 function isBarItem(item) {
@@ -487,7 +532,6 @@ function createOrder(order) {
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
   const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
   const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
-  const estimatedTotal = Number(order.subtotalKnownItems || 0) + tipAmount;
   if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
   if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
@@ -601,9 +645,33 @@ function validateTruckItems(items) {
       itemName: menuItem.itemName,
       price: menuItem.price,
       quantity: Number(item.quantity || 0),
-      alcoholic: Boolean(menuItem.alcoholic)
+      alcoholic: Boolean(menuItem.alcoholic),
+      selectedModifiers: validateSelectedModifiers(menuItem, item.selectedModifiers)
     };
   }).filter(item => item.quantity > 0);
+}
+
+function validateSelectedModifiers(menuItem, selectedModifiers) {
+  const selected = Array.isArray(selectedModifiers) ? selectedModifiers : [];
+  const selectedByGroup = {};
+  selected.forEach(group => {
+    selectedByGroup[String(group.group || '').trim()] = Array.isArray(group.selections) ? group.selections : [];
+  });
+
+  return (menuItem.modifierGroups || []).map(group => {
+    const requested = selectedByGroup[group.name] || [];
+    if (group.required && !requested.length) {
+      throw new Error(`Please choose ${group.name} for ${menuItem.itemName}.`);
+    }
+    const allowed = {};
+    group.options.forEach(option => allowed[option.name] = option);
+    const cleanSelections = requested.map(option => allowed[String(option.name || '').trim()])
+      .filter(Boolean);
+    if (group.type !== 'multi' && cleanSelections.length > 1) {
+      throw new Error(`Please choose only one ${group.name} for ${menuItem.itemName}.`);
+    }
+    return cleanSelections.length ? { group: group.name, selections: cleanSelections } : null;
+  }).filter(Boolean);
 }
 
 function createTruckOrder(order) {
@@ -618,7 +686,6 @@ function createTruckOrder(order) {
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
   const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
   const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
-  const estimatedTotal = Number(order.subtotalKnownItems || 0) + tipAmount;
   if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
   if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
@@ -628,6 +695,9 @@ function createTruckOrder(order) {
   const incomingItems = Array.isArray(order.items) ? order.items : [];
   const items = validateTruckItems(incomingItems);
   if (!items.length) throw new Error('Please select at least one food truck item.');
+  const subtotalKnownItems = items.reduce((sum, item) =>
+    sum + (Number(item.price || 0) + modifierUnitTotal(item)) * Number(item.quantity || 0), 0);
+  const estimatedTotal = subtotalKnownItems + tipAmount;
   const alcoholIncluded = items.some(item => item.alcoholic);
   if (alcoholIncluded && !order.alcoholVerificationAccepted) {
     throw new Error('Alcohol verification acknowledgement is required.');
@@ -652,7 +722,7 @@ function createTruckOrder(order) {
       String(order.phone || '').trim(),
       summary,
       JSON.stringify(items),
-      Number(order.subtotalKnownItems || 0),
+      subtotalKnownItems,
       Boolean(order.authorizationAccepted),
       alcoholIncluded,
       Boolean(order.alcoholVerificationAccepted),

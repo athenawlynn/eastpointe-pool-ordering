@@ -64,6 +64,61 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function normalizeModifierOption(option) {
+  if (typeof option === 'string') return { name: option, priceDelta: 0 };
+  return {
+    name: String(option?.name || '').trim(),
+    priceDelta: Number(option?.priceDelta || 0)
+  };
+}
+
+function modifierGroupsForItem(item) {
+  const raw = item?.modifierGroups;
+  const groups = Array.isArray(raw) ? raw : [];
+  return groups.map(group => ({
+    name: String(group?.name || '').trim(),
+    type: group?.type === 'multi' ? 'multi' : 'single',
+    required: Boolean(group?.required),
+    options: Array.isArray(group?.options)
+      ? group.options.map(normalizeModifierOption).filter(option => option.name)
+      : []
+  })).filter(group => group.name && group.options.length);
+}
+
+function selectedModifierGroups(item, selectionsByGroup = {}) {
+  return modifierGroupsForItem(item).map(group => {
+    const selectedNames = Array.isArray(selectionsByGroup[group.name])
+      ? selectionsByGroup[group.name]
+      : selectionsByGroup[group.name]
+        ? [selectionsByGroup[group.name]]
+        : [];
+    const options = group.options.filter(option => selectedNames.includes(option.name));
+    return options.length ? { group: group.name, selections: options } : null;
+  }).filter(Boolean);
+}
+
+function modifierUnitTotal(item) {
+  return (item.selectedModifiers || []).reduce((sum, group) =>
+    sum + (group.selections || []).reduce((groupSum, option) => groupSum + Number(option.priceDelta || 0), 0), 0);
+}
+
+function orderItemUnitPrice(item) {
+  return Number(item.price || 0) + modifierUnitTotal(item);
+}
+
+function orderItemLineTotal(item) {
+  return orderItemUnitPrice(item) * Number(item.quantity || 0);
+}
+
+function modifierSummaryLines(item) {
+  return (item.selectedModifiers || []).flatMap(group =>
+    (group.selections || []).map(option => {
+      const price = Number(option.priceDelta || 0);
+      return `${group.group}: ${option.name}${price ? ` ${currency(price)}` : ''}`;
+    })
+  );
+}
+
 function printableItems(order) {
   if (Array.isArray(order.items) && order.items.length) return order.items;
   return String(order.itemsSummary || '')
@@ -83,12 +138,13 @@ function printCustomerChit(order, onBlocked) {
   const rows = items.length
     ? items.map(item => {
       const qty = Number(item.quantity || 0);
-      const lineTotal = Number(item.price || 0) * qty;
+      const lineTotal = orderItemLineTotal(item);
       const hasKnownPrice = Number(item.price || 0) > 0 && qty > 0;
+      const modifiers = modifierSummaryLines(item);
       return `
         <tr>
           <td>${escapeHtml(qty ? `${qty}x` : '')}</td>
-          <td>${escapeHtml(item.itemName || item.name || '')}</td>
+          <td>${escapeHtml(item.itemName || item.name || '')}${modifiers.length ? `<div class="muted">${escapeHtml(modifiers.join(' · '))}</div>` : ''}</td>
           <td>${hasKnownPrice ? escapeHtml(currency(lineTotal)) : ''}</td>
         </tr>`;
     }).join('')
@@ -170,7 +226,11 @@ function ageLabel(value) {
 
 function itemLines(order) {
   if (Array.isArray(order.items) && order.items.length) {
-    return order.items.map(item => `${item.quantity || 1}x ${item.itemName}`).slice(0, 5);
+    return order.items.flatMap(item => {
+      const lines = [`${item.quantity || 1}x ${item.itemName}`];
+      modifierSummaryLines(item).forEach(line => lines.push(`  ${line}`));
+      return lines;
+    });
   }
   return String(order.itemsSummary || '')
     .split('\n')
@@ -653,7 +713,28 @@ function CategorySelect({ categories, active, setActive }) {
   );
 }
 
-function MenuItem({ item, quantity, setQuantity }) {
+function MenuItem({ item, quantity, setQuantity, modifierSelections = {}, setModifierSelection }) {
+  const modifierGroups = modifierGroupsForItem(item);
+
+  function toggleModifier(group, option) {
+    if (!setModifierSelection) return;
+    const current = modifierSelections[group.name];
+    if (group.type === 'multi') {
+      const currentList = Array.isArray(current) ? current : [];
+      const next = currentList.includes(option.name)
+        ? currentList.filter(name => name !== option.name)
+        : [...currentList, option.name];
+      setModifierSelection(group.name, next);
+      return;
+    }
+    setModifierSelection(group.name, current === option.name ? '' : option.name);
+  }
+
+  function isModifierSelected(group, option) {
+    const current = modifierSelections[group.name];
+    return Array.isArray(current) ? current.includes(option.name) : current === option.name;
+  }
+
   return (
     <div className={!item.available ? 'menuItem unavailable' : 'menuItem'}>
       <div className="menuText">
@@ -664,6 +745,31 @@ function MenuItem({ item, quantity, setQuantity }) {
         {item.description && <p>{item.description}</p>}
         {item.alcoholic && <span className="pill warning">Alcohol</span>}
         {!item.available && <span className="pill muted">Unavailable</span>}
+        {modifierGroups.length > 0 && (
+          <div className="modifierGroups">
+            {modifierGroups.map(group => (
+              <div className="modifierGroup" key={`${item.itemId}-${group.name}`}>
+                <div className="modifierGroupTitle">
+                  <span>{group.name}</span>
+                  {group.required && <em>Required</em>}
+                </div>
+                <div className={group.type === 'multi' ? 'modifierOptions multi' : 'modifierOptions'}>
+                  {group.options.map(option => (
+                    <button
+                      type="button"
+                      key={`${group.name}-${option.name}`}
+                      disabled={!item.available}
+                      className={isModifierSelected(group, option) ? 'selected' : ''}
+                      onClick={() => toggleModifier(group, option)}
+                    >
+                      {option.name}{Number(option.priceDelta || 0) ? ` +${currency(option.priceDelta)}` : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <div className="qty">
         <button disabled={!item.available || quantity <= 0} onClick={() => setQuantity(Math.max(0, quantity - 1))}>−</button>
@@ -684,6 +790,7 @@ function OrderPage() {
   const [statusError, setStatusError] = useState('');
   const [activeCat, setActiveCat] = useState('');
   const [quantities, setQuantities] = useState({});
+  const [modifierSelections, setModifierSelections] = useState({});
   const [lookup, setLookup] = useState({
     orderId: getQueryParam('order') || '',
     memberNumber: savedConfirmation?.memberNumber || ''
@@ -1354,8 +1461,12 @@ function TruckOrderPage() {
   }, [orderedTruckMenu, activeCat]);
   const selectedItems = useMemo(() => orderedTruckMenu
     .filter(item => Number(quantities[item.itemId] || 0) > 0)
-    .map(item => ({ ...item, quantity: Number(quantities[item.itemId]) })), [orderedTruckMenu, quantities]);
-  const subtotal = selectedItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+    .map(item => ({
+      ...item,
+      quantity: Number(quantities[item.itemId]),
+      selectedModifiers: selectedModifierGroups(item, modifierSelections[item.itemId])
+    })), [orderedTruckMenu, quantities, modifierSelections]);
+  const subtotal = selectedItems.reduce((sum, item) => sum + orderItemLineTotal(item), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
@@ -1372,12 +1483,31 @@ function TruckOrderPage() {
     setLookup(prev => ({ ...prev, [field]: value }));
   }
 
+  function setItemModifier(itemId, groupName, value) {
+    setModifierSelections(prev => ({
+      ...prev,
+      [itemId]: {
+        ...(prev[itemId] || {}),
+        [groupName]: value
+      }
+    }));
+  }
+
   function validateTruckOrder() {
     if (!truckOrderingOpen) return 'The Turn Truck ordering is currently closed.';
     if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter member name.';
     if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
     if (!selectedItems.length) return 'Please select at least one item.';
+    for (const item of selectedItems) {
+      const selectedByGroup = modifierSelections[item.itemId] || {};
+      const missingGroup = modifierGroupsForItem(item).find(group => {
+        if (!group.required) return false;
+        const selected = selectedByGroup[group.name];
+        return Array.isArray(selected) ? selected.length === 0 : !selected;
+      });
+      if (missingGroup) return `Please choose ${missingGroup.name} for ${item.itemName}.`;
+    }
     if (!form.authorizationAccepted) {
       return isGuestPayment
         ? 'Please acknowledge that a physical credit card must be provided at pickup.'
@@ -1415,7 +1545,8 @@ function TruckOrderPage() {
             category: item.category,
             itemName: item.itemName,
             price: Number(item.price || 0),
-            quantity: Number(item.quantity || 0)
+            quantity: Number(item.quantity || 0),
+            selectedModifiers: item.selectedModifiers || []
           })),
           subtotalKnownItems: subtotal,
           specialInstructions: form.specialInstructions.trim(),
@@ -1440,7 +1571,8 @@ function TruckOrderPage() {
           category: item.category,
           itemName: item.itemName,
           price: Number(item.price || 0),
-          quantity: Number(item.quantity || 0)
+          quantity: Number(item.quantity || 0),
+          selectedModifiers: item.selectedModifiers || []
         })),
         specialInstructions: form.specialInstructions.trim(),
         subtotalKnownItems: subtotal
@@ -1673,6 +1805,8 @@ function TruckOrderPage() {
                   item={item}
                   quantity={Number(quantities[item.itemId] || 0)}
                   setQuantity={(quantity) => setQuantities(prev => ({ ...prev, [item.itemId]: quantity }))}
+                  modifierSelections={modifierSelections[item.itemId] || {}}
+                  setModifierSelection={(groupName, value) => setItemModifier(item.itemId, groupName, value)}
                 />
               ))}
             </div>
@@ -1696,8 +1830,11 @@ function TruckOrderPage() {
           <div className="cartList">
             {selectedItems.map(item => (
               <div className="cartRow" key={item.itemId}>
-                <span>{item.itemName} × {item.quantity}</span>
-                <strong>{currency(Number(item.price) * Number(item.quantity))}</strong>
+                <span>
+                  {item.itemName} × {item.quantity}
+                  {modifierSummaryLines(item).map(line => <small key={line}>{line}</small>)}
+                </span>
+                <strong>{currency(orderItemLineTotal(item))}</strong>
               </div>
             ))}
             <div className="cartTotal">

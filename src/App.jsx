@@ -826,7 +826,7 @@ function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, on
         {item.description && <p>{item.description}</p>}
         <div className="menuPillRow">
           {item.alcoholic && <span className="pill warning">Alcohol</span>}
-          {hasModifiers && <span className="pill muted">{modifierGroups.length} option group{modifierGroups.length === 1 ? '' : 's'}</span>}
+          {hasModifiers && <span className="pill muted">Choose options</span>}
           {!item.available && <span className="pill muted">Unavailable</span>}
         </div>
         {quantity > 0 && (

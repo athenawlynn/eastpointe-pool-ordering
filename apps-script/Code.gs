@@ -140,22 +140,21 @@ function normalizeCustomerType(value) {
   if (raw === 'guest') return 'Guest';
   if (raw === 'rsm') return 'RSM';
   if (['approved non-member', 'approved non member', 'non-member', 'non member', 'nonmember'].includes(raw)) {
-    return 'Approved Non-Member';
+    return 'RSM';
   }
   return 'Golf Member';
 }
 
 function customerTypeForPayment(paymentType, memberCustomerType) {
   if (paymentType === 'Guest Pay at Pickup') return 'Guest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
   const normalizedMemberType = normalizeCustomerType(memberCustomerType);
-  if (['Approved Non-Member', 'RSM'].includes(normalizedMemberType)) return normalizedMemberType;
+  if (normalizedMemberType === 'RSM') return 'RSM';
   return 'Golf Member';
 }
 
 function truckFeeSettingsPrefix(paymentType, customerType) {
   if (paymentType === 'Guest Pay at Pickup' || customerType === 'Guest') return 'TruckGuest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup' || ['Approved Non-Member', 'RSM'].includes(customerType)) return 'TruckNonMember';
+  if (customerType === 'RSM') return 'TruckNonMember';
   return 'TruckMember';
 }
 
@@ -814,7 +813,7 @@ function createTruckOrder(order) {
   if (!isTruckOrderingOpen()) {
     throw new Error('Food truck ordering is currently closed. Please order directly at the truck.');
   }
-  const allowedPaymentTypes = ['Member Account', 'Guest Pay at Pickup', 'Approved Non-Member Pay at Pickup'];
+  const allowedPaymentTypes = ['Member Account', 'Guest Pay at Pickup'];
   const paymentType = allowedPaymentTypes.includes(order.paymentType) ? order.paymentType : 'Member Account';
   const pickupPayment = paymentType === 'Guest Pay at Pickup';
   const paymentStatus = pickupPayment ? 'Due at Pickup' : 'Member Account';
@@ -1420,7 +1419,7 @@ function sendOrderEmail(order) {
     order.itemsSummary || 'No standard menu items.',
     order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
     ``,
-    `Known subtotal: $${Number(order.subtotalKnownItems || 0).toFixed(2)}`,
+    `Subtotal: $${Number(order.subtotalKnownItems || 0).toFixed(2)}`,
     guestPayment ? `Card type: ${order.guestCardType || 'Not selected'}` : '',
     Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} ($${Number(order.tipAmount || 0).toFixed(2)})` : '',
     Number(order.tipAmount || 0) > 0 || guestPayment ? `${guestPayment ? 'Estimated total' : 'Total with tip'}: $${Number(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0)).toFixed(2)}` : '',

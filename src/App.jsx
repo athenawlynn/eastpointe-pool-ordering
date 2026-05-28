@@ -187,7 +187,7 @@ function printCustomerChit(order, onBlocked) {
         <h2>Items</h2>
         <table>${rows}</table>
         ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
-        <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
+        <p class="total">Subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
         <h2>Payment</h2>
         ${isGuestPayment ? `<p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p>` : ''}
         ${serviceFeeVisible && serviceFeeAmount > 0 ? `<p>${escapeHtml(order.serviceFeeLabel || 'Service Fee')}: ${escapeHtml(currency(serviceFeeAmount))}</p>` : ''}
@@ -302,13 +302,12 @@ function isGuestOrder(order) {
 }
 
 function isApprovedNonMemberOrder(order) {
-  return order?.paymentType === 'Approved Non-Member Pay at Pickup' || ['Approved Non-Member', 'RSM'].includes(order?.customerType);
+  return order?.customerType === 'RSM';
 }
 
 function customerTypeForPayment(paymentType, memberCustomerType = '') {
   if (paymentType === 'Guest Pay at Pickup') return 'Guest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
-  if (['Approved Non-Member', 'RSM'].includes(memberCustomerType)) return memberCustomerType;
+  if (memberCustomerType === 'RSM') return 'RSM';
   return 'Golf Member';
 }
 
@@ -330,7 +329,7 @@ function percentSetting(settings, key, fallback) {
 
 function paymentFeeSettingsPrefix(paymentType, customerType = '') {
   if (paymentType === 'Guest Pay at Pickup' || customerType === 'Guest') return 'TruckGuest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup' || ['Approved Non-Member', 'RSM'].includes(customerType)) return 'TruckNonMember';
+  if (customerType === 'RSM') return 'TruckNonMember';
   return 'TruckMember';
 }
 
@@ -1539,7 +1538,7 @@ function OrderPage() {
           </label>
         )}
         <label>Mobile Number
-          <input inputMode="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="Example: 917-207-6562" />
+          <input inputMode="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="Example: 561-555-0100" />
           <span className="fieldHint">For staff to contact you if there is a question about your order.</span>
         </label>
         {form.fulfillmentType === 'Delivery' && (
@@ -1616,7 +1615,7 @@ function OrderPage() {
               </div>
             )}
             <div className="cartTotal">
-              <span>Known subtotal</span>
+              <span>Subtotal</span>
               <strong>{currency(subtotal)}</strong>
             </div>
           </div>
@@ -1671,7 +1670,7 @@ function OrderPage() {
               </label>
             )}
             <div className="guestTotalBox">
-              <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+              <span>Subtotal</span><strong>{currency(subtotal)}</strong>
               <span>{checkoutTip.label && checkoutTip.label !== 'No tip' ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
               <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
             </div>
@@ -1797,7 +1796,7 @@ function TruckOrderPage() {
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
-  const isApprovedNonMemberPayment = form.paymentType === 'Member Account' && ['Approved Non-Member', 'RSM'].includes(memberCustomerType);
+  const isApprovedNonMemberPayment = form.paymentType === 'Member Account' && memberCustomerType === 'RSM';
   const isPickupPayment = isGuestPayment;
   const memberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
   const showTipSection = isPickupPayment || memberTipsEnabled;
@@ -2224,17 +2223,17 @@ function TruckOrderPage() {
 
       <section className="card">
         <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Account details'}</div>
-        <h2>{isGuestPayment ? 'Guest Information' : 'Member / RSM Information'}</h2>
+        <h2>{isGuestPayment ? 'Guest Information' : 'Account Information'}</h2>
         <label>{isGuestPayment ? 'Guest Name' : 'Name'}
           <input value={form.memberName} onChange={event => setField('memberName', event.target.value)} placeholder="First and last name" />
         </label>
         {!isGuestPayment && (
-          <label>Member / RSM Number
+          <label>Member Number
             <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
           </label>
         )}
         <label>Mobile Number
-          <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 917-207-6562" />
+          <input inputMode="tel" value={form.phone} onChange={event => setField('phone', event.target.value)} placeholder="Example: 561-555-0100" />
           <span className="fieldHint">Required so truck staff can contact you if there is a question.</span>
         </label>
         <div className="notice dietaryNotice">
@@ -2317,7 +2316,7 @@ function TruckOrderPage() {
               </div>
             ))}
             <div className="cartTotal">
-              <span>Known subtotal</span>
+              <span>Subtotal</span>
               <strong>{currency(subtotal)}</strong>
             </div>
           </div>
@@ -2372,7 +2371,7 @@ function TruckOrderPage() {
               </label>
             )}
             <div className="guestTotalBox">
-              <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+              <span>Subtotal</span><strong>{currency(subtotal)}</strong>
               {checkoutFees.serviceFeeVisible && checkoutFees.serviceFeeAmount > 0 && (
                 <>
                   <span>{checkoutFees.serviceFeeLabel || 'Service fee'}</span><strong>{currency(checkoutFees.serviceFeeAmount)}</strong>
@@ -2697,7 +2696,7 @@ function AdminPage({ onBackToOrder }) {
       `${order.itemsSummary || ''}`,
       order.barRequest ? `\nBar / Cocktail Request:\n${order.barRequest}` : '',
       ``,
-      `Known Subtotal: ${currency(order.subtotalKnownItems)}`,
+      `Subtotal: ${currency(order.subtotalKnownItems)}`,
       guestPayment ? `Payment Status: ${order.paymentStatus || 'Due at Pickup'}` : '',
       guestPayment ? `Card Type: ${order.guestCardType || 'Not selected'}` : '',
       Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} (${currency(order.tipAmount)})` : '',
@@ -3275,11 +3274,11 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffOrderMember">
           <h3>{order.memberName || (guestPayment ? 'Guest' : 'Member')}</h3>
           <div className="staffMemberLine">
-            <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? 'Approved non-member/RSM' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? `RSM #${order.memberNumber}` : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
-          {nonMemberPayment && <div className="paymentDueBadge nonMemberBadge">Approved non-member/RSM · Collect payment at pickup</div>}
+          {nonMemberPayment && <div className="paymentDueBadge nonMemberBadge">RSM account · 22% service fee visible</div>}
           {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
         </div>
         <div className="staffItems">
@@ -3720,7 +3719,7 @@ function OperationsGuide() {
               <li>Add one member number per row.</li>
               <li>Use <strong>Active</strong> for allowed accounts.</li>
               <li>Use <strong>Inactive</strong> to block ordering without deleting history.</li>
-              <li>Use <strong>CustomerType</strong> for truck fee rules: Golf Member, RSM, or Approved Non-Member.</li>
+              <li>Use <strong>CustomerType</strong> for truck fee rules: Golf Member or RSM.</li>
             </ul>
           </article>
           <article>

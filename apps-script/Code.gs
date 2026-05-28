@@ -274,7 +274,8 @@ function memberNumbersMatch(a, b) {
   return memberLookupValue(a) === memberLookupValue(b);
 }
 
-function validateMemberNumber(memberNumber) {
+function validateMemberNumber(memberNumber, serviceName) {
+  const contactName = serviceName || 'Pool Bar';
   const normalized = String(memberNumber || '').trim();
   if (!/^\d{4,6}$/.test(normalized)) {
     throw new Error('Member number must be 4–6 digits.');
@@ -282,11 +283,11 @@ function validateMemberNumber(memberNumber) {
 
   const member = getMembers().find(m => memberNumbersMatch(m.memberNumber, normalized));
   if (!member) {
-    throw new Error('Member number not found. Please check your member number or contact the Pool Bar.');
+    throw new Error(`Member number not found. Please check your member number or contact ${contactName}.`);
   }
 
   if (String(member.status || '').toLowerCase() !== 'active') {
-    throw new Error('Member account is not active. Please contact the Pool Bar.');
+    throw new Error(`Member account is not active. Please contact ${contactName}.`);
   }
 
   return true;
@@ -698,7 +699,7 @@ function createTruckOrder(order) {
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
   const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
   const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
-  if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber);
+  if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber, 'The Turn Truck');
   if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
   if (!order.authorizationAccepted) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest payment acknowledgement is required.' : 'Charge authorization is required.');
@@ -945,7 +946,7 @@ function truckStatusPayload(order) {
 }
 
 function getTruckOrderStatus(orderId, memberNumber) {
-  validateMemberNumber(memberNumber);
+  validateMemberNumber(memberNumber, 'The Turn Truck');
   const sheet = getSheet('TruckOrders');
   const rows = rowsToObjects(sheet);
   const order = rows.find(row =>
@@ -958,7 +959,7 @@ function getTruckOrderStatus(orderId, memberNumber) {
 
 function getLatestTruckOrderStatus(memberNumber) {
   const normalizedMemberNumber = String(memberNumber || '').trim();
-  validateMemberNumber(normalizedMemberNumber);
+  validateMemberNumber(normalizedMemberNumber, 'The Turn Truck');
   const sheet = getSheet('TruckOrders');
   const rows = rowsToObjects(sheet)
     .filter(row => memberNumbersMatch(row.MemberNumber, normalizedMemberNumber))

@@ -164,11 +164,11 @@ function calculateTruckFees(subtotal, tipAmount, paymentType, settings) {
   const finalTotal = roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip);
   return {
     customerType: customerTypeForPayment(paymentType),
-    serviceFeeLabel: `Service Fee ${Math.round(serviceFeeRate * 100)}%`,
+    serviceFeeLabel: `Service Fee (${Math.round(serviceFeeRate * 100)}%)`,
     serviceFeeRate,
     serviceFeeAmount,
     serviceFeeVisible,
-    creditCardFeeLabel: `Credit Card Transaction Fee ${Math.round(creditCardFeeRate * 100)}%`,
+    creditCardFeeLabel: `Credit Card Transaction Fee (${Math.round(creditCardFeeRate * 100)}%)`,
     creditCardFeeRate,
     creditCardFeeAmount,
     creditCardFeeVisible,

@@ -350,11 +350,11 @@ function calculateTruckFees({ subtotal, tipAmount, paymentType, settings }) {
   const safeTip = roundMoney(tipAmount);
   return {
     customerType: customerTypeForPayment(paymentType),
-    serviceFeeLabel: `Service Fee ${Math.round(serviceFeeRate * 100)}%`,
+    serviceFeeLabel: `Service Fee (${Math.round(serviceFeeRate * 100)}%)`,
     serviceFeeRate,
     serviceFeeAmount,
     serviceFeeVisible,
-    creditCardFeeLabel: `Credit Card Transaction Fee ${Math.round(creditCardFeeRate * 100)}%`,
+    creditCardFeeLabel: `Credit Card Transaction Fee (${Math.round(creditCardFeeRate * 100)}%)`,
     creditCardFeeRate,
     creditCardFeeAmount,
     creditCardFeeVisible,
@@ -1671,7 +1671,7 @@ function OrderPage() {
             )}
             <div className="guestTotalBox">
               <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
-              <span>Tip</span><strong>{currency(checkoutTip.amount)}</strong>
+              <span>{checkoutTip.label && checkoutTip.label !== 'No tip' ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
               <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
             </div>
             {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
@@ -2363,15 +2363,15 @@ function TruckOrderPage() {
               <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
               {checkoutFees.serviceFeeVisible && checkoutFees.serviceFeeAmount > 0 && (
                 <>
-                  <span>Service fee</span><strong>{currency(checkoutFees.serviceFeeAmount)}</strong>
+                  <span>{checkoutFees.serviceFeeLabel || 'Service fee'}</span><strong>{currency(checkoutFees.serviceFeeAmount)}</strong>
                 </>
               )}
               {checkoutFees.creditCardFeeVisible && checkoutFees.creditCardFeeAmount > 0 && (
                 <>
-                  <span>Credit card transaction fee</span><strong>{currency(checkoutFees.creditCardFeeAmount)}</strong>
+                  <span>{checkoutFees.creditCardFeeLabel || 'Credit card transaction fee'}</span><strong>{currency(checkoutFees.creditCardFeeAmount)}</strong>
                 </>
               )}
-              <span>Tip</span><strong>{currency(checkoutTip.amount)}</strong>
+              <span>{checkoutTip.label && checkoutTip.label !== 'No tip' ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
               <span>Estimated total</span><strong>{currency(checkoutTotal)}</strong>
             </div>
             {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}

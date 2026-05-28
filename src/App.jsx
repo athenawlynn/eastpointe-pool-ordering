@@ -728,12 +728,15 @@ function EmptyState({ title, body }) {
 
 function CategoryTabs({ categories, active, setActive }) {
   return (
-    <div className="tabs">
-      {categories.map(cat => (
-        <button key={cat} className={cat === active ? 'tab active' : 'tab'} onClick={() => setActive(cat)}>
-          {cat}
-        </button>
-      ))}
+    <div className="tabsWrap">
+      <div className="tabs" aria-label="Menu categories">
+        {categories.map(cat => (
+          <button key={cat} className={cat === active ? 'tab active' : 'tab'} onClick={() => setActive(cat)}>
+            {cat}
+          </button>
+        ))}
+      </div>
+      {categories.length > 2 && <span className="swipeCue">Swipe categories</span>}
     </div>
   );
 }
@@ -2068,7 +2071,7 @@ function TruckOrderPage() {
           <div>
             <div className="sectionKicker"><Utensils size={15} /> The turn menu</div>
             <h2>Food Truck Menu</h2>
-            <p className="hint">Use the + button to add items to your order.</p>
+            <p className="hint">Choose a category from the dropdown or swipe the category row. Use + to add items.</p>
           </div>
           <span className="pill">Pickup only</span>
         </div>

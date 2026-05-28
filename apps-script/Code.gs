@@ -135,20 +135,33 @@ function percentSetting(settings, key, fallback) {
   return value > 1 ? value / 100 : value;
 }
 
-function customerTypeForPayment(paymentType) {
-  if (paymentType === 'Guest Pay at Pickup') return 'Guest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
+function normalizeCustomerType(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (raw === 'guest') return 'Guest';
+  if (raw === 'rsm') return 'RSM';
+  if (['approved non-member', 'approved non member', 'non-member', 'non member', 'nonmember'].includes(raw)) {
+    return 'Approved Non-Member';
+  }
   return 'Golf Member';
 }
 
-function truckFeeSettingsPrefix(paymentType) {
-  if (paymentType === 'Guest Pay at Pickup') return 'TruckGuest';
-  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'TruckNonMember';
+function customerTypeForPayment(paymentType, memberCustomerType) {
+  if (paymentType === 'Guest Pay at Pickup') return 'Guest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
+  const normalizedMemberType = normalizeCustomerType(memberCustomerType);
+  if (['Approved Non-Member', 'RSM'].includes(normalizedMemberType)) return normalizedMemberType;
+  return 'Golf Member';
+}
+
+function truckFeeSettingsPrefix(paymentType, customerType) {
+  if (paymentType === 'Guest Pay at Pickup' || customerType === 'Guest') return 'TruckGuest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup' || ['Approved Non-Member', 'RSM'].includes(customerType)) return 'TruckNonMember';
   return 'TruckMember';
 }
 
-function calculateTruckFees(subtotal, tipAmount, paymentType, settings) {
-  const prefix = truckFeeSettingsPrefix(paymentType);
+function calculateTruckFees(subtotal, tipAmount, paymentType, settings, memberCustomerType) {
+  const customerType = customerTypeForPayment(paymentType, memberCustomerType);
+  const prefix = truckFeeSettingsPrefix(paymentType, customerType);
   const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
   const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
@@ -163,7 +176,7 @@ function calculateTruckFees(subtotal, tipAmount, paymentType, settings) {
   const safeTip = roundMoney(tipAmount);
   const finalTotal = roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip);
   return {
-    customerType: customerTypeForPayment(paymentType),
+    customerType,
     serviceFeeLabel: `Service Fee (${Math.round(serviceFeeRate * 100)}%)`,
     serviceFeeRate,
     serviceFeeAmount,
@@ -329,13 +342,15 @@ function getMembers() {
   const headers = values[0].map(h => String(h).trim());
   const memberCol = headers.indexOf('MemberNumber');
   const statusCol = headers.indexOf('Status');
+  const customerTypeCol = headers.indexOf('CustomerType');
 
   if (memberCol >= 0) {
     return values.slice(1)
       .filter(row => String(row[memberCol] || '').trim())
       .map(row => ({
         memberNumber: String(row[memberCol] || '').trim(),
-        status: statusCol >= 0 ? String(row[statusCol] || '').trim() || 'Active' : 'Active'
+        status: statusCol >= 0 ? String(row[statusCol] || '').trim() || 'Active' : 'Active',
+        customerType: normalizeCustomerType(customerTypeCol >= 0 ? row[customerTypeCol] : '')
       }));
   }
 
@@ -343,7 +358,8 @@ function getMembers() {
     .filter(row => String(row[0] || '').trim())
     .map(row => ({
       memberNumber: String(row[0] || '').trim(),
-      status: String(row[1] || '').trim() || 'Active'
+      status: String(row[1] || '').trim() || 'Active',
+      customerType: normalizeCustomerType(row[2] || '')
     }));
 }
 
@@ -383,7 +399,16 @@ function validateMemberNumber(memberNumber, serviceName) {
     throw new Error(`Member account is not active. Please contact ${contactName}.`);
   }
 
-  return true;
+  return member;
+}
+
+function getMemberProfile(memberNumber) {
+  const member = validateMemberNumber(memberNumber, 'The Turn Truck');
+  return {
+    memberNumber: String(member.memberNumber || ''),
+    status: String(member.status || 'Active'),
+    customerType: normalizeCustomerType(member.customerType)
+  };
 }
 
 
@@ -522,6 +547,10 @@ function doGet(e) {
 
     if (action === 'settings') {
       return jsonResponse({ ok: true, settings: getSettingsObject() });
+    }
+
+    if (action === 'memberProfile') {
+      return jsonResponse({ ok: true, ...getMemberProfile(e.parameter.memberNumber) });
     }
 
     if (action === 'orders') {
@@ -787,14 +816,15 @@ function createTruckOrder(order) {
   }
   const allowedPaymentTypes = ['Member Account', 'Guest Pay at Pickup', 'Approved Non-Member Pay at Pickup'];
   const paymentType = allowedPaymentTypes.includes(order.paymentType) ? order.paymentType : 'Member Account';
-  const pickupPayment = paymentType !== 'Member Account';
+  const pickupPayment = paymentType === 'Guest Pay at Pickup';
   const paymentStatus = pickupPayment ? 'Due at Pickup' : 'Member Account';
   const settings = getSettingsObject();
   const tipsEnabled = pickupPayment || String(settings.TruckMemberTipsEnabled || 'TRUE').toUpperCase() !== 'FALSE';
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
   const tipAmount = tipsEnabled ? roundMoney(Math.max(0, Number(order.tipAmount || 0))) : 0;
   const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
-  if (!pickupPayment) validateMemberNumber(order.memberNumber, 'The Turn Truck');
+  const memberProfile = pickupPayment ? null : validateMemberNumber(order.memberNumber, 'The Turn Truck');
+  const memberCustomerType = memberProfile ? memberProfile.customerType : '';
   if (!String(order.memberName || '').trim()) throw new Error(pickupPayment ? 'Name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
   if (!order.authorizationAccepted) throw new Error(pickupPayment ? 'Payment acknowledgement is required.' : 'Charge authorization is required.');
@@ -805,7 +835,7 @@ function createTruckOrder(order) {
   if (!items.length) throw new Error('Please select at least one food truck item.');
   const subtotalKnownItems = items.reduce((sum, item) =>
     sum + (Number(item.price || 0) + modifierUnitTotal(item)) * Number(item.quantity || 0), 0);
-  const fees = calculateTruckFees(subtotalKnownItems, tipAmount, paymentType, settings);
+  const fees = calculateTruckFees(subtotalKnownItems, tipAmount, paymentType, settings, memberCustomerType);
   const alcoholIncluded = items.some(item => item.alcoholic);
   if (alcoholIncluded && !order.alcoholVerificationAccepted) {
     throw new Error('Alcohol verification acknowledgement is required.');
@@ -925,7 +955,7 @@ function normalizeTruckOrder(row) {
     status: String(row.Status || 'New'),
     paymentType: String(row.PaymentType || 'Member Account'),
     paymentStatus: String(row.PaymentStatus || ''),
-    customerType: String(row.CustomerType || customerTypeForPayment(String(row.PaymentType || 'Member Account'))),
+    customerType: normalizeCustomerType(row.CustomerType || customerTypeForPayment(String(row.PaymentType || 'Member Account'))),
     guestCardType: String(row.GuestCardType || ''),
     tipLabel: String(row.TipLabel || ''),
     tipAmount: Number(row.TipAmount || 0),

@@ -1,36 +1,36 @@
-MemberNumber,Status
-1001,Active
-1002,Active
-1003,Active
-1004,Active
-1005,Active
-11225,Active
-11890,Active
-12456,Active
-13002,Active
-14567,Active
-15001,Active
-16234,Active
-17345,Active
-18456,Active
-19567,Active
-20678,Active
-21789,Active
-22890,Active
-23901,Active
-24012,Active
-25123,Active
-26234,Active
-27345,Active
-28456,Active
-29567,Active
-06741,Active
-07088,Active
-06939,Active
-06271,Active
-06470,Active
-06949,Active
-07056,Active
-06592,Active
-0693,Active
-9238,Active
+MemberNumber,Status,CustomerType
+1001,Active,Golf Member
+1002,Active,Golf Member
+1003,Active,Golf Member
+1004,Active,Golf Member
+1005,Active,Golf Member
+11225,Active,Golf Member
+11890,Active,Golf Member
+12456,Active,Golf Member
+13002,Active,Golf Member
+14567,Active,Golf Member
+15001,Active,Golf Member
+16234,Active,Golf Member
+17345,Active,Golf Member
+18456,Active,Golf Member
+19567,Active,Golf Member
+20678,Active,Golf Member
+21789,Active,Golf Member
+22890,Active,Golf Member
+23901,Active,Golf Member
+24012,Active,Golf Member
+25123,Active,Golf Member
+26234,Active,Golf Member
+27345,Active,Golf Member
+28456,Active,Golf Member
+29567,Active,Golf Member
+06741,Active,Golf Member
+07088,Active,Golf Member
+06939,Active,Golf Member
+06271,Active,Golf Member
+06470,Active,Golf Member
+06949,Active,Approved Non-Member
+07056,Active,Approved Non-Member
+06592,Active,Approved Non-Member
+0693,Active,Approved Non-Member
+9238,Active,RSM

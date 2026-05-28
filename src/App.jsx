@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
@@ -413,6 +413,13 @@ function apiErrorMessage(error, action) {
   if (error.name === 'AbortError') return 'The ordering system is taking longer than expected to respond. Please try again.';
   if (String(error.message || '').includes('Failed to fetch')) return 'Unable to reach the ordering system. Please check the connection and try again.';
   return error.message || `Unable to complete ${action}.`;
+}
+
+function truckErrorMessage(message) {
+  return String(message || 'Unable to complete truck order.')
+    .replace(/contact the Pool Bar/g, 'contact The Turn Truck')
+    .replace(/Pool ordering/g, 'Truck ordering')
+    .replace(/Pool Bar/g, 'The Turn Truck');
 }
 
 async function fetchJsonWithRetry(url, options, action) {
@@ -1586,6 +1593,7 @@ function OrderPage() {
 
 function TruckOrderPage() {
   const savedConfirmation = readSavedTruckConfirmation();
+  const errorRef = useRef(null);
   const [menu, setMenu] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
@@ -1667,6 +1675,13 @@ function TruckOrderPage() {
     [orderedTruckMenu, customizingItemId]
   );
 
+  function showTruckError(message) {
+    setErr(truckErrorMessage(message));
+    setTimeout(() => {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
   function setField(field, value) {
     setForm(prev => ({ ...prev, [field]: value }));
   }
@@ -1737,8 +1752,7 @@ function TruckOrderPage() {
   async function submitTruckOrder() {
     const validation = validateTruckOrder();
     if (validation) {
-      setErr(validation);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showTruckError(validation);
       return;
     }
     setSubmitting(true);
@@ -1809,7 +1823,7 @@ function TruckOrderPage() {
       setLiveStatus('New');
       sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
     } catch (e) {
-      setErr(e.message);
+      showTruckError(e.message);
     } finally {
       setSubmitting(false);
     }
@@ -1819,7 +1833,7 @@ function TruckOrderPage() {
     const orderId = String(lookup.orderId || '').trim();
     const memberNumber = String(lookup.memberNumber || '').trim();
     if (!/^\d{4,6}$/.test(memberNumber)) {
-      setErr('Enter your 4–6 digit member number.');
+      showTruckError('Enter your 4–6 digit member number.');
       return;
     }
     setLookingUp(true);
@@ -1858,8 +1872,7 @@ function TruckOrderPage() {
       setReadyAt(nextReadyAt);
       sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
     } catch (e) {
-      setErr(e.message || 'Food truck order not found.');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showTruckError(e.message || 'Food truck order not found.');
     } finally {
       setLookingUp(false);
     }
@@ -1900,7 +1913,7 @@ function TruckOrderPage() {
     const confirmationIsGuest = form.paymentType === 'Guest Pay at Pickup' || chit?.paymentType === 'Guest Pay at Pickup';
     return (
       <div className="stack memberStack truckMember">
-        {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+        {err && <div ref={errorRef} className="alert truckErrorPanel"><AlertTriangle size={30} />{err}</div>}
         <div className={ready ? 'card success statusCard readyCard' : 'card success statusCard'}>
           <div className="orderNumHeader truckOrderHeader">
             <span>Truck order confirmed</span>
@@ -1947,7 +1960,7 @@ function TruckOrderPage() {
   if (!truckOrderingOpen) {
     return (
       <div className="stack memberStack truckMember">
-        {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+        {err && <div ref={errorRef} className="alert truckErrorPanel"><AlertTriangle size={30} />{err}</div>}
 
         <section className="card hero memberHero truckHero truckHeroWithCart">
           <div>
@@ -1993,7 +2006,7 @@ function TruckOrderPage() {
 
   return (
     <div className="stack memberStack truckMember">
-      {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+      {err && <div ref={errorRef} className="alert truckErrorPanel"><AlertTriangle size={30} />{err}</div>}
 
       <section className="card hero memberHero truckHero truckHeroWithCart">
         <div>

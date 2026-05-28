@@ -130,6 +130,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--gold); box-shado
 .check input { width: 20px; min-width: 20px; height: 20px; margin: 0; }
 .alcoholCheck { background: #f8e9e4; }
 .alert { display: flex; gap: 8px; align-items: center; border: 1px solid #e7b8aa; background: #fff2ed; color: var(--danger); padding: 10px 12px; border-radius: 14px; font-weight: 800; font-size: 13px; }
+.truckErrorPanel { align-items: center; gap: 14px; padding: 22px 18px; border-width: 2px; border-radius: 18px; font-size: clamp(20px, 5vw, 27px); line-height: 1.18; font-weight: 900; scroll-margin-top: 16px; }
+.truckErrorPanel svg { flex: 0 0 auto; color: var(--danger); }
 .centered { display: grid; justify-items: center; text-align: center; gap: 7px; }
 .success { display: grid; justify-items: center; text-align: center; }
 .success svg { color: var(--success); }

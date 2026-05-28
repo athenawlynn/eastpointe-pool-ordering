@@ -166,6 +166,7 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .choiceCard span { color: var(--muted); line-height: 1.28; font-size: 13px; }
 .activeChoice { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 61, 45, .10); background: #f4f8f1; }
 .guestChoice.activeChoice { border-color: #8A5A0A; background: #FEF3E2; box-shadow: 0 0 0 3px rgba(138, 90, 10, .12); }
+.nonMemberChoice.activeChoice { border-color: #2f6f88; background: #eaf5f7; box-shadow: 0 0 0 3px rgba(47, 111, 136, .12); }
 .serviceNotice { margin-top: 10px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.35; font-weight: 750; }
 .serviceBanner { display: flex; align-items: center; gap: 9px; border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 12px; padding: 11px 12px; font-size: 13px; line-height: 1.35; font-weight: 850; }
 .serviceBanner.closed { border-color: #e7b8aa; background: #fff2ed; color: var(--danger); }
@@ -189,6 +190,7 @@ pre { white-space: pre-wrap; margin: 0; font-family: inherit; line-height: 1.35;
 .paymentDueBadge { border: 1px solid #FAC775; background: #FEF3E2; color: var(--amber); border-radius: 10px; font-weight: 900; }
 .paymentDueNotice { width: 100%; padding: 11px 12px; font-size: 13px; text-align: left; }
 .paymentDueBadge { display: inline-flex; width: fit-content; margin-top: 9px; padding: 5px 9px; font-size: 11px; }
+.nonMemberBadge { color: #2f6f88; background: #eaf5f7; border-color: #b8dbe4; }
 .guestPaymentCheckout { display: grid; gap: 10px; margin: 14px 0 4px; padding: 13px; border: 1px solid #E8C36F; border-radius: 10px; background: #FFFDF9; }
 .guestPaymentCheckout h3 { margin: 0; color: var(--ink); font-size: 17px; }
 .segmentedOptions { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -406,6 +408,15 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffOrderCard .staffOrderFoot span { padding: 5px 12px; border-radius: 999px; background: #f4f0e9; }
 .staffOrderCard .staffOrderFoot .alcoholPill { background: #f8e9e4; color: #a33f35; }
 .truckOrderCard .staffOrderFoot span { background: #F7F1DF; color: #7A5B11; }
+.truckOrderCard .staffOrderFoot .guestPill { background: #eaf5f7; color: #2f6f88; }
+.truckOrderCard.guestOrderCard { border-color: #8dc7d8; box-shadow: 0 0 0 2px rgba(47, 111, 136, .13), 0 2px 10px rgba(0, 0, 0, .04); }
+.truckOrderCard.guestOrderCard .staffOrderHead { background: #eaf5f7; border-bottom-color: #b8dbe4; }
+.truckOrderCard.guestOrderCard .staffOrderHead strong { color: #1d5e78; }
+.truckOrderCard.nonMemberOrderCard { border-color: #a8d7c2; box-shadow: 0 0 0 2px rgba(45, 107, 64, .10), 0 2px 10px rgba(0, 0, 0, .04); }
+.staffFeeBreakdown { display: grid; gap: 4px; border-bottom: 1px solid var(--line-soft); background: #fffdf9; padding: 9px 14px; }
+.staffFeeBreakdown div { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 11px; font-weight: 800; }
+.staffFeeBreakdown strong { color: var(--ink); }
+.staffFeeBreakdown .feeTotal { border-top: 1px solid var(--line-soft); margin-top: 3px; padding-top: 6px; color: var(--ink); }
 .staffTimeLine { display: flex; flex-wrap: wrap; gap: 6px 10px; padding: 8px 14px; border-bottom: 1px solid var(--line-soft); color: var(--soft-muted); font-size: 11px; font-weight: 800; }
 .staffActions { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px 12px; align-items: center; }
 .staffPrimaryAction, .staffSecondaryAction, .staffPrintButton { min-height: 38px; border-radius: 8px; font-weight: 850; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }

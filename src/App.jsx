@@ -156,8 +156,13 @@ function printCustomerChit(order, onBlocked) {
   const customRequest = order.barRequest || order.specialInstructions || '';
   const customLabel = order.barRequest ? 'Bar / Cocktail Request' : 'Special Instructions';
   const isGuestPayment = order.paymentType === 'Guest Pay at Pickup';
+  const isPickupPayment = isGuestPayment || order.paymentType === 'Approved Non-Member Pay at Pickup';
   const tipAmount = Number(order.tipAmount || 0);
-  const totalWithTip = Number(order.subtotalKnownItems || 0) + tipAmount;
+  const serviceFeeAmount = Number(order.serviceFeeAmount || 0);
+  const creditCardFeeAmount = Number(order.creditCardFeeAmount || 0);
+  const serviceFeeVisible = order.serviceFeeVisible === true || String(order.serviceFeeVisible).toUpperCase() === 'TRUE';
+  const creditCardFeeVisible = order.creditCardFeeVisible === true || String(order.creditCardFeeVisible).toUpperCase() === 'TRUE';
+  const totalWithFees = Number(order.finalTotal || order.estimatedTotal || Number(order.subtotalKnownItems || 0) + tipAmount + serviceFeeAmount + creditCardFeeAmount);
   const hasTip = tipAmount > 0;
   w.document.write(`
     <html>
@@ -183,7 +188,13 @@ function printCustomerChit(order, onBlocked) {
         <table>${rows}</table>
         ${customRequest ? `<h2>${escapeHtml(customLabel)}</h2><p>${escapeHtml(customRequest)}</p><p class="muted">Custom requests may be priced by staff.</p>` : ''}
         <p class="total">Known subtotal: ${escapeHtml(currency(order.subtotalKnownItems))}</p>
-        ${isGuestPayment ? `<h2>Payment</h2><p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p><p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p><p><strong>Estimated total: ${escapeHtml(currency(totalWithTip))}</strong></p>` : hasTip ? `<h2>Tip</h2><p>Tip: ${escapeHtml(order.tipLabel || 'Custom')} (${escapeHtml(currency(tipAmount))})</p><p><strong>Total with tip: ${escapeHtml(currency(totalWithTip))}</strong></p>` : ''}
+        <h2>Payment</h2>
+        ${isGuestPayment ? `<p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p>` : ''}
+        ${order.paymentType === 'Approved Non-Member Pay at Pickup' ? `<p><strong>Approved non-member/RSM payment at pickup.</strong></p>` : ''}
+        ${serviceFeeVisible && serviceFeeAmount > 0 ? `<p>${escapeHtml(order.serviceFeeLabel || 'Service Fee')}: ${escapeHtml(currency(serviceFeeAmount))}</p>` : ''}
+        ${creditCardFeeVisible && creditCardFeeAmount > 0 ? `<p>${escapeHtml(order.creditCardFeeLabel || 'Credit Card Transaction Fee')}: ${escapeHtml(currency(creditCardFeeAmount))}</p>` : ''}
+        ${hasTip || isPickupPayment ? `<p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p>` : ''}
+        <p><strong>Total: ${escapeHtml(currency(totalWithFees))}</strong></p>
         <p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>
       </body>
     </html>
@@ -288,7 +299,69 @@ function displayPhone(phone) {
 }
 
 function isGuestOrder(order) {
-  return order?.paymentType === 'Guest Pay at Pickup' || order?.paymentStatus === 'Due at Pickup';
+  return order?.paymentType === 'Guest Pay at Pickup' || order?.customerType === 'Guest';
+}
+
+function isApprovedNonMemberOrder(order) {
+  return order?.paymentType === 'Approved Non-Member Pay at Pickup' || order?.customerType === 'Approved Non-Member';
+}
+
+function customerTypeForPayment(paymentType) {
+  if (paymentType === 'Guest Pay at Pickup') return 'Guest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
+  return 'Golf Member';
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function numericSetting(settings, key, fallback) {
+  const value = settings?.[key];
+  if (value === undefined || value === null || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function percentSetting(settings, key, fallback) {
+  const value = numericSetting(settings, key, fallback);
+  return value > 1 ? value / 100 : value;
+}
+
+function paymentFeeSettingsPrefix(paymentType) {
+  if (paymentType === 'Guest Pay at Pickup') return 'TruckGuest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'TruckNonMember';
+  return 'TruckMember';
+}
+
+function calculateTruckFees({ subtotal, tipAmount, paymentType, settings }) {
+  const prefix = paymentFeeSettingsPrefix(paymentType);
+  const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
+  const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
+  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, paymentType !== 'Member Account');
+  const creditCardFeeEnabled = settingEnabled(settings, `${prefix}CreditCardFeeEnabled`, paymentType === 'Guest Pay at Pickup');
+  const creditCardFeeVisible = settingEnabled(settings, `${prefix}CreditCardFeeVisible`, creditCardFeeEnabled);
+  const serviceFeeAmount = serviceFeeEnabled ? roundMoney(Number(subtotal || 0) * serviceFeeRate) : 0;
+  const creditCardBase = String(settings?.TruckCreditCardFeeBase || 'SubtotalPlusServiceFee') === 'SubtotalOnly'
+    ? Number(subtotal || 0)
+    : Number(subtotal || 0) + serviceFeeAmount;
+  const creditCardFeeAmount = creditCardFeeEnabled ? roundMoney(creditCardBase * creditCardFeeRate) : 0;
+  const safeTip = roundMoney(tipAmount);
+  return {
+    customerType: customerTypeForPayment(paymentType),
+    serviceFeeLabel: `Service Fee ${Math.round(serviceFeeRate * 100)}%`,
+    serviceFeeRate,
+    serviceFeeAmount,
+    serviceFeeVisible,
+    creditCardFeeLabel: `Credit Card Transaction Fee ${Math.round(creditCardFeeRate * 100)}%`,
+    creditCardFeeRate,
+    creditCardFeeAmount,
+    creditCardFeeVisible,
+    tipAmount: safeTip,
+    estimatedTotal: roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip),
+    finalTotal: roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip)
+  };
 }
 
 function tipOrdersToday(orders) {
@@ -301,6 +374,37 @@ function tipOrdersToday(orders) {
 
 function sumTips(orders) {
   return orders.reduce((sum, order) => sum + Number(order.tipAmount || 0), 0);
+}
+
+function orderFinalTotal(order) {
+  return Number(order.finalTotal || order.estimatedTotal || (
+    Number(order.subtotalKnownItems || 0) +
+    Number(order.serviceFeeAmount || 0) +
+    Number(order.creditCardFeeAmount || 0) +
+    Number(order.tipAmount || 0)
+  ));
+}
+
+function staffFeeLines(order) {
+  const lines = [];
+  if (Number(order.serviceFeeAmount || 0) > 0) {
+    lines.push({
+      label: order.serviceFeeVisible === true || String(order.serviceFeeVisible).toUpperCase() === 'TRUE'
+        ? (order.serviceFeeLabel || 'Service Fee')
+        : `${order.serviceFeeLabel || 'Service Fee'} (hidden)`,
+      amount: Number(order.serviceFeeAmount || 0)
+    });
+  }
+  if (Number(order.creditCardFeeAmount || 0) > 0) {
+    lines.push({
+      label: order.creditCardFeeLabel || 'Credit Card Transaction Fee',
+      amount: Number(order.creditCardFeeAmount || 0)
+    });
+  }
+  if (Number(order.tipAmount || 0) > 0) {
+    lines.push({ label: `Tip ${order.tipLabel || ''}`.trim(), amount: Number(order.tipAmount || 0) });
+  }
+  return lines;
 }
 
 function tipDetails(subtotal, tipChoice, customTip) {
@@ -995,7 +1099,7 @@ function OrderPage() {
     customTip: '',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
-    phone: '',
+    phone: savedConfirmation?.phone || '',
     tableNumber: savedConfirmation?.tableNumber || initialTable,
     barRequest: '',
     authorizationAccepted: false,
@@ -1089,7 +1193,7 @@ function OrderPage() {
     if (!orderingOpen) return 'Pool ordering is currently closed. Please order directly at the Pool Bar.';
     if (form.fulfillmentType === 'Delivery' && !deliveryAvailable) return 'Delivery is currently unavailable. Please choose pickup at the Pool Bar.';
     if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter member name.';
-    if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!isPickupPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
     const t = Number(form.tableNumber);
     if (form.fulfillmentType === 'Delivery' && (!Number.isInteger(t) || t < 1 || t > 100)) {
@@ -1102,6 +1206,8 @@ function OrderPage() {
     if (!form.authorizationAccepted) {
       return isGuestPayment
         ? 'Please acknowledge that a physical credit card must be provided at pickup.'
+        : isApprovedNonMemberPayment
+          ? 'Please acknowledge that payment must be provided at pickup.'
         : 'Please authorize the charge to the member account.';
     }
     if (isGuestPayment && !form.guestCardType) return 'Please choose the card type you will provide at pickup.';
@@ -1236,7 +1342,7 @@ function OrderPage() {
 
 
   useEffect(() => {
-    if (!confirmation?.orderId || !form.memberNumber) return;
+    if (!confirmation?.orderId || (!form.memberNumber && !form.phone)) return;
     async function pollStatus() {
       try {
         const res = await apiGet('orderStatus', {
@@ -1669,10 +1775,18 @@ function TruckOrderPage() {
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
+  const isApprovedNonMemberPayment = form.paymentType === 'Approved Non-Member Pay at Pickup';
+  const isPickupPayment = isGuestPayment || isApprovedNonMemberPayment;
   const memberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
-  const showTipSection = isGuestPayment || memberTipsEnabled;
+  const showTipSection = isPickupPayment || memberTipsEnabled;
   const checkoutTip = tipDetails(subtotal, form.tipChoice, form.customTip);
-  const checkoutTotal = subtotal + checkoutTip.amount;
+  const checkoutFees = calculateTruckFees({
+    subtotal,
+    tipAmount: showTipSection ? checkoutTip.amount : 0,
+    paymentType: form.paymentType,
+    settings
+  });
+  const checkoutTotal = checkoutFees.finalTotal;
   const customizingItem = useMemo(() =>
     orderedTruckMenu.find(item => item.itemId === customizingItemId) || null,
     [orderedTruckMenu, customizingItemId]
@@ -1729,8 +1843,8 @@ function TruckOrderPage() {
 
   function validateTruckOrder() {
     if (!truckOrderingOpen) return 'The Turn Truck ordering is currently closed.';
-    if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter member name.';
-    if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
+    if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : isApprovedNonMemberPayment ? 'Please enter name.' : 'Please enter member name.';
+    if (!isPickupPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
     if (!selectedItems.length) return 'Please select at least one item.';
     for (const item of selectedItems) {
@@ -1745,7 +1859,9 @@ function TruckOrderPage() {
     if (!form.authorizationAccepted) {
       return isGuestPayment
         ? 'Please acknowledge that a physical credit card must be provided at pickup.'
-        : 'Please authorize the charge to the member account.';
+        : isApprovedNonMemberPayment
+          ? 'Please acknowledge that payment must be provided at pickup.'
+          : 'Please authorize the charge to the member account.';
     }
     if (isGuestPayment && !form.guestCardType) return 'Please choose the card type you will provide at pickup.';
     if (truckHasAlcohol && !form.alcoholVerificationAccepted) return 'Please accept the alcohol verification notice.';
@@ -1765,13 +1881,23 @@ function TruckOrderPage() {
         order: {
           timestamp: todayISO(),
           paymentType: form.paymentType,
-          paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
+          paymentStatus: isPickupPayment ? 'Due at Pickup' : 'Member Account',
+          customerType: checkoutFees.customerType,
           guestCardType: isGuestPayment ? form.guestCardType : '',
           tipAmount: showTipSection ? checkoutTip.amount : 0,
           tipLabel: showTipSection ? checkoutTip.label : '',
-          estimatedTotal: showTipSection ? checkoutTotal : subtotal,
+          serviceFeeLabel: checkoutFees.serviceFeeLabel,
+          serviceFeeRate: checkoutFees.serviceFeeRate,
+          serviceFeeAmount: checkoutFees.serviceFeeAmount,
+          serviceFeeVisible: checkoutFees.serviceFeeVisible,
+          creditCardFeeLabel: checkoutFees.creditCardFeeLabel,
+          creditCardFeeRate: checkoutFees.creditCardFeeRate,
+          creditCardFeeAmount: checkoutFees.creditCardFeeAmount,
+          creditCardFeeVisible: checkoutFees.creditCardFeeVisible,
+          estimatedTotal: checkoutFees.estimatedTotal,
+          finalTotal: checkoutFees.finalTotal,
           memberName: form.memberName.trim(),
-          memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
+          memberNumber: isPickupPayment ? '' : form.memberNumber.trim(),
           phone: form.phone.trim(),
           items: selectedItems.map(item => ({
             itemId: item.itemId,
@@ -1793,13 +1919,23 @@ function TruckOrderPage() {
         timestamp: todayISO(),
         fulfillmentType: 'Pickup',
         paymentType: form.paymentType,
-        paymentStatus: isGuestPayment ? 'Due at Pickup' : 'Member Account',
+        paymentStatus: isPickupPayment ? 'Due at Pickup' : 'Member Account',
+        customerType: checkoutFees.customerType,
         guestCardType: isGuestPayment ? form.guestCardType : '',
         tipAmount: showTipSection ? checkoutTip.amount : 0,
         tipLabel: showTipSection ? checkoutTip.label : '',
-        estimatedTotal: showTipSection ? checkoutTotal : subtotal,
+        serviceFeeLabel: checkoutFees.serviceFeeLabel,
+        serviceFeeRate: checkoutFees.serviceFeeRate,
+        serviceFeeAmount: checkoutFees.serviceFeeAmount,
+        serviceFeeVisible: checkoutFees.serviceFeeVisible,
+        creditCardFeeLabel: checkoutFees.creditCardFeeLabel,
+        creditCardFeeRate: checkoutFees.creditCardFeeRate,
+        creditCardFeeAmount: checkoutFees.creditCardFeeAmount,
+        creditCardFeeVisible: checkoutFees.creditCardFeeVisible,
+        estimatedTotal: checkoutFees.estimatedTotal,
+        finalTotal: checkoutFees.finalTotal,
         memberName: form.memberName.trim(),
-        memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
+        memberNumber: isPickupPayment ? '' : form.memberNumber.trim(),
         items: selectedItems.map(item => ({
           itemId: item.itemId,
           category: item.category,
@@ -1816,8 +1952,10 @@ function TruckOrderPage() {
         orderId: res.orderId,
         status: 'New',
         memberName: form.memberName.trim(),
-        memberNumber: isGuestPayment ? '' : form.memberNumber.trim(),
+        memberNumber: isPickupPayment ? '' : form.memberNumber.trim(),
+        phone: form.phone.trim(),
         paymentType: form.paymentType,
+        customerType: checkoutFees.customerType,
         guestCardType: isGuestPayment ? form.guestCardType : '',
         tipChoice: showTipSection ? form.tipChoice : '0',
         chit
@@ -1855,6 +1993,7 @@ function TruckOrderPage() {
         memberNumber,
         memberName: res.memberName || '',
         paymentType: res.paymentType || 'Member Account',
+        customerType: res.customerType || customerTypeForPayment(res.paymentType || 'Member Account'),
         readyAt: nextReadyAt,
         chit: res.items || res.itemsSummary || res.subtotalKnownItems ? {
           orderId: resolvedOrderId,
@@ -1862,6 +2001,21 @@ function TruckOrderPage() {
           fulfillmentType: 'Pickup',
           memberName: res.memberName || '',
           paymentType: res.paymentType || 'Member Account',
+          paymentStatus: res.paymentStatus || '',
+          customerType: res.customerType || customerTypeForPayment(res.paymentType || 'Member Account'),
+          guestCardType: res.guestCardType || '',
+          tipLabel: res.tipLabel || '',
+          tipAmount: Number(res.tipAmount || 0),
+          serviceFeeLabel: res.serviceFeeLabel || '',
+          serviceFeeRate: Number(res.serviceFeeRate || 0),
+          serviceFeeAmount: Number(res.serviceFeeAmount || 0),
+          serviceFeeVisible: res.serviceFeeVisible,
+          creditCardFeeLabel: res.creditCardFeeLabel || '',
+          creditCardFeeRate: Number(res.creditCardFeeRate || 0),
+          creditCardFeeAmount: Number(res.creditCardFeeAmount || 0),
+          creditCardFeeVisible: res.creditCardFeeVisible,
+          estimatedTotal: Number(res.estimatedTotal || 0),
+          finalTotal: Number(res.finalTotal || res.estimatedTotal || 0),
           memberNumber,
           items: res.items || [],
           itemsSummary: res.itemsSummary || '',
@@ -1887,7 +2041,8 @@ function TruckOrderPage() {
       try {
         const res = await apiGet('truckOrderStatus', {
           orderId: confirmation.orderId,
-          memberNumber: form.memberNumber.trim()
+          memberNumber: form.memberNumber.trim(),
+          phone: form.phone.trim()
         });
         const nextStatus = res.status || '';
         const nextReadyAt = nextStatus === 'Ready for Pickup' || nextStatus === 'Completed'
@@ -1905,7 +2060,7 @@ function TruckOrderPage() {
     pollStatus();
     const id = setInterval(pollStatus, 8000);
     return () => clearInterval(id);
-  }, [confirmation?.orderId, form.memberNumber]);
+  }, [confirmation?.orderId, form.memberNumber, form.phone]);
 
   if (loading) return <LoadingCard message="Loading truck menu..." />;
 
@@ -2042,16 +2197,24 @@ function TruckOrderPage() {
             <strong>Guest - Pay at Pickup</strong>
             <span>A credit card must be provided at pickup before the order is released.</span>
           </button>
+          <button
+            className={form.paymentType === 'Approved Non-Member Pay at Pickup' ? 'choiceCard activeChoice nonMemberChoice' : 'choiceCard nonMemberChoice'}
+            onClick={() => setField('paymentType', 'Approved Non-Member Pay at Pickup')}
+            type="button"
+          >
+            <strong>Approved Non-Member / RSM</strong>
+            <span>For approved non-member orders paid directly at pickup.</span>
+          </button>
         </div>
       </section>
 
       <section className="card">
-        <div className="sectionKicker"><UserRound size={15} /> {isGuestPayment ? 'Guest details' : 'Member details'}</div>
-        <h2>{isGuestPayment ? 'Guest Information' : 'Member Information'}</h2>
-        <label>{isGuestPayment ? 'Guest Name' : 'Member Name'}
+        <div className="sectionKicker"><UserRound size={15} /> {isPickupPayment ? 'Pickup payment details' : 'Member details'}</div>
+        <h2>{isGuestPayment ? 'Guest Information' : isApprovedNonMemberPayment ? 'Approved Non-Member Information' : 'Member Information'}</h2>
+        <label>{isGuestPayment ? 'Guest Name' : isApprovedNonMemberPayment ? 'Name' : 'Member Name'}
           <input value={form.memberName} onChange={event => setField('memberName', event.target.value)} placeholder="First and last name" />
         </label>
-        {!isGuestPayment && (
+        {!isPickupPayment && (
           <label>Member Number
             <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
           </label>
@@ -2148,10 +2311,12 @@ function TruckOrderPage() {
 
         {showTipSection && (
           <div className="guestPaymentCheckout">
-            <div className="sectionKicker"><ShieldCheck size={15} /> {isGuestPayment ? 'Guest payment' : 'Tip'}</div>
-            <h3>{isGuestPayment ? 'Card at Pickup' : 'Add a Tip'}</h3>
+            <div className="sectionKicker"><ShieldCheck size={15} /> {isPickupPayment ? 'Payment at pickup' : 'Tip'}</div>
+            <h3>{isGuestPayment ? 'Card at Pickup' : isApprovedNonMemberPayment ? 'Approved Payment at Pickup' : 'Add a Tip'}</h3>
             {isGuestPayment
               ? <p className="hint">No card number is collected online. Staff will collect the physical credit card at pickup.</p>
+              : isApprovedNonMemberPayment
+                ? <p className="hint">Staff will collect payment at pickup. No online payment is processed.</p>
               : <p className="hint">Optional tip to add to the member account charge.</p>}
             {isGuestPayment && (
               <label>Card Type
@@ -2196,10 +2361,21 @@ function TruckOrderPage() {
             )}
             <div className="guestTotalBox">
               <span>Known subtotal</span><strong>{currency(subtotal)}</strong>
+              {checkoutFees.serviceFeeVisible && checkoutFees.serviceFeeAmount > 0 && (
+                <>
+                  <span>Service fee</span><strong>{currency(checkoutFees.serviceFeeAmount)}</strong>
+                </>
+              )}
+              {checkoutFees.creditCardFeeVisible && checkoutFees.creditCardFeeAmount > 0 && (
+                <>
+                  <span>Credit card transaction fee</span><strong>{currency(checkoutFees.creditCardFeeAmount)}</strong>
+                </>
+              )}
               <span>Tip</span><strong>{currency(checkoutTip.amount)}</strong>
-              <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
+              <span>Estimated total</span><strong>{currency(checkoutTotal)}</strong>
             </div>
             {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
+            {isApprovedNonMemberPayment && <div className="paymentDueNotice"><strong>Payment required at pickup.</strong> Orders will not be released until staff confirms payment.</div>}
           </div>
         )}
 
@@ -2216,7 +2392,9 @@ function TruckOrderPage() {
           <input type="checkbox" checked={form.authorizationAccepted} onChange={event => setField('authorizationAccepted', event.target.checked)} />
           <span>{isGuestPayment
             ? 'I understand a valid credit card must be provided to staff at pickup before this guest order is released.'
-            : 'I authorize this food truck order to be charged to the member account listed above.'}</span>
+            : isApprovedNonMemberPayment
+              ? 'I understand payment must be provided to staff at pickup before this order is released.'
+              : 'I authorize this food truck order to be charged to the member account listed above.'}</span>
         </label>
 
         {truckHasAlcohol && (
@@ -3077,19 +3255,22 @@ function TruckAdminPage({ onBackToOrder }) {
     const action = truckAction(order);
     const isUpdating = updatingStatus?.orderId === order.orderId;
     const guestPayment = isGuestOrder(order);
+    const nonMemberPayment = isApprovedNonMemberOrder(order);
+    const feeLines = staffFeeLines(order);
     return (
-      <article className={`staffOrderCard truckOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
+      <article className={`staffOrderCard truckOrderCard ${tone}${guestPayment ? ' guestOrderCard' : ''}${nonMemberPayment ? ' nonMemberOrderCard' : ''}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
         <div className="staffOrderHead">
           <strong>#{order.orderId}</strong>
           <span>{ageLabel(order.timestamp || order.updatedAt)}</span>
         </div>
         <div className="staffOrderMember">
-          <h3>{order.memberName || 'Member'}</h3>
+          <h3>{order.memberName || (guestPayment ? 'Guest' : 'Member')}</h3>
           <div className="staffMemberLine">
-            <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
+            <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? 'Approved non-member/RSM' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
+          {nonMemberPayment && <div className="paymentDueBadge nonMemberBadge">Approved non-member/RSM · Collect payment at pickup</div>}
           {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
         </div>
         <div className="staffItems">
@@ -3108,9 +3289,16 @@ function TruckAdminPage({ onBackToOrder }) {
           </div>
         )}
         <div className="staffOrderFoot">
-          <strong>{currency(order.subtotalKnownItems)}</strong>
-          <span className={order.alcoholIncluded ? 'alcoholPill' : ''}>{order.alcoholIncluded ? 'Alcohol' : 'Truck order'}</span>
+          <strong>{currency(orderFinalTotal(order))}</strong>
+          <span className={guestPayment ? 'guestPill' : order.alcoholIncluded ? 'alcoholPill' : ''}>{guestPayment ? 'Guest' : order.alcoholIncluded ? 'Alcohol' : 'Truck order'}</span>
         </div>
+        {feeLines.length > 0 && (
+          <div className="staffFeeBreakdown">
+            <div><span>Subtotal</span><strong>{currency(order.subtotalKnownItems)}</strong></div>
+            {feeLines.map(line => <div key={`${order.orderId}-${line.label}`}><span>{line.label}</span><strong>{currency(line.amount)}</strong></div>)}
+            <div className="feeTotal"><span>Staff total</span><strong>{currency(orderFinalTotal(order))}</strong></div>
+          </div>
+        )}
         <div className="staffTimeLine">
           <span>{order.updatedAt ? `Updated ${timeLabel(order.updatedAt) || order.updatedAt}` : `Placed ${timeLabel(order.timestamp) || order.timestamp}`}</span>
           {order.completedAt && <span>Completed {timeLabel(order.completedAt) || order.completedAt}</span>}
@@ -3127,7 +3315,7 @@ function TruckAdminPage({ onBackToOrder }) {
           {order.status === 'Completed' && (
             <div className={order.posPosted ? 'postedBadge posted' : 'postedBadge needsPosting'}>
               {order.posPosted ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
-              <span>{order.posPosted ? 'Posted to POS' : 'Needs POS Posting'} · {currency(order.subtotalKnownItems)}</span>
+              <span>{order.posPosted ? 'Posted to POS' : 'Needs POS Posting'} · {currency(orderFinalTotal(order))}</span>
             </div>
           )}
           {order.status === 'Completed' && (
@@ -3176,7 +3364,7 @@ function TruckAdminPage({ onBackToOrder }) {
   const needsPosCount = orders.filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order)).length;
   const needsPosTotal = orders
     .filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order))
-    .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+    .reduce((sum, order) => sum + orderFinalTotal(order), 0);
   const todaysTipOrders = tipOrdersToday(orders);
   const todaysTipTotal = sumTips(todaysTipOrders);
   const todaysTipPostedTotal = sumTips(todaysTipOrders.filter(order => order.posPosted));
@@ -3184,6 +3372,9 @@ function TruckAdminPage({ onBackToOrder }) {
   const subtotalToday = orders
     .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const totalToday = orders
+    .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
+    .reduce((sum, order) => sum + orderFinalTotal(order), 0);
   const menuItemsByCategory = menuItems.reduce((groups, item) => {
     const category = item.category || 'Other';
     if (!groups[category]) groups[category] = [];
@@ -3255,7 +3446,7 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffStat ready"><strong>{readyCount}</strong><span>Ready for pickup</span></div>
         <div className="staffStat completed"><strong>{completedToday}</strong><span>Completed today</span></div>
         <div className="staffStat pos"><strong>{needsPosCount}</strong><span>Need POS posting · {currency(needsPosTotal)}</span></div>
-        <div className="staffStat revenue"><strong>{currency(subtotalToday)}</strong><span>Truck subtotal</span></div>
+        <div className="staffStat revenue"><strong>{currency(totalToday)}</strong><span>Truck total</span></div>
       </section>
 
       <section className="staffBoard truckBoard">
@@ -3288,7 +3479,7 @@ function TruckAdminPage({ onBackToOrder }) {
             <div><strong>{completedToday}</strong><span>Completed</span></div>
             <div><strong>{postedToday}</strong><span>POS posted</span></div>
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
-            <div><strong>{currency(subtotalToday)}</strong><span>Subtotal</span></div>
+            <div><strong>{currency(totalToday)}</strong><span>Total incl. fees</span></div>
           </div>
           <div className="tipReconciliation">
             <div className="tipReconciliationHead">

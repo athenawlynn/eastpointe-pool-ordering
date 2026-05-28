@@ -19,7 +19,8 @@ const ADMIN_EDITABLE_SETTINGS = ['OrderingOpen', 'DeliveryAvailable', 'TruckOrde
 const STATION_STATUSES = ['Not Needed', 'New', 'Preparing', 'Ready', 'Completed'];
 const STATION_COLUMNS = ['RouteStations', 'BarStatus', 'KitchenStatus', 'RunnerStatus', 'BarUpdatedAt', 'KitchenUpdatedAt', 'RunnerUpdatedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy'];
 const PAYMENT_COLUMNS = ['PaymentType', 'PaymentStatus', 'GuestCardType', 'TipLabel', 'TipAmount', 'EstimatedTotal'];
-const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'AlcoholIncluded', 'AlcoholVerificationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy', 'PaymentType', 'PaymentStatus', 'GuestCardType', 'TipLabel', 'TipAmount', 'EstimatedTotal'];
+const TRUCK_FEE_COLUMNS = ['CustomerType', 'ServiceFeeLabel', 'ServiceFeeRate', 'ServiceFeeAmount', 'ServiceFeeVisible', 'CreditCardFeeLabel', 'CreditCardFeeRate', 'CreditCardFeeAmount', 'CreditCardFeeVisible', 'FinalTotal'];
+const TRUCK_ORDER_COLUMNS = ['Timestamp', 'OrderID', 'Status', 'MemberName', 'MemberNumber', 'Phone', 'ItemsSummary', 'ItemsJSON', 'SubtotalKnownItems', 'AuthorizationAccepted', 'AlcoholIncluded', 'AlcoholVerificationAccepted', 'StaffNotes', 'UpdatedAt', 'CompletedAt', 'POSPosted', 'POSPostedAt', 'POSPostedBy', 'PaymentType', 'PaymentStatus', 'GuestCardType', 'TipLabel', 'TipAmount', 'EstimatedTotal'].concat(TRUCK_FEE_COLUMNS);
 
 /**
  * Optional SMS texting through Twilio.
@@ -110,6 +111,70 @@ function getSettingsObject() {
     if (r.SettingKey) settings[String(r.SettingKey).trim()] = String(r.SettingValue ?? '').trim();
   });
   return settings;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function settingEnabled(settings, key, fallback) {
+  const value = settings[key];
+  if (value === undefined || value === null || value === '') return fallback;
+  return String(value).toUpperCase() !== 'FALSE';
+}
+
+function numericSetting(settings, key, fallback) {
+  const value = settings[key];
+  if (value === undefined || value === null || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function percentSetting(settings, key, fallback) {
+  const value = numericSetting(settings, key, fallback);
+  return value > 1 ? value / 100 : value;
+}
+
+function customerTypeForPayment(paymentType) {
+  if (paymentType === 'Guest Pay at Pickup') return 'Guest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'Approved Non-Member';
+  return 'Golf Member';
+}
+
+function truckFeeSettingsPrefix(paymentType) {
+  if (paymentType === 'Guest Pay at Pickup') return 'TruckGuest';
+  if (paymentType === 'Approved Non-Member Pay at Pickup') return 'TruckNonMember';
+  return 'TruckMember';
+}
+
+function calculateTruckFees(subtotal, tipAmount, paymentType, settings) {
+  const prefix = truckFeeSettingsPrefix(paymentType);
+  const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
+  const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
+  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, paymentType !== 'Member Account');
+  const creditCardFeeEnabled = settingEnabled(settings, `${prefix}CreditCardFeeEnabled`, paymentType === 'Guest Pay at Pickup');
+  const creditCardFeeVisible = settingEnabled(settings, `${prefix}CreditCardFeeVisible`, creditCardFeeEnabled);
+  const serviceFeeAmount = serviceFeeEnabled ? roundMoney(Number(subtotal || 0) * serviceFeeRate) : 0;
+  const creditCardBase = String(settings.TruckCreditCardFeeBase || 'SubtotalPlusServiceFee') === 'SubtotalOnly'
+    ? Number(subtotal || 0)
+    : Number(subtotal || 0) + serviceFeeAmount;
+  const creditCardFeeAmount = creditCardFeeEnabled ? roundMoney(creditCardBase * creditCardFeeRate) : 0;
+  const safeTip = roundMoney(tipAmount);
+  const finalTotal = roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip);
+  return {
+    customerType: customerTypeForPayment(paymentType),
+    serviceFeeLabel: `Service Fee ${Math.round(serviceFeeRate * 100)}%`,
+    serviceFeeRate,
+    serviceFeeAmount,
+    serviceFeeVisible,
+    creditCardFeeLabel: `Credit Card Transaction Fee ${Math.round(creditCardFeeRate * 100)}%`,
+    creditCardFeeRate,
+    creditCardFeeAmount,
+    creditCardFeeVisible,
+    estimatedTotal: finalTotal,
+    finalTotal
+  };
 }
 
 function isDeliveryAvailable() {
@@ -291,6 +356,17 @@ function memberNumbersMatch(a, b) {
   return memberLookupValue(a) === memberLookupValue(b);
 }
 
+function phoneLookupValue(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  return digits.length > 10 ? digits.slice(-10) : digits;
+}
+
+function phoneNumbersMatch(a, b) {
+  const left = phoneLookupValue(a);
+  const right = phoneLookupValue(b);
+  return Boolean(left && right && left === right);
+}
+
 function validateMemberNumber(memberNumber, serviceName) {
   const contactName = serviceName || 'Pool Bar';
   const normalized = String(memberNumber || '').trim();
@@ -467,7 +543,7 @@ function doGet(e) {
     }
 
     if (action === 'truckOrderStatus') {
-      return jsonResponse({ ok: true, ...getTruckOrderStatus(e.parameter.orderId, e.parameter.memberNumber) });
+      return jsonResponse({ ok: true, ...getTruckOrderStatus(e.parameter.orderId, e.parameter.memberNumber, e.parameter.phone) });
     }
 
     if (action === 'latestTruckOrderStatus') {
@@ -709,17 +785,19 @@ function createTruckOrder(order) {
   if (!isTruckOrderingOpen()) {
     throw new Error('Food truck ordering is currently closed. Please order directly at the truck.');
   }
-  const paymentType = order.paymentType === 'Guest Pay at Pickup' ? 'Guest Pay at Pickup' : 'Member Account';
-  const paymentStatus = paymentType === 'Guest Pay at Pickup' ? 'Due at Pickup' : 'Member Account';
+  const allowedPaymentTypes = ['Member Account', 'Guest Pay at Pickup', 'Approved Non-Member Pay at Pickup'];
+  const paymentType = allowedPaymentTypes.includes(order.paymentType) ? order.paymentType : 'Member Account';
+  const pickupPayment = paymentType !== 'Member Account';
+  const paymentStatus = pickupPayment ? 'Due at Pickup' : 'Member Account';
   const settings = getSettingsObject();
-  const tipsEnabled = paymentType === 'Guest Pay at Pickup' || String(settings.TruckMemberTipsEnabled || 'TRUE').toUpperCase() !== 'FALSE';
+  const tipsEnabled = pickupPayment || String(settings.TruckMemberTipsEnabled || 'TRUE').toUpperCase() !== 'FALSE';
   const guestCardType = paymentType === 'Guest Pay at Pickup' ? String(order.guestCardType || '').trim() : '';
-  const tipAmount = tipsEnabled ? Math.max(0, Number(order.tipAmount || 0)) : 0;
+  const tipAmount = tipsEnabled ? roundMoney(Math.max(0, Number(order.tipAmount || 0))) : 0;
   const tipLabel = tipsEnabled ? String(order.tipLabel || 'No tip').trim() : '';
-  if (paymentType !== 'Guest Pay at Pickup') validateMemberNumber(order.memberNumber, 'The Turn Truck');
-  if (!String(order.memberName || '').trim()) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest name is required.' : 'Member name is required.');
+  if (!pickupPayment) validateMemberNumber(order.memberNumber, 'The Turn Truck');
+  if (!String(order.memberName || '').trim()) throw new Error(pickupPayment ? 'Name is required.' : 'Member name is required.');
   if (!String(order.phone || '').trim()) throw new Error('Mobile number is required.');
-  if (!order.authorizationAccepted) throw new Error(paymentType === 'Guest Pay at Pickup' ? 'Guest payment acknowledgement is required.' : 'Charge authorization is required.');
+  if (!order.authorizationAccepted) throw new Error(pickupPayment ? 'Payment acknowledgement is required.' : 'Charge authorization is required.');
   if (paymentType === 'Guest Pay at Pickup' && !guestCardType) throw new Error('Guest card type is required.');
 
   const incomingItems = Array.isArray(order.items) ? order.items : [];
@@ -727,7 +805,7 @@ function createTruckOrder(order) {
   if (!items.length) throw new Error('Please select at least one food truck item.');
   const subtotalKnownItems = items.reduce((sum, item) =>
     sum + (Number(item.price || 0) + modifierUnitTotal(item)) * Number(item.quantity || 0), 0);
-  const estimatedTotal = subtotalKnownItems + tipAmount;
+  const fees = calculateTruckFees(subtotalKnownItems, tipAmount, paymentType, settings);
   const alcoholIncluded = items.some(item => item.alcoholic);
   if (alcoholIncluded && !order.alcoholVerificationAccepted) {
     throw new Error('Alcohol verification acknowledgement is required.');
@@ -767,7 +845,17 @@ function createTruckOrder(order) {
       guestCardType,
       tipLabel,
       tipAmount,
-      estimatedTotal
+      fees.estimatedTotal,
+      fees.customerType,
+      fees.serviceFeeLabel,
+      fees.serviceFeeRate,
+      fees.serviceFeeAmount,
+      fees.serviceFeeVisible,
+      fees.creditCardFeeLabel,
+      fees.creditCardFeeRate,
+      fees.creditCardFeeAmount,
+      fees.creditCardFeeVisible,
+      fees.finalTotal
     ]);
   } finally {
     lock.releaseLock();
@@ -837,10 +925,20 @@ function normalizeTruckOrder(row) {
     status: String(row.Status || 'New'),
     paymentType: String(row.PaymentType || 'Member Account'),
     paymentStatus: String(row.PaymentStatus || ''),
+    customerType: String(row.CustomerType || customerTypeForPayment(String(row.PaymentType || 'Member Account'))),
     guestCardType: String(row.GuestCardType || ''),
     tipLabel: String(row.TipLabel || ''),
     tipAmount: Number(row.TipAmount || 0),
     estimatedTotal: Number(row.EstimatedTotal || row.SubtotalKnownItems || 0),
+    serviceFeeLabel: String(row.ServiceFeeLabel || ''),
+    serviceFeeRate: Number(row.ServiceFeeRate || 0),
+    serviceFeeAmount: Number(row.ServiceFeeAmount || 0),
+    serviceFeeVisible: String(row.ServiceFeeVisible).toUpperCase() === 'TRUE' || row.ServiceFeeVisible === true,
+    creditCardFeeLabel: String(row.CreditCardFeeLabel || ''),
+    creditCardFeeRate: Number(row.CreditCardFeeRate || 0),
+    creditCardFeeAmount: Number(row.CreditCardFeeAmount || 0),
+    creditCardFeeVisible: String(row.CreditCardFeeVisible).toUpperCase() === 'TRUE' || row.CreditCardFeeVisible === true,
+    finalTotal: Number(row.FinalTotal || row.EstimatedTotal || row.SubtotalKnownItems || 0),
     memberName: String(row.MemberName || ''),
     memberNumber: String(row.MemberNumber || ''),
     phone: String(row.Phone || ''),
@@ -947,28 +1045,26 @@ function getLatestOrderStatus(memberNumber) {
 }
 
 function truckStatusPayload(order) {
-  return {
-    orderId: String(order.OrderID || ''),
-    status: String(order.Status || 'New'),
-    paymentType: String(order.PaymentType || 'Member Account'),
-    paymentStatus: String(order.PaymentStatus || ''),
-    guestCardType: String(order.GuestCardType || ''),
-    tipLabel: String(order.TipLabel || ''),
-    tipAmount: Number(order.TipAmount || 0),
-    estimatedTotal: Number(order.EstimatedTotal || order.SubtotalKnownItems || 0),
-    memberName: String(order.MemberName || ''),
-    updatedAt: order.UpdatedAt ? new Date(order.UpdatedAt).toLocaleString() : '',
-    completedAt: order.CompletedAt ? new Date(order.CompletedAt).toLocaleString() : ''
-  };
+  return normalizeTruckOrder(order);
 }
 
-function getTruckOrderStatus(orderId, memberNumber) {
-  validateMemberNumber(memberNumber, 'The Turn Truck');
+function getTruckOrderStatus(orderId, memberNumber, phone) {
+  const normalizedMemberNumber = String(memberNumber || '').trim();
+  const normalizedPhone = String(phone || '').trim();
+  if (normalizedMemberNumber) {
+    validateMemberNumber(normalizedMemberNumber, 'The Turn Truck');
+  } else if (!normalizedPhone) {
+    throw new Error('Member number or mobile number is required.');
+  }
   const sheet = getSheet('TruckOrders');
   const rows = rowsToObjects(sheet);
   const order = rows.find(row =>
     String(row.OrderID || '') === String(orderId || '') &&
-    memberNumbersMatch(row.MemberNumber, memberNumber)
+    (
+      normalizedMemberNumber
+        ? memberNumbersMatch(row.MemberNumber, normalizedMemberNumber)
+        : phoneNumbersMatch(row.Phone, normalizedPhone)
+    )
   );
   if (!order) throw new Error('Food truck order not found.');
   return truckStatusPayload(order);

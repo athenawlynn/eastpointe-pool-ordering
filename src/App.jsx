@@ -1941,10 +1941,56 @@ function TruckOrderPage() {
     );
   }
 
+  if (!truckOrderingOpen) {
+    return (
+      <div className="stack memberStack truckMember">
+        {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
+
+        <section className="card hero memberHero truckHero truckHeroWithCart">
+          <div>
+            <p className="eyebrow">{settings.ClubName || 'Eastpointe Country Club'}</p>
+            <h2>The Turn Truck</h2>
+            <p>Order from the golf course. Members can charge their account, and guests can pay at pickup.</p>
+          </div>
+          <div className="truckHeroCartWrap" aria-hidden="true">
+            <img src="/turn-truck-golf-cart.png" alt="" className="truckHeroCart" />
+          </div>
+        </section>
+
+        <section className="card truckClosedPanel">
+          <AlertTriangle size={42} />
+          <div>
+            <p className="eyebrow">Ordering paused</p>
+            <h2>The Turn Truck is currently closed</h2>
+            <p>Online ordering is not available right now. Please check back during truck hours or order directly at the truck.</p>
+          </div>
+          <div className="closedTruckDetails">
+            <strong>No online orders can be placed while ordering is closed.</strong>
+            <span>Staff can reopen ordering from the Truck Staff Dashboard.</span>
+          </div>
+        </section>
+
+        <section className="card statusLookupCard">
+          <div className="sectionKicker"><ClipboardList size={15} /> Already ordered?</div>
+          <h2>Check Truck Order</h2>
+          <p className="hint">Enter your member number. Order number is optional if you have it.</p>
+          <div className="lookupGrid">
+            <label>Order Number <span className="optionalText">Optional</span>
+              <input inputMode="numeric" value={lookup.orderId} onChange={event => setLookupField('orderId', event.target.value.replace(/\D/g, ''))} placeholder="Example: 5001" />
+            </label>
+            <label>Member Number
+              <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+            </label>
+          </div>
+          <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="stack memberStack truckMember">
       {err && <div className="alert"><AlertTriangle size={18} />{err}</div>}
-      {!truckOrderingOpen && <div className="serviceBanner closed"><AlertTriangle size={18} /> The Turn Truck ordering is currently closed.</div>}
 
       <section className="card hero memberHero truckHero truckHeroWithCart">
         <div>

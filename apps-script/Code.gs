@@ -265,13 +265,22 @@ function getMembers() {
   }));
 }
 
+function memberLookupValue(memberNumber) {
+  const digits = String(memberNumber || '').replace(/\D/g, '');
+  return digits.replace(/^0+/, '') || '0';
+}
+
+function memberNumbersMatch(a, b) {
+  return memberLookupValue(a) === memberLookupValue(b);
+}
+
 function validateMemberNumber(memberNumber) {
   const normalized = String(memberNumber || '').trim();
   if (!/^\d{4,6}$/.test(normalized)) {
     throw new Error('Member number must be 4–6 digits.');
   }
 
-  const member = getMembers().find(m => m.memberNumber === normalized);
+  const member = getMembers().find(m => memberNumbersMatch(m.memberNumber, normalized));
   if (!member) {
     throw new Error('Member number not found. Please check your member number or contact the Pool Bar.');
   }
@@ -846,7 +855,7 @@ function getOrderStatus(orderId, memberNumber) {
   const rows = rowsToObjects(sheet);
   const order = rows.find(row =>
     String(row.OrderID || '') === String(orderId || '') &&
-    String(row.MemberNumber || '') === String(memberNumber || '')
+    memberNumbersMatch(row.MemberNumber, memberNumber)
   );
   if (!order) throw new Error('Order not found.');
   const derivedStatus = deriveOverallStatus(order);
@@ -900,7 +909,7 @@ function getLatestOrderStatus(memberNumber) {
   validateMemberNumber(normalizedMemberNumber);
   const sheet = getSheet('Orders');
   const rows = rowsToObjects(sheet)
-    .filter(row => String(row.MemberNumber || '') === normalizedMemberNumber)
+    .filter(row => memberNumbersMatch(row.MemberNumber, normalizedMemberNumber))
     .reverse();
   if (!rows.length) throw new Error('No orders found for that member number.');
 
@@ -941,7 +950,7 @@ function getTruckOrderStatus(orderId, memberNumber) {
   const rows = rowsToObjects(sheet);
   const order = rows.find(row =>
     String(row.OrderID || '') === String(orderId || '') &&
-    String(row.MemberNumber || '') === String(memberNumber || '')
+    memberNumbersMatch(row.MemberNumber, memberNumber)
   );
   if (!order) throw new Error('Food truck order not found.');
   return truckStatusPayload(order);
@@ -952,7 +961,7 @@ function getLatestTruckOrderStatus(memberNumber) {
   validateMemberNumber(normalizedMemberNumber);
   const sheet = getSheet('TruckOrders');
   const rows = rowsToObjects(sheet)
-    .filter(row => String(row.MemberNumber || '') === normalizedMemberNumber)
+    .filter(row => memberNumbersMatch(row.MemberNumber, normalizedMemberNumber))
     .reverse();
   if (!rows.length) throw new Error('No food truck orders found for that member number.');
 

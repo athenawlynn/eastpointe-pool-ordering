@@ -259,10 +259,27 @@ function getTruckMenu() {
 
 function getMembers() {
   const sheet = getSheet('Members');
-  return rowsToObjects(sheet).map(row => ({
-    memberNumber: String(row.MemberNumber || '').trim(),
-    status: String(row.Status || '').trim() || 'Active'
-  }));
+  const values = sheet.getDataRange().getValues();
+  if (!values.length) return [];
+  const headers = values[0].map(h => String(h).trim());
+  const memberCol = headers.indexOf('MemberNumber');
+  const statusCol = headers.indexOf('Status');
+
+  if (memberCol >= 0) {
+    return values.slice(1)
+      .filter(row => String(row[memberCol] || '').trim())
+      .map(row => ({
+        memberNumber: String(row[memberCol] || '').trim(),
+        status: statusCol >= 0 ? String(row[statusCol] || '').trim() || 'Active' : 'Active'
+      }));
+  }
+
+  return values
+    .filter(row => String(row[0] || '').trim())
+    .map(row => ({
+      memberNumber: String(row[0] || '').trim(),
+      status: String(row[1] || '').trim() || 'Active'
+    }));
 }
 
 function memberLookupValue(memberNumber) {

@@ -1163,6 +1163,7 @@ function OrderPage() {
       }));
     } catch (e) {
       setErr(e.message);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
     }
@@ -1173,6 +1174,7 @@ function OrderPage() {
     const memberNumber = String(lookup.memberNumber || '').trim();
     if (!/^\d{4,6}$/.test(memberNumber)) {
       setErr('Enter your 4–6 digit member number.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -1857,6 +1859,7 @@ function TruckOrderPage() {
       sessionStorage.setItem(TRUCK_CONFIRMATION_KEY, JSON.stringify(saved));
     } catch (e) {
       setErr(e.message || 'Food truck order not found.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLookingUp(false);
     }

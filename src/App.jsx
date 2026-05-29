@@ -3475,8 +3475,8 @@ function TruckAdminPage({ onBackToOrder }) {
         })}
       </section>
 
-      <section className="managerPanels">
-        <div className="managerPanel">
+      <section className="managerPanels truckManagerPanels">
+        <div className="managerPanel posPanel">
           <div className="managerPanelHead">
             <h3>Truck POS Reconciliation</h3>
             <span>{shortDate()}</span>
@@ -3488,34 +3488,36 @@ function TruckAdminPage({ onBackToOrder }) {
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
             <div><strong>{currency(totalToday)}</strong><span>Total incl. fees</span></div>
           </div>
-          <div className="tipReconciliation">
-            <div className="tipReconciliationHead">
-              <h4>Tip Reconciliation</h4>
-              <strong>{currency(todaysTipTotal)}</strong>
-            </div>
-            <div className="tipSummaryGrid">
-              <div><strong>{todaysTipOrders.length}</strong><span>Tip orders</span></div>
-              <div><strong>{currency(todaysTipPostedTotal)}</strong><span>POS posted tips</span></div>
-              <div className={todaysTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysTipOpenTotal)}</strong><span>Open tips</span></div>
-            </div>
-            <div className="tipOrderList">
-              {todaysTipOrders.length
-                ? todaysTipOrders.map(order => (
-                  <div className="tipOrderRow" key={`truck-tip-${order.orderId}`}>
-                    <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
-                    <strong>{currency(order.tipAmount)}</strong>
-                    <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
-                  </div>
-                ))
-                : <p>No tips recorded today.</p>}
-            </div>
-          </div>
           {needsPosCount > 0
             ? <p className="closingNote">Closing check: mark all completed truck orders as POS posted.</p>
             : <p className="closingNote good">Truck POS reconciliation is clear.</p>}
         </div>
 
-        <div className="managerPanel">
+        <div className="managerPanel tipPanel">
+          <div className="managerPanelHead">
+            <h3>Tip Reconciliation</h3>
+            <span>{currency(todaysTipTotal)}</span>
+          </div>
+          <p className="managerHint">Use this as the daily tip check before closing out truck orders in the POS.</p>
+          <div className="tipSummaryGrid">
+            <div><strong>{todaysTipOrders.length}</strong><span>Tip orders</span></div>
+            <div><strong>{currency(todaysTipPostedTotal)}</strong><span>POS posted tips</span></div>
+            <div className={todaysTipOpenTotal ? 'attention' : ''}><strong>{currency(todaysTipOpenTotal)}</strong><span>Open tips</span></div>
+          </div>
+          <div className="tipOrderList">
+            {todaysTipOrders.length
+              ? todaysTipOrders.map(order => (
+                <div className="tipOrderRow" key={`truck-tip-${order.orderId}`}>
+                  <span>#{order.orderId} · {order.memberName || 'Guest'} · {order.guestCardType || 'Card'}</span>
+                  <strong>{currency(order.tipAmount)}</strong>
+                  <small>{order.posPosted ? 'POS posted' : 'Needs posting'}</small>
+                </div>
+              ))
+              : <p>No tips recorded today.</p>}
+          </div>
+        </div>
+
+        <div className="managerPanel availabilityPanel">
           <div className="managerPanelHead">
             <h3>Truck Menu Availability</h3>
             <span>{menuItems.filter(item => !item.available).length} unavailable</span>

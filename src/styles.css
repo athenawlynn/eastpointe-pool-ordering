@@ -327,25 +327,38 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffStat.pos strong { color: #8A5A0A; }
 .staffStat.cancelled strong { color: #A32D2D; }
 .managerPanels { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; padding: 18px 24px 28px; border-top: 1px solid var(--line-soft); background: #FFFDF9; }
-.managerPanel { border: 1px solid var(--line-soft); background: white; border-radius: 10px; overflow: hidden; }
-.managerPanelHead { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line-soft); }
-.managerPanelHead h3 { margin: 0; font-size: 16px; color: var(--ink); }
-.managerHint { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--line-soft); background: #FFFDF9; color: var(--muted); font-size: 12px; font-weight: 800; line-height: 1.35; }
+.truckManagerPanels { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.managerPanel { border: 1px solid var(--line-soft); background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 12px 24px rgba(27, 49, 37, .06); }
+.managerPanel.posPanel { border-color: #C9DCCF; background: #FBFEFC; }
+.managerPanel.tipPanel { border-color: #E8C36F; background: #FFFDF7; }
+.managerPanel.availabilityPanel { border-color: #CFE0DA; background: #FBFEFD; }
+.managerPanelHead { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 16px; border-bottom: 1px solid var(--line-soft); }
+.posPanel .managerPanelHead { background: #EAF5EE; border-bottom-color: #C9DCCF; }
+.tipPanel .managerPanelHead { background: #FFF0C7; border-bottom-color: #E8C36F; }
+.availabilityPanel .managerPanelHead { background: #E4F2EE; border-bottom-color: #CFE0DA; }
+.managerPanelHead h3 { margin: 0; font-size: clamp(17px, 1.25vw, 22px); color: var(--ink); letter-spacing: -.01em; line-height: 1.05; }
+.posPanel .managerPanelHead h3 { color: #173C2A; }
+.tipPanel .managerPanelHead h3 { color: #7A560D; }
+.availabilityPanel .managerPanelHead h3 { color: #1F5D50; }
+.managerHint { margin: 0; padding: 11px 16px; border-bottom: 1px solid var(--line-soft); background: rgba(255,255,255,.72); color: var(--muted); font-size: 12px; font-weight: 850; line-height: 1.35; }
 .tipReconciliation { margin: 14px 16px 0; padding: 13px; border: 1px solid #E8C36F; border-radius: 10px; background: #FFFDF9; }
 .tipReconciliationHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .tipReconciliationHead h4 { margin: 0; color: var(--ink); font-size: 14px; }
 .tipReconciliationHead strong { color: var(--green); font-size: 22px; }
-.tipSummaryGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-.tipSummaryGrid div { padding: 9px; border-radius: 8px; background: white; border: 1px solid var(--line-soft); }
+.tipSummaryGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 13px 16px 0; }
+.tipSummaryGrid div { padding: 11px; border-radius: 9px; background: white; border: 1px solid #E8D6A3; }
+.tipReconciliation .tipSummaryGrid { margin: 10px 0 0; }
+.tipReconciliation .tipSummaryGrid div { padding: 9px; border-color: var(--line-soft); }
 .tipSummaryGrid strong { display: block; color: var(--ink); font-size: 18px; }
 .tipSummaryGrid span { color: var(--muted); font-size: 11px; font-weight: 800; }
-.tipOrderList { display: grid; gap: 7px; margin-top: 10px; }
+.tipOrderList { display: grid; gap: 7px; margin: 12px 16px 14px; }
 .tipOrderList p { margin: 0; color: var(--muted); font-weight: 750; }
 .tipOrderRow { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line-soft); font-size: 12px; }
 .tipOrderRow span { color: var(--ink); font-weight: 850; }
 .tipOrderRow strong { color: var(--green); }
 .tipOrderRow small { color: var(--muted); font-weight: 850; }
-.managerPanelHead span { color: var(--soft-muted); font-size: 12px; font-weight: 850; }
+.managerPanelHead span { color: var(--soft-muted); font-size: 12px; font-weight: 950; }
+.tipPanel .managerPanelHead span { color: #2D6B40; font-size: 19px; }
 .closingGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line-soft); }
 .closingGrid div { background: #F9F8F5; padding: 14px; min-height: 82px; display: grid; align-content: center; }
 .closingGrid strong { color: var(--deep-green); font-size: 25px; line-height: 1; }

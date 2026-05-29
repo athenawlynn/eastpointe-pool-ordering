@@ -295,6 +295,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffToggleButton { border: 1px solid rgba(255, 255, 255, .2); border-radius: 8px; padding: 9px 12px; min-height: 38px; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 900; }
 .staffToggleButton.on { background: #2D6B40; }
 .staffToggleButton.off { background: #8A5A0A; }
+.truckOrderingToggle.open { background: #1E6091; border-color: rgba(195, 225, 246, .6); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
+.truckOrderingToggle.closed { background: #A33A2D; border-color: rgba(255, 204, 194, .6); box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); }
 .scheduleField { width: auto; min-width: 96px; margin: 0; color: rgba(255,255,255,.72); letter-spacing: 0; text-transform: none; font-size: 10px; gap: 3px; }
 .scheduleField input { min-height: 28px; padding: 5px 7px; border-color: rgba(255,255,255,.24); background: rgba(255,255,255,.10); color: white; font-size: 12px; }
 .staffAlert { margin: 18px 24px 0; }
@@ -384,6 +386,23 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .staffOrderCard.ready { border-color: #97C459; }
 .staffOrderCard.completed { border-color: var(--line-soft); background: #F9F8F5; opacity: .76; }
 .staffOrderCard.cancelled { border-color: #E7B8AA; background: #FFF8F5; opacity: .8; }
+.truckOrderCard.new { background: #F2F8FF; border-color: #9FCAEF; }
+.truckOrderCard.preparing { background: #FFF7E8; border-color: #F4BD63; }
+.truckOrderCard.ready { background: #F0FAF2; border-color: #8FC56F; }
+.truckOrderCard.completed { background: #F7F6F2; border-color: #DED8CE; }
+.truckOrderCard.cancelled { background: #FFF3EF; border-color: #E7B8AA; }
+.truckOrderCard.new .staffOrderHead { background: #E6F1FB; border-bottom-color: #B5D4F4; }
+.truckOrderCard.preparing .staffOrderHead { background: #FEF3E2; border-bottom-color: #FAC775; }
+.truckOrderCard.ready .staffOrderHead { background: #EAF5EE; border-bottom-color: #B8D8CD; }
+.truckOrderCard.completed .staffOrderHead { background: #F0EDE8; }
+.truckOrderCard.cancelled .staffOrderHead { background: #F8E9E4; border-bottom-color: #E7B8AA; }
+.truckOrderCard .staffOrderMember,
+.truckOrderCard .staffItems,
+.truckOrderCard .staffOrderFoot,
+.truckOrderCard .staffTimeLine,
+.truckOrderCard .staffActions,
+.truckOrderCard .stationBadges,
+.truckOrderCard .staffFeeBreakdown { background: transparent; }
 .staffOrderHead { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 14px 10px; border-bottom: 1px solid var(--line-soft); }
 .staffOrderHead strong { color: var(--ink); font-size: 15px; letter-spacing: 0; }
 .staffOrderHead span { color: var(--soft-muted); font-size: 11px; font-weight: 750; white-space: nowrap; }

@@ -43,8 +43,8 @@ const STATION_COLUMNS = [
 ];
 
 const TRUCK_COLUMNS = [
-  { id: 'New', title: 'Order Received', statuses: ['New'], tone: 'new' },
-  { id: 'Acknowledged', title: 'Acknowledged', statuses: ['Acknowledged'], tone: 'preparing' },
+  { id: 'New', title: 'New Order Waiting', statuses: ['New'], tone: 'new' },
+  { id: 'Acknowledged', title: 'Preparing', statuses: ['Acknowledged'], tone: 'preparing' },
   { id: 'Ready', title: 'Ready for Pickup', statuses: ['Ready for Pickup'], tone: 'ready' },
   { id: 'Completed', title: 'Completed', statuses: ['Completed'], tone: 'completed', todayOnly: true },
   { id: 'Cancelled', title: 'Cancelled', statuses: ['Cancelled'], tone: 'cancelled', todayOnly: true }
@@ -2484,7 +2484,7 @@ function AdminPage({ onBackToOrder }) {
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [activeStationId, setActiveStationId] = useState('all');
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundError, setSoundError] = useState('');
 
   async function handleEnableSound() {
@@ -3113,7 +3113,7 @@ function TruckAdminPage({ onBackToOrder }) {
   const [updatingSetting, setUpdatingSetting] = useState('');
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundError, setSoundError] = useState('');
 
   async function handleEnableSound() {
@@ -3411,11 +3411,11 @@ function TruckAdminPage({ onBackToOrder }) {
             <Volume2 size={18} /> {soundEnabled ? 'Sound On' : 'Enable Sound'}
           </button>
           <button
-            className={truckOrderingOpen ? 'staffToggleButton on' : 'staffToggleButton off'}
+            className={truckOrderingOpen ? 'staffToggleButton truckOrderingToggle open' : 'staffToggleButton truckOrderingToggle closed'}
             onClick={() => updateTruckOrderingOpen(!truckOrderingOpen)}
             disabled={Boolean(updatingSetting)}
           >
-            {updatingSetting === 'TruckOrderingOpen' ? 'Saving...' : truckOrderingOpen ? 'Truck Ordering Open' : 'Truck Ordering Closed'}
+            {updatingSetting === 'TruckOrderingOpen' ? 'Saving...' : truckOrderingOpen ? 'Truck Ordering Is Open' : 'Truck Ordering Is Closed'}
           </button>
           <button
             className={truckMemberTipsEnabled ? 'staffToggleButton on' : 'staffToggleButton off'}

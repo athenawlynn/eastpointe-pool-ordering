@@ -500,10 +500,15 @@ function isOrderToday(order) {
   return isToday(order.timestamp) || isToday(order.updatedAt) || isToday(order.completedAt);
 }
 
+function isCloseoutToday(order) {
+  return isOrderToday(order) || isToday(order.posPostedAt);
+}
+
 function orderMatchesDate(order, targetDate) {
   return sameDateInput(order.completedAt, targetDate) ||
     sameDateInput(order.timestamp, targetDate) ||
-    sameDateInput(order.updatedAt, targetDate);
+    sameDateInput(order.updatedAt, targetDate) ||
+    sameDateInput(order.posPostedAt, targetDate);
 }
 
 function csvCell(value) {
@@ -3270,6 +3275,17 @@ function TruckAdminPage({ onBackToOrder }) {
 
   async function updateTruckPosPosted(orderId, posted) {
     setUpdatingStatus({ orderId, posPosted: posted });
+    const previousOrders = orders;
+    const nowLabel = new Date().toLocaleString();
+    setOrders(prev => prev.map(order => String(order.orderId) === String(orderId)
+      ? {
+        ...order,
+        posPosted: posted,
+        posPostedAt: posted ? nowLabel : '',
+        posPostedBy: posted ? 'Truck Staff' : '',
+        updatedAt: nowLabel
+      }
+      : order));
     try {
       await adminFunction('truck-update-pos-posted', {
         method: 'POST',
@@ -3278,6 +3294,7 @@ function TruckAdminPage({ onBackToOrder }) {
       });
       await loadTruckOrders();
     } catch (e) {
+      setOrders(previousOrders);
       setErr(e.message);
     } finally {
       setUpdatingStatus(null);
@@ -3342,6 +3359,17 @@ function TruckAdminPage({ onBackToOrder }) {
     if (order.status === 'Acknowledged') return { label: 'Ready for Pick Up', status: 'Ready for Pickup' };
     if (order.status === 'Ready for Pickup') return { label: 'Complete', status: 'Completed' };
     return null;
+  }
+
+  function truckEmptyLabel(column) {
+    const labels = {
+      New: 'No new orders',
+      Acknowledged: 'No preparing orders',
+      Ready: 'No ready orders',
+      Completed: 'No completed orders',
+      Cancelled: 'No cancelled orders'
+    };
+    return labels[column.id] || 'No orders';
   }
 
   function exportTruckDailyReport() {
@@ -3501,21 +3529,21 @@ function TruckAdminPage({ onBackToOrder }) {
   const truckCloseTime = timeInputValue(settings, 'TruckOrderingCloseTime', '16:30');
   const activeCount = orders.filter(order => !['Completed', 'Cancelled'].includes(order.status)).length;
   const readyCount = orders.filter(order => order.status === 'Ready for Pickup').length;
-  const completedToday = orders.filter(order => order.status === 'Completed' && isOrderToday(order)).length;
-  const postedToday = orders.filter(order => order.status === 'Completed' && order.posPosted && isOrderToday(order)).length;
-  const needsPosCount = orders.filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order)).length;
-  const needsPosTotal = orders
-    .filter(order => order.status === 'Completed' && !order.posPosted && isOrderToday(order))
+  const closeoutOrdersToday = orders.filter(order => order.status !== 'Cancelled' && isCloseoutToday(order));
+  const completedOrdersToday = closeoutOrdersToday.filter(order => order.status === 'Completed');
+  const completedToday = completedOrdersToday.length;
+  const postedToday = completedOrdersToday.filter(order => order.posPosted).length;
+  const needsPosCount = completedOrdersToday.filter(order => !order.posPosted).length;
+  const needsPosTotal = completedOrdersToday
+    .filter(order => !order.posPosted)
     .reduce((sum, order) => sum + orderFinalTotal(order), 0);
-  const todaysTipOrders = tipOrdersToday(orders);
+  const todaysTipOrders = closeoutOrdersToday.filter(order => Number(order.tipAmount || 0) > 0);
   const todaysTipTotal = sumTips(todaysTipOrders);
   const todaysTipPostedTotal = sumTips(todaysTipOrders.filter(order => order.posPosted));
   const todaysTipOpenTotal = sumTips(todaysTipOrders.filter(order => !order.posPosted));
-  const subtotalToday = orders
-    .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
+  const subtotalToday = closeoutOrdersToday
     .reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
-  const totalToday = orders
-    .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
+  const totalToday = closeoutOrdersToday
     .reduce((sum, order) => sum + orderFinalTotal(order), 0);
   const reportOrdersForDate = orders.filter(order => orderMatchesDate(order, reportDate));
   const reportCompletedOrders = reportOrdersForDate.filter(order => order.status === 'Completed');
@@ -3613,7 +3641,7 @@ function TruckAdminPage({ onBackToOrder }) {
               <div className="staffColumnBody">
                 {columnOrders.length
                   ? columnOrders.map(order => renderTruckOrderCard(order, column.tone))
-                  : <div className="staffEmpty">No {column.title.toLowerCase()} orders</div>}
+                  : <div className="staffEmpty">{truckEmptyLabel(column)}</div>}
               </div>
             </div>
           );

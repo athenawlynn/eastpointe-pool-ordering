@@ -3743,6 +3743,7 @@ function TruckAdminPage({ onBackToOrder }) {
               </div>
             ))}
           </div>
+          <div className="availabilityScrollCue">Scroll for more menu items</div>
         </div>
       </section>
     </div>

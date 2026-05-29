@@ -294,7 +294,15 @@ function stationStatus(order, station) {
 function displayPhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
   if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
-  return String(phone || '').trim();
+  if (digits.length === 11 && digits.startsWith('1')) return `${digits.slice(1, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+  return '';
+}
+
+function phoneHref(phone) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (digits.length === 10) return `tel:${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return `tel:${digits}`;
+  return '';
 }
 
 function isGuestOrder(order) {
@@ -521,6 +529,21 @@ function timeInputValue(settings, key, fallback) {
   const match = raw.match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return fallback;
   return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+function timeRangeLabel(openTime, closeTime) {
+  function label(value) {
+    const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return '';
+    let hour = Number(match[1]);
+    const minute = match[2];
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${suffix}`;
+  }
+  const open = label(openTime);
+  const close = label(closeTime);
+  return open && close ? `${open} - ${close}` : '';
 }
 
 function scheduleIsOpen(settings, prefix = '') {
@@ -1833,6 +1856,10 @@ function TruckOrderPage() {
   const subtotal = selectedItems.reduce((sum, item) => sum + orderItemLineTotal(item), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
+  const truckOrderingHours = timeRangeLabel(
+    timeInputValue(settings, 'TruckOrderingOpenTime', '08:30'),
+    timeInputValue(settings, 'TruckOrderingCloseTime', '16:30')
+  );
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
   const isApprovedNonMemberPayment = form.paymentType === 'Member Account' && memberCustomerType === 'RSM';
   const isPickupPayment = isGuestPayment;
@@ -1906,6 +1933,7 @@ function TruckOrderPage() {
     if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter name.';
     if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
+    if (!displayPhone(form.phone)) return 'Please enter a 10-digit mobile number.';
     if (!selectedItems.length) return 'Please select at least one item.';
     for (const item of selectedItems) {
       const selectedByGroup = modifierSelections[item.itemId] || {};
@@ -2199,6 +2227,7 @@ function TruckOrderPage() {
           </div>
           <div className="closedTruckDetails">
             <strong>No online orders can be placed while ordering is closed.</strong>
+            {truckOrderingHours && <span>Online ordering hours: {truckOrderingHours}</span>}
             <span>Staff can reopen ordering from the Truck Staff Dashboard.</span>
           </div>
         </section>
@@ -2854,6 +2883,8 @@ function AdminPage({ onBackToOrder }) {
           : 'Pickup at Bar';
     const lines = itemLines(order);
     const guestPayment = isGuestOrder(order);
+    const formattedPhone = displayPhone(order.phone);
+    const callHref = phoneHref(order.phone);
 
     return (
       <article className={`staffOrderCard ${tone}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
@@ -2864,8 +2895,8 @@ function AdminPage({ onBackToOrder }) {
         <div className="staffOrderMember">
           <h3>{order.memberName || 'Member'}</h3>
           <div className="staffMemberLine">
-            <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
-            {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
+            <span>{guestPayment ? 'Guest payment due' : `Member #${order.memberNumber}`}{formattedPhone ? ` · ${formattedPhone}` : ''}</span>
+            {callHref && <a href={callHref} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
@@ -3352,6 +3383,8 @@ function TruckAdminPage({ onBackToOrder }) {
     const guestPayment = isGuestOrder(order);
     const nonMemberPayment = isApprovedNonMemberOrder(order);
     const feeLines = staffFeeLines(order);
+    const formattedPhone = displayPhone(order.phone);
+    const callHref = phoneHref(order.phone);
     return (
       <article className={`staffOrderCard truckOrderCard ${tone}${guestPayment ? ' guestOrderCard' : ''}${nonMemberPayment ? ' nonMemberOrderCard' : ''}${order.alcoholIncluded ? ' alcoholOrder' : ''}`} key={order.orderId}>
         <div className="staffOrderHead">
@@ -3361,8 +3394,8 @@ function TruckAdminPage({ onBackToOrder }) {
         <div className="staffOrderMember">
           <h3>{order.memberName || (guestPayment ? 'Guest' : 'Member')}</h3>
           <div className="staffMemberLine">
-            <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? `RSM #${order.memberNumber}` : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
-            {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
+            <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? `RSM #${order.memberNumber}` : `Member #${order.memberNumber}`}{formattedPhone ? ` · ${formattedPhone}` : ''}</span>
+            {callHref && <a href={callHref} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup</div>}
           {nonMemberPayment && <div className="paymentDueBadge nonMemberBadge">RSM account · 22% service fee visible</div>}

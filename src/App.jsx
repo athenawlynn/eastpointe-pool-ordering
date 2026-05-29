@@ -339,7 +339,7 @@ function calculateTruckFees({ subtotal, tipAmount, paymentType, settings, member
   const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
   const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
-  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, paymentType !== 'Member Account');
+  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, customerType !== 'Golf Member');
   const creditCardFeeEnabled = settingEnabled(settings, `${prefix}CreditCardFeeEnabled`, paymentType === 'Guest Pay at Pickup');
   const creditCardFeeVisible = settingEnabled(settings, `${prefix}CreditCardFeeVisible`, creditCardFeeEnabled);
   const serviceFeeAmount = serviceFeeEnabled ? roundMoney(Number(subtotal || 0) * serviceFeeRate) : 0;

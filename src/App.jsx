@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home, Download } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -463,8 +463,46 @@ function isToday(value) {
     date.getDate() === now.getDate();
 }
 
+function dateInputValue(value = new Date()) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (!date.getTime()) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function sameDateInput(value, targetDate) {
+  if (!targetDate) return false;
+  return dateInputValue(value) === targetDate;
+}
+
 function isOrderToday(order) {
   return isToday(order.timestamp) || isToday(order.updatedAt) || isToday(order.completedAt);
+}
+
+function orderMatchesDate(order, targetDate) {
+  return sameDateInput(order.completedAt, targetDate) ||
+    sameDateInput(order.timestamp, targetDate) ||
+    sameDateInput(order.updatedAt, targetDate);
+}
+
+function csvCell(value) {
+  const text = String(value ?? '');
+  return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCsv(filename, rows) {
+  const csv = rows.map(row => row.map(csvCell).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function settingEnabled(settings, key, fallback = true) {
@@ -3115,6 +3153,7 @@ function TruckAdminPage({ onBackToOrder }) {
   const [newOrderAlert, setNewOrderAlert] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [soundError, setSoundError] = useState('');
+  const [reportDate, setReportDate] = useState(dateInputValue());
 
   async function handleEnableSound() {
     try {
@@ -3259,6 +3298,54 @@ function TruckAdminPage({ onBackToOrder }) {
     return null;
   }
 
+  function exportTruckDailyReport() {
+    const header = [
+      'Date',
+      'Order ID',
+      'Status',
+      'POS Posted',
+      'Customer Name',
+      'Customer Type',
+      'Payment Type',
+      'Card Type',
+      'Phone',
+      'Subtotal',
+      'Service Fee',
+      'Service Fee Visible',
+      'Credit Card Fee',
+      'Credit Card Fee Visible',
+      'Tip',
+      'Total',
+      'Placed',
+      'Completed',
+      'Items',
+      'Special Instructions'
+    ];
+    const rows = reportOrdersForDate.map(order => [
+      reportDate,
+      order.orderId,
+      order.status,
+      order.posPosted ? 'YES' : 'No',
+      order.memberName || (isGuestOrder(order) ? 'Guest' : ''),
+      order.customerType || (isGuestOrder(order) ? 'Guest' : 'Golf Member'),
+      order.paymentType || '',
+      order.guestCardType || '',
+      order.phone || '',
+      Number(order.subtotalKnownItems || 0).toFixed(2),
+      Number(order.serviceFeeAmount || 0).toFixed(2),
+      order.serviceFeeVisible === true || String(order.serviceFeeVisible).toUpperCase() === 'TRUE' ? 'YES' : 'No',
+      Number(order.creditCardFeeAmount || 0).toFixed(2),
+      order.creditCardFeeVisible === true || String(order.creditCardFeeVisible).toUpperCase() === 'TRUE' ? 'YES' : 'No',
+      Number(order.tipAmount || 0).toFixed(2),
+      orderFinalTotal(order).toFixed(2),
+      order.timestamp || '',
+      order.completedAt || '',
+      itemLines(order).join(' | '),
+      order.staffNotes || ''
+    ]);
+    downloadCsv(`turn-truck-closeout-${reportDate}.csv`, [header, ...rows]);
+  }
+
   function renderTruckOrderCard(order, tone) {
     const action = truckAction(order);
     const isUpdating = updatingStatus?.orderId === order.orderId;
@@ -3382,6 +3469,16 @@ function TruckAdminPage({ onBackToOrder }) {
   const totalToday = orders
     .filter(order => order.status !== 'Cancelled' && isOrderToday(order))
     .reduce((sum, order) => sum + orderFinalTotal(order), 0);
+  const reportOrdersForDate = orders.filter(order => orderMatchesDate(order, reportDate));
+  const reportCompletedOrders = reportOrdersForDate.filter(order => order.status === 'Completed');
+  const reportBillableOrders = reportCompletedOrders.filter(order => order.status !== 'Cancelled');
+  const reportPosPostedCount = reportCompletedOrders.filter(order => order.posPosted).length;
+  const reportNeedsPosCount = reportCompletedOrders.filter(order => !order.posPosted).length;
+  const reportSubtotal = reportBillableOrders.reduce((sum, order) => sum + Number(order.subtotalKnownItems || 0), 0);
+  const reportServiceFees = reportBillableOrders.reduce((sum, order) => sum + Number(order.serviceFeeAmount || 0), 0);
+  const reportCardFees = reportBillableOrders.reduce((sum, order) => sum + Number(order.creditCardFeeAmount || 0), 0);
+  const reportTips = reportBillableOrders.reduce((sum, order) => sum + Number(order.tipAmount || 0), 0);
+  const reportTotal = reportBillableOrders.reduce((sum, order) => sum + orderFinalTotal(order), 0);
   const menuItemsByCategory = menuItems.reduce((groups, item) => {
     const category = item.category || 'Other';
     if (!groups[category]) groups[category] = [];
@@ -3487,6 +3584,28 @@ function TruckAdminPage({ onBackToOrder }) {
             <div><strong>{postedToday}</strong><span>POS posted</span></div>
             <div className={needsPosCount ? 'attention' : ''}><strong>{needsPosCount}</strong><span>Need POS posting</span></div>
             <div><strong>{currency(totalToday)}</strong><span>Total incl. fees</span></div>
+          </div>
+          <div className="dailyReportBox">
+            <div className="dailyReportHead">
+              <div>
+                <h4>Daily Closeout Report</h4>
+                <span>{reportCompletedOrders.length} completed orders</span>
+              </div>
+              <label>Date
+                <input type="date" value={reportDate} onChange={event => setReportDate(event.target.value)} />
+              </label>
+            </div>
+            <div className="dailyReportGrid">
+              <div><strong>{currency(reportSubtotal)}</strong><span>Subtotal</span></div>
+              <div><strong>{currency(reportServiceFees)}</strong><span>Service fees</span></div>
+              <div><strong>{currency(reportCardFees)}</strong><span>Card fees</span></div>
+              <div><strong>{currency(reportTips)}</strong><span>Tips</span></div>
+              <div><strong>{reportPosPostedCount}/{reportCompletedOrders.length}</strong><span>POS posted</span></div>
+              <div className={reportNeedsPosCount ? 'attention' : ''}><strong>{currency(reportTotal)}</strong><span>Closeout total</span></div>
+            </div>
+            <button className="exportReportButton" type="button" onClick={exportTruckDailyReport} disabled={!reportOrdersForDate.length}>
+              <Download size={16} /> Export CSV
+            </button>
           </div>
           {needsPosCount > 0
             ? <p className="closingNote">Closing check: mark all completed truck orders as POS posted.</p>

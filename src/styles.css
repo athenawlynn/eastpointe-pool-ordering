@@ -364,6 +364,19 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .closingGrid strong { color: var(--deep-green); font-size: 25px; line-height: 1; }
 .closingGrid span { margin-top: 5px; color: var(--muted); font-size: 12px; font-weight: 800; }
 .closingGrid .attention strong { color: var(--danger); }
+.dailyReportBox { margin: 14px 16px; padding: 14px; border: 1px solid #C9DCCF; border-radius: 12px; background: white; box-shadow: inset 0 0 0 1px rgba(255,255,255,.55); }
+.dailyReportHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.dailyReportHead h4 { margin: 0; color: #173C2A; font-size: 16px; line-height: 1.05; }
+.dailyReportHead span { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 850; }
+.dailyReportHead label { display: grid; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+.dailyReportHead input { min-height: 36px; border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; background: #FFFDF9; }
+.dailyReportGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.dailyReportGrid div { min-height: 62px; padding: 10px; border: 1px solid var(--line-soft); border-radius: 9px; background: #F9F8F5; display: grid; align-content: center; }
+.dailyReportGrid strong { color: var(--deep-green); font-size: 18px; line-height: 1; }
+.dailyReportGrid span { margin-top: 5px; color: var(--muted); font-size: 11px; font-weight: 850; }
+.dailyReportGrid .attention strong { color: var(--danger); }
+.exportReportButton { width: 100%; min-height: 38px; margin-top: 12px; border: 0; border-radius: 9px; background: var(--deep-green); color: white; font-size: 13px; font-weight: 900; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.exportReportButton:disabled { opacity: .5; cursor: not-allowed; }
 .closingNote { margin: 0; padding: 12px 16px; color: #8A5A0A; background: #FEF3E2; font-size: 13px; font-weight: 850; }
 .closingNote.good { color: #2D6B40; background: #EAF5EE; }
 .menuAvailabilityList { max-height: 302px; overflow: auto; }
@@ -509,6 +522,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .truckStats .staffStat.revenue strong { font-size: 28px; }
   .managerPanels { grid-template-columns: 1fr; padding: 14px; }
   .closingGrid { grid-template-columns: repeat(2, 1fr); }
+  .dailyReportHead { display: grid; }
+  .dailyReportGrid { grid-template-columns: repeat(2, 1fr); }
   .tipSummaryGrid, .tipOrderRow { grid-template-columns: 1fr; }
   .tipReconciliation { margin: 12px 12px 0; }
   .staffStat { min-height: 88px; padding: 18px 20px; border-right: 0; }

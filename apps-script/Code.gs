@@ -117,6 +117,17 @@ function roundMoney(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
 }
 
+function displayTipLabel(label) {
+  const raw = String(label || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  if (raw.indexOf('%') > -1 || lower === 'custom' || lower === 'no tip') return raw;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric) && numeric > 0 && numeric < 1) return `${Math.round(numeric * 100)}%`;
+  if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 100) return `${numeric}%`;
+  return raw;
+}
+
 function settingEnabled(settings, key, fallback) {
   const value = settings[key];
   if (value === undefined || value === null || value === '') return fallback;
@@ -196,21 +207,21 @@ function isDeliveryAvailable() {
 
 function isOrderingOpen() {
   const settings = getSettingsObject();
+  const scheduled = scheduleOpenNow(settings, '');
+  if (scheduled !== null) return scheduled;
   if (hasExplicitSetting(settings, 'OrderingOpen')) {
     return String(settings.OrderingOpen).toUpperCase() !== 'FALSE';
   }
-  const scheduled = scheduleOpenNow(settings, '');
-  if (scheduled !== null) return scheduled;
   return String(settings.OrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
 }
 
 function isTruckOrderingOpen() {
   const settings = getSettingsObject();
+  const scheduled = scheduleOpenNow(settings, 'Truck');
+  if (scheduled !== null) return scheduled;
   if (hasExplicitSetting(settings, 'TruckOrderingOpen')) {
     return String(settings.TruckOrderingOpen).toUpperCase() !== 'FALSE';
   }
-  const scheduled = scheduleOpenNow(settings, 'Truck');
-  if (scheduled !== null) return scheduled;
   return String(settings.TruckOrderingOpen || 'TRUE').toUpperCase() !== 'FALSE';
 }
 
@@ -1421,7 +1432,7 @@ function sendOrderEmail(order) {
     ``,
     `Subtotal: $${Number(order.subtotalKnownItems || 0).toFixed(2)}`,
     guestPayment ? `Card type: ${order.guestCardType || 'Not selected'}` : '',
-    Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} ($${Number(order.tipAmount || 0).toFixed(2)})` : '',
+    Number(order.tipAmount || 0) > 0 ? `Tip: ${displayTipLabel(order.tipLabel || 'Custom')} ($${Number(order.tipAmount || 0).toFixed(2)})` : '',
     Number(order.tipAmount || 0) > 0 || guestPayment ? `${guestPayment ? 'Estimated total' : 'Total with tip'}: $${Number(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0)).toFixed(2)}` : '',
     guestPayment ? `Collect physical credit card before handoff. Do not release without payment.` : '',
     order.hasCustomBarRequest ? `Custom bar request pricing to be entered in club POS.` : '',

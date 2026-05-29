@@ -192,7 +192,7 @@ function printCustomerChit(order, onBlocked) {
         ${isGuestPayment ? `<p><strong>Guest payment required at pickup.</strong></p><p>Card type: ${escapeHtml(order.guestCardType || 'Not selected')}</p>` : ''}
         ${serviceFeeVisible && serviceFeeAmount > 0 ? `<p>${escapeHtml(order.serviceFeeLabel || 'Service Fee')}: ${escapeHtml(currency(serviceFeeAmount))}</p>` : ''}
         ${creditCardFeeVisible && creditCardFeeAmount > 0 ? `<p>${escapeHtml(order.creditCardFeeLabel || 'Credit Card Transaction Fee')}: ${escapeHtml(currency(creditCardFeeAmount))}</p>` : ''}
-        ${hasTip || isGuestPayment ? `<p>Tip: ${escapeHtml(order.tipLabel || 'No tip')} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p>` : ''}
+        ${hasTip || isGuestPayment ? `<p>Tip: ${escapeHtml(displayTipLabel(order.tipLabel || 'No tip'))} ${tipAmount > 0 ? `(${escapeHtml(currency(tipAmount))})` : ''}</p>` : ''}
         <p><strong>Total: ${escapeHtml(currency(totalWithFees))}</strong></p>
         ${showFinalChargeNote ? '<p class="muted">Final club account charge may include staff-priced custom items, tax, service charge, or adjustments.</p>' : ''}
       </body>
@@ -410,9 +410,20 @@ function staffFeeLines(order) {
     });
   }
   if (Number(order.tipAmount || 0) > 0) {
-    lines.push({ label: `Tip ${order.tipLabel || ''}`.trim(), amount: Number(order.tipAmount || 0) });
+    lines.push({ label: `Tip ${displayTipLabel(order.tipLabel)}`.trim(), amount: Number(order.tipAmount || 0) });
   }
   return lines;
+}
+
+function displayTipLabel(label) {
+  const raw = String(label || '').trim();
+  if (!raw) return '';
+  const lower = raw.toLowerCase();
+  if (raw.includes('%') || lower === 'custom' || lower === 'no tip') return raw;
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric) && numeric > 0 && numeric < 1) return `${Math.round(numeric * 100)}%`;
+  if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 100) return `${numeric}%`;
+  return raw;
 }
 
 function tipDetails(subtotal, tipChoice, customTip) {
@@ -561,12 +572,12 @@ function scheduleIsOpen(settings, prefix = '') {
 }
 
 function effectiveOrderingOpen(settings, key = 'OrderingOpen', prefix = '') {
+  const scheduledOpen = scheduleIsOpen(settings, prefix);
+  if (scheduledOpen !== null) return scheduledOpen;
   const manualValue = settings?.[key];
   if (manualValue !== undefined && manualValue !== null && manualValue !== '') {
     return settingEnabled(settings, key, true);
   }
-  const scheduledOpen = scheduleIsOpen(settings, prefix);
-  if (scheduledOpen !== null) return scheduledOpen;
   return settingEnabled(settings, key, true);
 }
 
@@ -2766,7 +2777,7 @@ function AdminPage({ onBackToOrder }) {
       `Subtotal: ${currency(order.subtotalKnownItems)}`,
       guestPayment ? `Payment Status: ${order.paymentStatus || 'Due at Pickup'}` : '',
       guestPayment ? `Card Type: ${order.guestCardType || 'Not selected'}` : '',
-      Number(order.tipAmount || 0) > 0 ? `Tip: ${order.tipLabel || 'Custom'} (${currency(order.tipAmount)})` : '',
+      Number(order.tipAmount || 0) > 0 ? `Tip: ${displayTipLabel(order.tipLabel || 'Custom')} (${currency(order.tipAmount)})` : '',
       Number(order.tipAmount || 0) > 0 || guestPayment ? `${guestPayment ? 'Estimated Total' : 'Total with Tip'}: ${currency(order.estimatedTotal || Number(order.subtotalKnownItems || 0) + Number(order.tipAmount || 0))}` : '',
       `Alcohol: ${order.alcoholIncluded ? 'YES' : 'No'}`,
       `POS Posted: ${order.posPosted ? 'YES' : 'No'}`
@@ -2899,8 +2910,8 @@ function AdminPage({ onBackToOrder }) {
             {callHref && <a href={callHref} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
           <div className={order.fulfillmentType === 'Delivery' ? 'serviceBadge delivery' : 'serviceBadge'}>{serviceLabel}</div>
-          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
-          {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
+          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {displayTipLabel(order.tipLabel || 'No tip')}</div>}
+          {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {displayTipLabel(order.tipLabel || 'Custom')} · {currency(order.tipAmount)}</div>}
         </div>
 
         <div className="staffItems">
@@ -3284,6 +3295,7 @@ function TruckAdminPage({ onBackToOrder }) {
         body: JSON.stringify({ key, value })
       });
       if (res.settings) setSettings({ ...res.settings, [key]: value });
+      return res;
     } catch (e) {
       setSettings(previousSettings);
       setErr(e.message);
@@ -3292,8 +3304,11 @@ function TruckAdminPage({ onBackToOrder }) {
     }
   }
 
-  function updateTruckOrderingOpen(nextOpen) {
-    updateTruckSetting('TruckOrderingOpen', nextOpen ? 'TRUE' : 'FALSE');
+  async function updateTruckOrderingOpen(nextOpen) {
+    if (truckScheduleEnabled) {
+      await updateTruckSetting('TruckOrderingScheduleEnabled', 'FALSE');
+    }
+    await updateTruckSetting('TruckOrderingOpen', nextOpen ? 'TRUE' : 'FALSE');
   }
 
   async function updateTruckMenuAvailability(itemId, available) {
@@ -3479,7 +3494,7 @@ function TruckAdminPage({ onBackToOrder }) {
     );
   }
 
-  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
+  const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const truckMemberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
   const truckScheduleEnabled = settingEnabled(settings, 'TruckOrderingScheduleEnabled', true);
   const truckOpenTime = timeInputValue(settings, 'TruckOrderingOpenTime', '08:30');

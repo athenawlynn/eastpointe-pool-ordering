@@ -3213,7 +3213,7 @@ function TruckAdminPage({ onBackToOrder }) {
         headers: { Authorization: `Bearer ${getTruckToken()}` },
         body: JSON.stringify({ key, value })
       });
-      if (res.settings) setSettings(res.settings);
+      if (res.settings) setSettings({ ...res.settings, [key]: value });
     } catch (e) {
       setSettings(previousSettings);
       setErr(e.message);
@@ -3277,9 +3277,8 @@ function TruckAdminPage({ onBackToOrder }) {
             <span>{guestPayment ? 'Guest payment due' : nonMemberPayment ? `RSM #${order.memberNumber}` : `Member #${order.memberNumber}`}{order.phone ? ` · ${displayPhone(order.phone)}` : ''}</span>
             {order.phone && <a href={`tel:${String(order.phone).replace(/\D/g, '')}`} aria-label={`Call ${order.memberName || 'member'}`}><Phone size={16} /></a>}
           </div>
-          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup · Tip {order.tipLabel || 'No tip'}</div>}
+          {guestPayment && <div className="paymentDueBadge">Collect {order.guestCardType || 'card'} at pickup</div>}
           {nonMemberPayment && <div className="paymentDueBadge nonMemberBadge">RSM account · 22% service fee visible</div>}
-          {!guestPayment && Number(order.tipAmount || 0) > 0 && <div className="paymentDueBadge tipBadge">Tip {order.tipLabel || 'Custom'} · {currency(order.tipAmount)}</div>}
         </div>
         <div className="staffItems">
           {itemLines(order).map((line, index) => <p key={`${order.orderId}-${index}`}>{line}</p>)}
@@ -3360,7 +3359,7 @@ function TruckAdminPage({ onBackToOrder }) {
     );
   }
 
-  const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
+  const truckOrderingOpen = settingEnabled(settings, 'TruckOrderingOpen', true);
   const truckMemberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
   const truckScheduleEnabled = settingEnabled(settings, 'TruckOrderingScheduleEnabled', true);
   const truckOpenTime = timeInputValue(settings, 'TruckOrderingOpenTime', '08:30');

@@ -3942,9 +3942,187 @@ function OperationsGuide() {
   );
 }
 
+function TruckOperationsGuide() {
+  const links = [
+    {
+      title: 'Turn Truck Ordering',
+      body: 'Customer-facing pickup-only ordering for golfers at the turn.',
+      href: `${PUBLIC_BASE_URL}/truck`,
+      Icon: Truck,
+      type: 'member'
+    },
+    {
+      title: 'Truck Staff Dashboard',
+      body: 'New orders, preparing, ready for pickup, sold-out controls, and closeout.',
+      href: `${PUBLIC_BASE_URL}/truck-admin`,
+      Icon: ChefHat,
+      type: 'staff'
+    }
+  ];
+
+  return (
+    <div className="opsGuide truckOnlyGuide">
+      <section className="opsHero truckOpsHero">
+        <div className="opsHeroBrand">
+          <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" />
+          <div>
+            <p className="eyebrow">Eastpointe Country Club</p>
+            <h1>The Turn Truck Guide</h1>
+            <p>A truck-specific quick guide for QR ordering, iPad staff use, menu availability, and daily closeout.</p>
+          </div>
+        </div>
+        <div className="opsMotifs" aria-label="Turn Truck highlights">
+          <span><Flag size={15} /> Golf course pickup</span>
+          <span><QrCode size={15} /> QR-ready</span>
+          <span><Truck size={15} /> Truck staff iPad</span>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><QrCode size={15} /> Truck-only links</p>
+            <h2>Turn Truck QR & Staff Links</h2>
+          </div>
+          <p>Use these for the truck QR code, staff iPad bookmark, and manager training.</p>
+        </div>
+        <div className="opsLinkGrid truckOpsLinkGrid">
+          {links.map(({ title, body, href, Icon, type }) => (
+            <article className={`opsLinkCard ${type === 'staff' ? 'staffArea' : ''}`} key={title}>
+              <div className="opsLinkIcon"><Icon size={22} /></div>
+              <div>
+                {type === 'staff' && <span className="opsStaffBadge">Staff area</span>}
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
+              <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
+              <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="opsSection opsTwoCol">
+        <div className="opsPanel">
+          <p className="sectionKicker"><BookOpen size={15} /> During service</p>
+          <h2>Truck Staff Workflow</h2>
+          <div className="opsSteps">
+            <div><strong>1</strong><span>Open the Truck Staff Dashboard on the iPad and tap once to enable the new-order sound.</span></div>
+            <div><strong>2</strong><span>Use Truck Ordering Is Open or Closed to control whether customers can place orders.</span></div>
+            <div><strong>3</strong><span>Move orders from New Order Waiting to Preparing, then Ready for Pickup, then Completed.</span></div>
+            <div><strong>4</strong><span>Use Truck Menu Availability to mark sold-out items without editing the Google Sheet during service.</span></div>
+          </div>
+        </div>
+
+        <div className="opsPanel opsRolesPanel">
+          <p className="sectionKicker"><Users size={15} /> Who does what</p>
+          <h2>Truck Roles</h2>
+          <div className="opsRolesGrid">
+            <div className="serviceRole">
+              <h3>Truck Staff</h3>
+              <ul>
+                <li>Acknowledge and prepare orders</li>
+                <li>Mark orders ready for pickup</li>
+                <li>Mark items sold out or available</li>
+                <li>Collect guest card payment at pickup</li>
+              </ul>
+            </div>
+            <div>
+              <h3>Managers / Admin</h3>
+              <ul>
+                <li>Update truck menu items and pricing</li>
+                <li>Maintain member numbers and CustomerType</li>
+                <li>Review TruckOrders</li>
+                <li>Export closeout reports</li>
+              </ul>
+            </div>
+            <div className="doNotEditRole">
+              <h3>Do Not Edit During Service</h3>
+              <ul>
+                <li>TruckMenuItems rows</li>
+                <li>Members rows</li>
+                <li>Pricing</li>
+                <li>Sort order</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><PencilLine size={15} /> Truck backend</p>
+            <h2>Truck Menu, Members & Closeout</h2>
+          </div>
+        </div>
+        <div className="opsInfoGrid">
+          <article>
+            <h3>TruckMenuItems</h3>
+            <p>Use this tab for the truck menu only.</p>
+            <ul>
+              <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
+              <li><strong>Modifiers</strong>: controls item customization buttons.</li>
+              <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
+              <li><strong>SortOrder</strong>: controls customer menu order.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Members</h3>
+            <p>Use CustomerType to control truck fee rules for member-account orders.</p>
+            <ul>
+              <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
+              <li><strong>RSM</strong>: visible 22% service fee.</li>
+              <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>TruckOrders</h3>
+            <p>This is the permanent truck order log.</p>
+            <ul>
+              <li>Review completed orders.</li>
+              <li>Check service fees, card fees, and tips.</li>
+              <li>Use the dashboard export for daily POS closeout.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsPanel ownerToolsPanel">
+          <p className="sectionKicker"><ExternalLink size={15} /> Owner tools</p>
+          <h2>Truck Admin Links</h2>
+          <div className="opsBackendLinks">
+            <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
+              <strong>Menu & Member Update Sheet</strong>
+              <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
+              <ExternalLink size={16} />
+            </a>
+            <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
+              <strong>Netlify Deploys</strong>
+              <span>Live site publishing status</span>
+              <ExternalLink size={16} />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="opsFooterCard">
+        <img src="/eastpointe-logo-tight.png" alt="" />
+        <div>
+          <h2>Recommended truck setup</h2>
+          <p>Print the Turn Truck QR code, bookmark the Truck Staff Dashboard on the iPad, and use the dashboard during service. Use the Google Sheet only for manager-level menu and member updates.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function App() {
   const initialMode = window.location.pathname.includes('/truck-admin')
     ? 'truck-admin'
+    : window.location.pathname.includes('/truck-operations-guide')
+      ? 'truck-operations-guide'
     : window.location.pathname.includes('/operations-guide')
       ? 'operations-guide'
       : window.location.pathname.includes('/truck')
@@ -3959,6 +4137,8 @@ export default function App() {
       ? '/admin'
       : mode === 'truck-admin'
         ? '/truck-admin'
+        : mode === 'truck-operations-guide'
+          ? '/truck-operations-guide'
         : mode === 'operations-guide'
           ? '/operations-guide'
           : mode === 'truck'
@@ -3970,13 +4150,14 @@ export default function App() {
   const isTruckMode = mode === 'truck' || mode === 'truck-admin';
   const mainClass = mode === 'admin' || mode === 'truck-admin'
     ? 'app adminApp'
-    : mode === 'operations-guide'
+    : mode === 'operations-guide' || mode === 'truck-operations-guide'
       ? 'app opsApp'
       : 'app';
   return (
     <main className={mainClass}>
       <AppErrorBoundary key={mode}>
         {mode === 'operations-guide' && <OperationsGuide />}
+        {mode === 'truck-operations-guide' && <TruckOperationsGuide />}
         {mode === 'order' && <Header mode={mode} setMode={setMode} />}
         {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
         {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}

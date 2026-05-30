@@ -3978,6 +3978,31 @@ function TruckOperationsGuide() {
         </div>
       </section>
 
+      <section className="opsSection truckStartSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><Flag size={15} /> Start here</p>
+            <h2>Truck Shift Flow</h2>
+          </div>
+          <p>A quick path for staff working the truck today.</p>
+        </div>
+        <div className="truckFlow">
+          {[
+            ['1', 'Open dashboard', 'Open the Truck Staff Dashboard on the iPad.'],
+            ['2', 'Check ordering', 'Confirm Truck Ordering Is Open or Closed.'],
+            ['3', 'Review availability', 'Mark sold-out items before orders start.'],
+            ['4', 'Watch orders', 'Move orders through Preparing and Ready for Pickup.'],
+            ['5', 'Close out', 'Complete orders, mark POS posted, and export the report.']
+          ].map(([number, title, body]) => (
+            <div className="truckFlowStep" key={number}>
+              <strong>{number}</strong>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
@@ -4052,6 +4077,48 @@ function TruckOperationsGuide() {
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
+            <p className="sectionKicker"><ClipboardList size={15} /> Shift cheat sheet</p>
+            <h2>One-Page Truck Checklist</h2>
+          </div>
+          <p>Use this as the fast pre-shift, live-shift, and closeout reference.</p>
+        </div>
+        <div className="opsInfoGrid cheatSheetGrid">
+          <article>
+            <h3>Before Service</h3>
+            <ul>
+              <li>Open the Truck Staff Dashboard.</li>
+              <li>Tap once to enable new-order sound.</li>
+              <li>Confirm ordering is open or intentionally closed.</li>
+              <li>Review sold-out items and prices.</li>
+              <li>Place one test order only if needed.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>During Service</h3>
+            <ul>
+              <li>Watch New Order Waiting.</li>
+              <li>Move orders to Preparing when acknowledged.</li>
+              <li>Mark Ready for Pickup only when ready.</li>
+              <li>Mark sold-out items immediately.</li>
+              <li>Watch for duplicate member questions.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>After Service</h3>
+            <ul>
+              <li>Complete picked-up orders.</li>
+              <li>Mark POS posted after entry in the register.</li>
+              <li>Export the daily closeout report.</li>
+              <li>Report any app or order issues.</li>
+              <li>Close ordering if the truck is finished.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
             <p className="sectionKicker"><PencilLine size={15} /> Truck backend</p>
             <h2>Truck Menu, Members & Closeout</h2>
           </div>
@@ -4085,6 +4152,114 @@ function TruckOperationsGuide() {
               <li>Use the dashboard export for daily POS closeout.</li>
             </ul>
           </article>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><ClipboardList size={15} /> Order status</p>
+            <h2>What Each Status Means</h2>
+          </div>
+          <p>Use these meanings consistently so members and staff see the same flow.</p>
+        </div>
+        <div className="statusGuideTable">
+          {[
+            ['New Order Waiting', 'Order received by the dashboard.', 'Review the ticket and start preparing.'],
+            ['Preparing', 'Truck staff acknowledged the order.', 'Make the food or drinks.'],
+            ['Ready for Pickup', 'The order is ready at the truck.', 'Serve the member or guest at pickup.'],
+            ['Completed', 'The order was picked up or finished.', 'Mark POS posted after register entry.'],
+            ['Cancelled', 'The order should not be made.', 'Confirm reason if needed.']
+          ].map(([status, meaning, action]) => (
+            <div className="statusGuideRow" key={status}>
+              <strong>{status}</strong>
+              <span>{meaning}</span>
+              <span>{action}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><AlertTriangle size={15} /> What to do if</p>
+            <h2>Truck Troubleshooting</h2>
+          </div>
+        </div>
+        <div className="opsInfoGrid troubleGrid">
+          <article>
+            <h3>An item is sold out</h3>
+            <p>Mark it unavailable in Truck Menu Availability right away, then tell the truck lead.</p>
+          </article>
+          <article>
+            <h3>A member says they ordered</h3>
+            <p>Refresh the dashboard, check the member name or order number, then escalate if it still does not appear.</p>
+          </article>
+          <article>
+            <h3>An order is wrong</h3>
+            <p>Do not duplicate the order. Correct it operationally if possible, or notify the manager/admin.</p>
+          </article>
+          <article>
+            <h3>The app freezes</h3>
+            <p>Refresh once. If needed, close and reopen the browser tab, then contact the lead.</p>
+          </article>
+          <article>
+            <h3>Guest payment is due</h3>
+            <p>Collect card payment at pickup before releasing the order.</p>
+          </article>
+          <article>
+            <h3>New-order sound is quiet</h3>
+            <p>Tap Enable Sound on the dashboard, turn up iPad volume, and keep the page open.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
+            <p className="sectionKicker"><Users size={15} /> Staff scripts</p>
+            <h2>What To Say</h2>
+          </div>
+          <p>Short scripts keep the member experience polished and consistent.</p>
+        </div>
+        <div className="scriptGrid">
+          <div>
+            <h3>If a member asks how to order</h3>
+            <p>Please scan the Turn Truck QR code, choose your items, and submit your order. The truck team will receive it directly.</p>
+          </div>
+          <div>
+            <h3>If an item is sold out</h3>
+            <p>I am sorry, that item is no longer available today. We are updating the ordering screen now.</p>
+          </div>
+          <div>
+            <h3>If there is a delay</h3>
+            <p>The truck team has your order and is working through the queue. We appreciate your patience.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="opsSection opsTwoCol">
+        <div className="opsPanel">
+          <p className="sectionKicker"><AlertTriangle size={15} /> Avoid these</p>
+          <h2>Common Mistakes</h2>
+          <div className="opsSteps mistakeList">
+            <div><strong>1</strong><span>Do not create a second order if the first one is delayed.</span></div>
+            <div><strong>2</strong><span>Do not mark Completed until the order has actually been picked up.</span></div>
+            <div><strong>3</strong><span>Do not leave sold-out items active in the system.</span></div>
+            <div><strong>4</strong><span>Do not promise availability without checking the dashboard.</span></div>
+          </div>
+        </div>
+
+        <div className="opsPanel">
+          <p className="sectionKicker"><ShieldCheck size={15} /> Training sign-off</p>
+          <h2>Manager Checklist</h2>
+          <div className="opsSteps">
+            <div><strong>1</strong><span>Staff member can open the correct truck links.</span></div>
+            <div><strong>2</strong><span>Staff member can process a sample order.</span></div>
+            <div><strong>3</strong><span>Staff member can mark an item sold out.</span></div>
+            <div><strong>4</strong><span>Staff member can complete an order and mark POS posted.</span></div>
+          </div>
         </div>
       </section>
 

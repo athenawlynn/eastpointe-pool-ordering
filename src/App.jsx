@@ -4077,6 +4077,84 @@ function TruckOperationsGuide() {
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
+            <p className="sectionKicker"><TableProperties size={15} /> Visual walkthrough</p>
+            <h2>What Staff Should Click</h2>
+          </div>
+          <p>Use these as quick screen references during training or a shift handoff.</p>
+        </div>
+        <div className="screenWalkthroughGrid">
+          <article className="screenWalkthroughCard">
+            <h3>Truck dashboard</h3>
+            <div className="miniDashboard" aria-label="Truck dashboard visual guide">
+              <div className="miniTopBar">
+                <span className="calloutDot">1</span>
+                <strong>Truck Ordering Is Open</strong>
+              </div>
+              <div className="miniStats">
+                <span>6 Active</span>
+                <span>5 Ready</span>
+                <span>3 Completed</span>
+              </div>
+              <div className="miniColumns">
+                <div><span className="calloutDot">2</span><strong>New Order Waiting</strong></div>
+                <div><span className="calloutDot">3</span><strong>Preparing</strong></div>
+                <div><span className="calloutDot">4</span><strong>Ready for Pickup</strong></div>
+              </div>
+            </div>
+            <ol className="calloutList">
+              <li>Open or close ordering.</li>
+              <li>Start new orders here.</li>
+              <li>Use Preparing after staff acknowledges the order.</li>
+              <li>Move here only when the order is ready.</li>
+            </ol>
+          </article>
+
+          <article className="screenWalkthroughCard">
+            <h3>Order ticket</h3>
+            <div className="miniTicket" aria-label="Truck order ticket visual guide">
+              <div className="miniTicketHead"><strong>#5012</strong><span>Just now</span></div>
+              <div className="miniTicketBody">
+                <span>1x Hot Dog</span>
+                <span>1x Arnold Palmer</span>
+              </div>
+              <div className="miniTicketFees">
+                <span>Subtotal</span><strong>$14.00</strong>
+                <span>Tip</span><strong>$2.80</strong>
+              </div>
+              <button type="button"><span className="calloutDot">1</span> Start Preparing</button>
+              <button type="button" className="secondary"><span className="calloutDot">2</span> Ticket</button>
+            </div>
+            <ol className="calloutList">
+              <li>Use the main button to move the order forward.</li>
+              <li>Print or view the ticket when staff needs a physical chit.</li>
+            </ol>
+          </article>
+
+          <article className="screenWalkthroughCard">
+            <h3>Menu availability</h3>
+            <div className="miniAvailability" aria-label="Truck menu availability visual guide">
+              <div className="miniAvailabilityHead"><strong>Truck Menu Availability</strong><span>0 unavailable</span></div>
+              <div className="miniAvailabilityRow">
+                <span>Hot Dog</span>
+                <button type="button"><span className="calloutDot">1</span> Available</button>
+              </div>
+              <div className="miniAvailabilityRow sold">
+                <span>The Smashed Burger</span>
+                <button type="button"><span className="calloutDot">2</span> Sold Out</button>
+              </div>
+              <small>Scroll for more menu items</small>
+            </div>
+            <ol className="calloutList">
+              <li>Tap Available to mark an item sold out.</li>
+              <li>Tap Sold Out to make the item available again.</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+
+      <section className="opsSection">
+        <div className="opsSectionHead">
+          <div>
             <p className="sectionKicker"><ClipboardList size={15} /> Shift cheat sheet</p>
             <h2>One-Page Truck Checklist</h2>
           </div>
@@ -4185,6 +4263,23 @@ function TruckOperationsGuide() {
           <div>
             <p className="sectionKicker"><AlertTriangle size={15} /> What to do if</p>
             <h2>Truck Troubleshooting</h2>
+          </div>
+        </div>
+        <div className="decisionTree">
+          <div className="decisionNode start"><strong>Order or issue comes in</strong></div>
+          <div className="decisionBranches">
+            <div>
+              <strong>Item unavailable?</strong>
+              <span>Mark sold out, tell the lead, and offer another item.</span>
+            </div>
+            <div>
+              <strong>Order not showing?</strong>
+              <span>Refresh, check name or order number, then escalate.</span>
+            </div>
+            <div>
+              <strong>Order ready?</strong>
+              <span>Mark Ready for Pickup, then Complete after pickup.</span>
+            </div>
           </div>
         </div>
         <div className="opsInfoGrid troubleGrid">

@@ -231,7 +231,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .opsHero { position: relative; overflow: hidden; display: grid; gap: 22px; padding: 28px; border-radius: 18px; background: #173323; color: white; border: 1px solid rgba(255,255,255,.12); }
 .opsHero::after { content: ''; position: absolute; right: -70px; bottom: -88px; width: 260px; height: 260px; border-radius: 50%; border: 34px solid rgba(230,213,142,.13); box-shadow: inset 0 0 0 2px rgba(255,255,255,.12); }
 .truckOpsHero { background: #143721; }
-.truckOpsHero::before { content: ''; position: absolute; right: 18px; top: 18px; width: 180px; height: 96px; border-radius: 18px; background: url('/turn-truck-golf-cart.png') center / cover no-repeat; opacity: .18; border: 1px solid rgba(255,255,255,.22); }
+.truckOpsHero::before { content: ''; position: absolute; right: 22px; top: 24px; width: 230px; height: 126px; border-radius: 18px; background: rgba(255,255,255,.92) url('/turn-truck-golf-cart.png') center / contain no-repeat; opacity: .92; border: 1px solid rgba(255,255,255,.32); box-shadow: 0 18px 36px rgba(0,0,0,.18); }
 .opsHeroBrand { position: relative; z-index: 1; display: flex; align-items: center; gap: 18px; }
 .opsHeroBrand img { width: 72px; height: 72px; border-radius: 999px; background: white; object-fit: cover; flex: 0 0 auto; }
 .opsHero h1 { margin: 0; font-size: clamp(30px, 5vw, 56px); line-height: .96; color: white; letter-spacing: 0; }
@@ -251,6 +251,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .truckFlowStep::after { content: ''; position: absolute; top: 30px; right: -15px; width: 18px; height: 2px; background: #D8C27D; }
 .truckFlowStep:last-child::after { display: none; }
 .truckFlowStep strong { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #173323; color: white; font-size: 14px; }
+.truckFlowStep > svg { color: #8A6A19; }
 .truckFlowStep h3 { margin: 0; color: var(--deep-green); font-size: 17px; line-height: 1.08; }
 .truckFlowStep p { margin: 0; color: var(--muted); font-size: 13px; font-weight: 700; line-height: 1.35; }
 .opsLinkCard { display: grid; gap: 12px; align-content: start; min-height: 100%; padding: 14px; border: 1px solid var(--line-soft); border-radius: 12px; background: #FFFDF9; }
@@ -262,6 +263,11 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .opsLinkCard h3, .opsInfoGrid h3, .opsRolesGrid h3 { margin: 0; color: var(--deep-green); font-size: 17px; line-height: 1.12; }
 .opsLinkCard p, .opsInfoGrid p, .opsInfoGrid li, .opsFooterCard p, .opsRolesGrid li { margin: 6px 0 0; color: var(--muted); font-weight: 620; line-height: 1.4; }
 .opsQr { width: 100%; max-width: 150px; justify-self: center; border-radius: 10px; border: 1px solid var(--line-soft); background: white; padding: 8px; }
+.opsPasswordHint { display: inline-flex; align-items: center; gap: 6px; width: fit-content; margin-top: 10px !important; padding: 7px 9px; border-radius: 999px; background: #173323; color: white !important; font-size: 12px; font-weight: 900 !important; }
+.opsPasswordHint svg { color: #E6D58E; }
+.opsPasswordHint strong { color: white; }
+.opsNoQr { min-height: 150px; display: grid; place-items: center; align-content: center; gap: 6px; border: 1px dashed #75B884; border-radius: 10px; background: #F4FBF6; color: #1F5A35; text-align: center; padding: 16px; }
+.opsNoQr span { color: var(--muted); font-size: 12px; font-weight: 800; }
 .opsLinkCard a, .opsBackendLinks a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border-radius: 8px; color: white; background: var(--deep-green); text-decoration: none; font-weight: 900; font-size: 13px; }
 .opsTwoCol { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; padding: 0; background: transparent; border: 0; box-shadow: none; }
 .opsPanel { background: white; border: 1px solid var(--line-soft); border-radius: 14px; padding: 20px; box-shadow: 0 2px 18px rgba(28,42,30,.05); }
@@ -315,7 +321,16 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .statusGuideTable { display: grid; border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; background: white; }
 .statusGuideRow { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: 12px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line-soft); }
 .statusGuideRow:last-child { border-bottom: 0; }
+.statusGuideRow.new { background: #F2F8FF; border-left: 6px solid #9FCAEF; }
+.statusGuideRow.preparing { background: #FFF7E8; border-left: 6px solid #F4BD63; }
+.statusGuideRow.ready { background: #F0FAF2; border-left: 6px solid #8FC56F; }
+.statusGuideRow.completed { background: #F7F6F2; border-left: 6px solid #DED8CE; }
+.statusGuideRow.cancelled { background: #FFF3EF; border-left: 6px solid #E7B8AA; }
 .statusGuideRow strong { color: var(--deep-green); font-size: 14px; }
+.statusGuideRow.preparing strong { color: #8A5A0A; }
+.statusGuideRow.ready strong { color: #2D6B40; }
+.statusGuideRow.completed strong { color: var(--muted); }
+.statusGuideRow.cancelled strong { color: var(--danger); }
 .statusGuideRow span { color: var(--muted); font-size: 13px; font-weight: 700; line-height: 1.35; }
 .troubleGrid article { background: #FFF8F5; border-color: #E7B8AA; }
 .troubleGrid article h3 { color: var(--danger); }
@@ -328,6 +343,8 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .decisionBranches span { color: var(--muted); font-size: 13px; font-weight: 750; line-height: 1.38; }
 .scriptGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .scriptGrid div { padding: 16px; border-radius: 12px; border: 1px solid #C9DCCF; background: #FBFEFC; }
+.scriptIcon { width: 46px; height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 0; border-radius: 999px; background: #EAF5EE; color: #2D6B40; margin-bottom: 10px; }
+.scriptIcon svg + svg { margin-left: -6px; color: #8A6A19; }
 .scriptGrid h3 { margin: 0; color: var(--deep-green); font-size: 16px; }
 .scriptGrid p { margin: 10px 0 0; color: var(--ink); font-size: 15px; font-weight: 750; line-height: 1.45; }
 .mistakeList div { background: #FFF2ED; }
@@ -566,6 +583,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .opsApp { padding: 0; }
   .opsGuide { padding: 10px; gap: 12px; }
   .opsHero { padding: 18px; border-radius: 14px; }
+  .truckOpsHero::before { display: none; }
   .opsHeroBrand { align-items: flex-start; }
   .opsHeroBrand img { width: 54px; height: 54px; }
   .opsHero h1 { font-size: 30px; }
@@ -575,7 +593,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .opsLinkGrid, .opsTwoCol, .opsInfoGrid { grid-template-columns: 1fr; }
   .truckFlow, .truckOpsLinkGrid, .statusGuideRow { grid-template-columns: 1fr; }
   .opsLinkCard { grid-template-columns: 42px 1fr; align-items: start; }
-  .opsLinkCard .opsQr, .opsLinkCard a { grid-column: 1 / -1; }
+  .opsLinkCard .opsQr, .opsLinkCard a, .opsNoQr { grid-column: 1 / -1; }
   .opsQr { max-width: 132px; }
   .opsFooterCard { align-items: flex-start; }
   .adminApp { padding: 0; max-width: none; width: 100%; }

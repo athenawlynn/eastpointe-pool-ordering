@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home, Download } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home, Download, MessageCircle, Eye } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -3949,14 +3949,17 @@ function TruckOperationsGuide() {
       body: 'Customer-facing pickup-only ordering for golfers at the turn.',
       href: `${PUBLIC_BASE_URL}/truck`,
       Icon: Truck,
-      type: 'member'
+      type: 'member',
+      showQr: true
     },
     {
       title: 'Truck Staff Dashboard',
       body: 'New orders, preparing, ready for pickup, sold-out controls, and closeout.',
       href: `${PUBLIC_BASE_URL}/truck-admin`,
       Icon: ChefHat,
-      type: 'staff'
+      type: 'staff',
+      showQr: false,
+      password: TRUCK_PASSWORD
     }
   ];
 
@@ -3988,14 +3991,15 @@ function TruckOperationsGuide() {
         </div>
         <div className="truckFlow">
           {[
-            ['1', 'Open dashboard', 'Open the Truck Staff Dashboard on the iPad.'],
-            ['2', 'Check ordering', 'Confirm Truck Ordering Is Open or Closed.'],
-            ['3', 'Review availability', 'Mark sold-out items before orders start.'],
-            ['4', 'Watch orders', 'Move orders through Preparing and Ready for Pickup.'],
-            ['5', 'Close out', 'Complete orders, mark POS posted, and export the report.']
-          ].map(([number, title, body]) => (
+            ['1', 'Open dashboard', 'Open the Truck Staff Dashboard on the iPad.', Home],
+            ['2', 'Check ordering', 'Confirm Truck Ordering Is Open or Closed.', Eye],
+            ['3', 'Review availability', 'Mark sold-out items before orders start.', ClipboardList],
+            ['4', 'Watch orders', 'Move orders through Preparing and Ready for Pickup.', Truck],
+            ['5', 'Close out', 'Complete orders, mark POS posted, and export the report.', Download]
+          ].map(([number, title, body, Icon]) => (
             <div className="truckFlowStep" key={number}>
               <strong>{number}</strong>
+              <Icon size={22} />
               <h3>{title}</h3>
               <p>{body}</p>
             </div>
@@ -4012,15 +4016,18 @@ function TruckOperationsGuide() {
           <p>Use these for the truck QR code, staff iPad bookmark, and manager training.</p>
         </div>
         <div className="opsLinkGrid truckOpsLinkGrid">
-          {links.map(({ title, body, href, Icon, type }) => (
+          {links.map(({ title, body, href, Icon, type, showQr, password }) => (
             <article className={`opsLinkCard ${type === 'staff' ? 'staffArea' : ''}`} key={title}>
               <div className="opsLinkIcon"><Icon size={22} /></div>
               <div>
                 {type === 'staff' && <span className="opsStaffBadge">Staff area</span>}
                 <h3>{title}</h3>
                 <p>{body}</p>
+                {password && <p className="opsPasswordHint"><Lock size={14} /> Password: <strong>{password}</strong></p>}
               </div>
-              <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
+              {showQr
+                ? <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
+                : <div className="opsNoQr"><Lock size={28} /><strong>Staff bookmark</strong><span>No QR needed for this dashboard.</span></div>}
               <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
             </article>
           ))}
@@ -4243,13 +4250,13 @@ function TruckOperationsGuide() {
         </div>
         <div className="statusGuideTable">
           {[
-            ['New Order Waiting', 'Order received by the dashboard.', 'Review the ticket and start preparing.'],
-            ['Preparing', 'Truck staff acknowledged the order.', 'Make the food or drinks.'],
-            ['Ready for Pickup', 'The order is ready at the truck.', 'Serve the member or guest at pickup.'],
-            ['Completed', 'The order was picked up or finished.', 'Mark POS posted after register entry.'],
-            ['Cancelled', 'The order should not be made.', 'Confirm reason if needed.']
-          ].map(([status, meaning, action]) => (
-            <div className="statusGuideRow" key={status}>
+            ['New Order Waiting', 'Order received by the dashboard.', 'Review the ticket and start preparing.', 'new'],
+            ['Preparing', 'Truck staff acknowledged the order.', 'Make the food or drinks.', 'preparing'],
+            ['Ready for Pickup', 'The order is ready at the truck.', 'Serve the member or guest at pickup.', 'ready'],
+            ['Completed', 'The order was picked up or finished.', 'Mark POS posted after register entry.', 'completed'],
+            ['Cancelled', 'The order should not be made.', 'Confirm reason if needed.', 'cancelled']
+          ].map(([status, meaning, action, tone]) => (
+            <div className={`statusGuideRow ${tone}`} key={status}>
               <strong>{status}</strong>
               <span>{meaning}</span>
               <span>{action}</span>
@@ -4262,7 +4269,7 @@ function TruckOperationsGuide() {
         <div className="opsSectionHead">
           <div>
             <p className="sectionKicker"><AlertTriangle size={15} /> What to do if</p>
-            <h2>Truck Troubleshooting</h2>
+            <h2>Truck Troubleshooting Help</h2>
           </div>
         </div>
         <div className="decisionTree">
@@ -4313,21 +4320,24 @@ function TruckOperationsGuide() {
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
-            <p className="sectionKicker"><Users size={15} /> Staff scripts</p>
+            <p className="sectionKicker"><MessageCircle size={15} /> Staff scripts</p>
             <h2>What To Say</h2>
           </div>
           <p>Short scripts keep the member experience polished and consistent.</p>
         </div>
         <div className="scriptGrid">
           <div>
+            <span className="scriptIcon"><UserRound size={20} /><MessageCircle size={18} /></span>
             <h3>If a member asks how to order</h3>
             <p>Please scan the Turn Truck QR code, choose your items, and submit your order. The truck team will receive it directly.</p>
           </div>
           <div>
+            <span className="scriptIcon"><AlertTriangle size={20} /><MessageCircle size={18} /></span>
             <h3>If an item is sold out</h3>
             <p>I am sorry, that item is no longer available today. We are updating the ordering screen now.</p>
           </div>
           <div>
+            <span className="scriptIcon"><Truck size={20} /><MessageCircle size={18} /></span>
             <h3>If there is a delay</h3>
             <p>The truck team has your order and is working through the queue. We appreciate your patience.</p>
           </div>
@@ -4434,7 +4444,7 @@ export default function App() {
         {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
         {mode === 'truck' && <TruckOrderPage />}
         {mode === 'order' && <OrderPage />}
-        {mode !== 'admin' && mode !== 'truck-admin' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
+        {mode !== 'admin' && mode !== 'truck-admin' && mode !== 'operations-guide' && mode !== 'truck-operations-guide' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
       </AppErrorBoundary>
     </main>
   );

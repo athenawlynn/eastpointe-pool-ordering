@@ -3796,8 +3796,7 @@ function OperationsGuide() {
   ];
 
   const backendLinks = [
-    { title: 'Menu & Member Update Sheet', href: GOOGLE_SHEET_URL, detail: 'Menus, member numbers, settings, and order logs' },
-    { title: 'Netlify Deploys', href: NETLIFY_DEPLOYS_URL, detail: 'Live site publishing status' }
+    { title: 'Menu & Member Update Sheet', href: GOOGLE_SHEET_URL, detail: 'Menus, member numbers, settings, and order logs' }
   ];
 
   return (
@@ -3900,6 +3899,10 @@ function OperationsGuide() {
                 <ExternalLink size={16} />
               </a>
             ))}
+          </div>
+          <div className="opsBackendNote">
+            <strong>Need website/app changes?</strong>
+            <span>Notify the developer to push updates.</span>
           </div>
         </div>
       </section>
@@ -4438,11 +4441,10 @@ function TruckOperationsGuide() {
                 <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
                 <ExternalLink size={16} />
               </a>
-              <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
-                <strong>Netlify Deploys</strong>
-                <span>Live site publishing status</span>
-                <ExternalLink size={16} />
-              </a>
+            </div>
+            <div className="opsBackendNote">
+              <strong>Need website/app changes?</strong>
+              <span>Notify the developer to push updates.</span>
             </div>
           </div>
         </div>

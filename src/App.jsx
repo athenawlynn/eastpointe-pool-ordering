@@ -12,6 +12,7 @@ const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
 const TRUCK_CONFIRMATION_KEY = 'eastpointeLastTruckConfirmation';
 const ADMIN_TOKEN_KEY = 'eastpointeAdminToken';
 const TRUCK_TOKEN_KEY = 'eastpointeTruckToken';
+const TRUCK_SOUND_OFF_KEY = 'eastpointeTruckSoundOff';
 const PUBLIC_BASE_URL = 'https://eastpointeordering.netlify.app';
 const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1LUax2G_gf1AO4wnqCVfZ2yh3tOv780ijlLB7XeMk2R0/edit';
 const NETLIFY_DEPLOYS_URL = 'https://app.netlify.com/projects/eastpointeordering/deploys';
@@ -3198,18 +3199,25 @@ function TruckAdminPage({ onBackToOrder }) {
   const [updatingSetting, setUpdatingSetting] = useState('');
   const [updatingMenuItem, setUpdatingMenuItem] = useState('');
   const [newOrderAlert, setNewOrderAlert] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => localStorage.getItem(TRUCK_SOUND_OFF_KEY) !== 'true');
   const [soundError, setSoundError] = useState('');
   const [reportDate, setReportDate] = useState(dateInputValue());
 
-  async function handleEnableSound() {
+  async function handleTestSound() {
     try {
       await enableNotificationSound();
       setSoundEnabled(true);
+      localStorage.removeItem(TRUCK_SOUND_OFF_KEY);
       setSoundError('');
     } catch (e) {
       setSoundError(e.message || 'Unable to enable sound on this device.');
     }
+  }
+
+  function handleTurnSoundOff() {
+    localStorage.setItem(TRUCK_SOUND_OFF_KEY, 'true');
+    setSoundEnabled(false);
+    setSoundError('');
   }
 
   async function loadTruckOrders() {
@@ -3230,7 +3238,7 @@ function TruckAdminPage({ onBackToOrder }) {
         );
         if (hasNewOrder) {
           setNewOrderAlert(true);
-          playNewOrderSound();
+          if (soundEnabled) playNewOrderSound();
           setTimeout(() => setNewOrderAlert(false), 5000);
         }
         return nextOrders;
@@ -3254,7 +3262,7 @@ function TruckAdminPage({ onBackToOrder }) {
     loadTruckOrders();
     const id = setInterval(loadTruckOrders, 8000);
     return () => clearInterval(id);
-  }, [loggedIn]);
+  }, [loggedIn, soundEnabled]);
 
   async function updateTruckStatus(orderId, status) {
     if (status === 'Cancelled' && !window.confirm(`Cancel truck order #${orderId}?`)) return;
@@ -3576,12 +3584,17 @@ function TruckAdminPage({ onBackToOrder }) {
           <span className="refreshStatus"><span></span> Auto-refreshing</span>
           <button
             className={soundEnabled ? 'staffSoundButton on' : 'staffSoundButton'}
-            onClick={handleEnableSound}
+            onClick={handleTestSound}
             type="button"
-            title="Tap once on this device so new truck orders can make a sound"
+            title="Tap to test or allow sound on this device"
           >
-            <Volume2 size={18} /> {soundEnabled ? 'Sound On' : 'Enable Sound'}
+            <Volume2 size={18} /> {soundEnabled ? 'Sound On / Test' : 'Turn Sound On'}
           </button>
+          {soundEnabled && (
+            <button className="staffSoundButton" onClick={handleTurnSoundOff} type="button" title="Turn off new-order sound on this device">
+              Sound Off
+            </button>
+          )}
           <button
             className={truckOrderingOpen ? 'staffToggleButton truckOrderingToggle open' : 'staffToggleButton truckOrderingToggle closed'}
             onClick={() => updateTruckOrderingOpen(!truckOrderingOpen)}
@@ -3946,7 +3959,7 @@ function TruckOperationsGuide() {
   const links = [
     {
       title: 'Turn Truck Ordering',
-      body: 'Customer-facing pickup-only ordering for golfers at the turn.',
+      body: 'Customer-Side ordering for golfers at the turn.',
       href: `${PUBLIC_BASE_URL}/truck`,
       Icon: Truck,
       type: 'member',
@@ -3985,17 +3998,17 @@ function TruckOperationsGuide() {
         <div className="opsSectionHead">
           <div>
             <p className="sectionKicker"><Flag size={15} /> Start here</p>
-            <h2>Truck Shift Flow</h2>
+            <h2>Truck Shift Work Flow</h2>
           </div>
           <p>A quick path for staff working the truck today.</p>
         </div>
         <div className="truckFlow">
           {[
-            ['1', 'Open dashboard', 'Open the Truck Staff Dashboard on the iPad.', Home],
-            ['2', 'Check ordering', 'Confirm Truck Ordering Is Open or Closed.', Eye],
-            ['3', 'Review availability', 'Mark sold-out items before orders start.', ClipboardList],
-            ['4', 'Watch orders', 'Move orders through Preparing and Ready for Pickup.', Truck],
-            ['5', 'Close out', 'Complete orders, mark POS posted, and export the report.', Download]
+            ['1', 'Shift Start: Open Dashboard', 'Open the Truck Staff Dashboard on the iPad.', Home],
+            ['2', 'Check Truck Open Status', 'Confirm Truck Ordering Is Open or Closed.', Eye],
+            ['3', 'Review Inventory', 'Mark sold-out items before orders start.', ClipboardList],
+            ['4', 'Wait for Orders', 'Move orders through Preparing and Ready for Pickup.', Truck],
+            ['5', 'End Shift Closeout', 'Complete orders, mark POS posted, and export the report.', Download]
           ].map(([number, title, body, Icon]) => (
             <div className="truckFlowStep" key={number}>
               <strong>{number}</strong>
@@ -4027,7 +4040,7 @@ function TruckOperationsGuide() {
               </div>
               {showQr
                 ? <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
-                : <div className="opsNoQr"><Lock size={28} /><strong>Staff bookmark</strong><span>No QR needed for this dashboard.</span></div>}
+                : null}
               <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
             </article>
           ))}

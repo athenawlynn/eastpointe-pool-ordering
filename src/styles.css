@@ -266,8 +266,6 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .opsPasswordHint { display: inline-flex; align-items: center; gap: 6px; width: fit-content; margin-top: 10px !important; padding: 7px 9px; border-radius: 999px; background: #173323; color: white !important; font-size: 12px; font-weight: 900 !important; }
 .opsPasswordHint svg { color: #E6D58E; }
 .opsPasswordHint strong { color: white; }
-.opsNoQr { min-height: 150px; display: grid; place-items: center; align-content: center; gap: 6px; border: 1px dashed #75B884; border-radius: 10px; background: #F4FBF6; color: #1F5A35; text-align: center; padding: 16px; }
-.opsNoQr span { color: var(--muted); font-size: 12px; font-weight: 800; }
 .opsLinkCard a, .opsBackendLinks a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; border-radius: 8px; color: white; background: var(--deep-green); text-decoration: none; font-weight: 900; font-size: 13px; }
 .opsTwoCol { display: grid; grid-template-columns: 1.1fr .9fr; gap: 14px; padding: 0; background: transparent; border: 0; box-shadow: none; }
 .opsPanel { background: white; border: 1px solid var(--line-soft); border-radius: 14px; padding: 20px; box-shadow: 0 2px 18px rgba(28,42,30,.05); }
@@ -593,7 +591,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .opsLinkGrid, .opsTwoCol, .opsInfoGrid { grid-template-columns: 1fr; }
   .truckFlow, .truckOpsLinkGrid, .statusGuideRow { grid-template-columns: 1fr; }
   .opsLinkCard { grid-template-columns: 42px 1fr; align-items: start; }
-  .opsLinkCard .opsQr, .opsLinkCard a, .opsNoQr { grid-column: 1 / -1; }
+  .opsLinkCard .opsQr, .opsLinkCard a { grid-column: 1 / -1; }
   .opsQr { max-width: 132px; }
   .opsFooterCard { align-items: flex-start; }
   .adminApp { padding: 0; max-width: none; width: 100%; }

@@ -4350,40 +4350,81 @@ function TruckOperationsGuide() {
 
       <details className="opsSection managerReference">
         <summary>
-          <span>
-            <span className="sectionKicker"><PencilLine size={15} /> Manager reference</span>
+          <div className="managerSummaryCopy">
+            <span className="sectionKicker"><ShieldCheck size={15} /> Manager reference</span>
             <strong>Truck backend: Menu, Members & Closeout</strong>
-          </span>
+            <p>Step-by-step setup guide for the person responsible for menu changes, member updates, and end-of-shift closeout.</p>
+          </div>
           <em>Open only for manager/admin setup</em>
         </summary>
         <div className="managerReferenceBody">
-          <div className="opsInfoGrid">
-            <article>
-              <h3>TruckMenuItems</h3>
-              <p>Use this tab for the truck menu only.</p>
+          <div className="managerIntroPanel">
+            <div>
+              <p className="sectionKicker"><Lock size={15} /> Manager/admin only</p>
+              <h2>Daily staff should use the dashboard. Managers use the sheet.</h2>
+              <p>During service, do not edit menu rows, pricing, member numbers, or sort order unless a manager is making an intentional backend change.</p>
+            </div>
+            <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
+              Open Menu & Member Update Sheet <ExternalLink size={16} />
+            </a>
+          </div>
+
+          <div className="managerGuideGrid">
+            <article className="managerGuideCard">
+              <span className="managerGuideIcon"><TableProperties size={22} /></span>
+              <h3>1. Update truck menu items</h3>
+              <p>Use the <strong>TruckMenuItems</strong> tab for the truck menu only. One row equals one item members can order.</p>
               <ul>
+                <li><strong>ItemName</strong>: what the customer sees.</li>
+                <li><strong>Description</strong>: short menu description.</li>
+                <li><strong>Price</strong>: number only, no dollar sign.</li>
                 <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
                 <li><strong>Modifiers</strong>: controls item customization buttons.</li>
                 <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
                 <li><strong>SortOrder</strong>: controls customer menu order.</li>
               </ul>
             </article>
-            <article>
-              <h3>Members</h3>
-              <p>Use CustomerType to control truck fee rules for member-account orders.</p>
+            <article className="managerGuideCard">
+              <span className="managerGuideIcon"><Users size={22} /></span>
+              <h3>2. Add or update member numbers</h3>
+              <p>Use the <strong>Members</strong> tab. Member numbers must stay as text when they start with zero.</p>
               <ul>
+                <li><strong>MemberNumber</strong>: 4-6 digits, keep leading zeroes.</li>
+                <li><strong>Status</strong>: Active allows ordering.</li>
+                <li><strong>CustomerType</strong>: controls truck fee visibility.</li>
                 <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
                 <li><strong>RSM</strong>: visible 22% service fee.</li>
                 <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
               </ul>
             </article>
-            <article>
-              <h3>TruckOrders</h3>
-              <p>This is the permanent truck order log.</p>
+            <article className="managerGuideCard">
+              <span className="managerGuideIcon"><Download size={22} /></span>
+              <h3>3. Close out and reconcile</h3>
+              <p>Use the <strong>TruckOrders</strong> tab and dashboard exports as the permanent truck order record.</p>
               <ul>
                 <li>Review completed orders.</li>
                 <li>Check service fees, card fees, and tips.</li>
                 <li>Use the dashboard export for daily POS closeout.</li>
+                <li>Confirm POS posted items before ending the shift.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div className="managerDoDontGrid">
+            <article>
+              <h3>Okay during service</h3>
+              <ul>
+                <li>Mark a truck item sold out from the dashboard.</li>
+                <li>Open or close truck ordering from the dashboard.</li>
+                <li>Export a daily report for POS closeout.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Manager changes only</h3>
+              <ul>
+                <li>Add new menu rows or change prices.</li>
+                <li>Add/remove member numbers.</li>
+                <li>Change CustomerType, modifiers, or sort order.</li>
               </ul>
             </article>
           </div>

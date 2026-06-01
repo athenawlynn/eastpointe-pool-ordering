@@ -3983,7 +3983,7 @@ function TruckOperationsGuide() {
           <img src="/eastpointe-logo-tight.png" alt="Eastpointe Country Club" />
           <div>
             <p className="eyebrow">Eastpointe Country Club</p>
-            <h1>The Turn Truck Guide</h1>
+            <h1>The Turn Truck Staff Dashboard Tutorial</h1>
             <p>A truck-specific quick guide for QR ordering, iPad staff use, menu availability, and daily closeout.</p>
           </div>
         </div>

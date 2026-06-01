@@ -859,7 +859,7 @@ function Header({ mode, setMode }) {
   );
 }
 
-function TruckHeader({ mode, setMode }) {
+function TruckHeader() {
   return (
     <header className="header truckHeader">
       <div className="brandLockup">
@@ -869,9 +869,6 @@ function TruckHeader({ mode, setMode }) {
           <h1>The Turn Truck</h1>
         </div>
       </div>
-      <button className="ghostButton" onClick={() => setMode(mode === 'truck-admin' ? 'truck' : 'truck-admin')}>
-        {mode === 'truck-admin' ? 'Order Page' : 'Truck Staff'}
-      </button>
     </header>
   );
 }
@@ -4492,18 +4489,19 @@ export default function App() {
     : mode === 'operations-guide' || mode === 'truck-operations-guide'
       ? 'app opsApp'
       : 'app';
+  const showCustomerFooter = mode !== 'admin' && mode !== 'truck-admin' && mode !== 'operations-guide' && mode !== 'truck-operations-guide';
   return (
     <main className={mainClass}>
       <AppErrorBoundary key={mode}>
         {mode === 'operations-guide' && <OperationsGuide />}
         {mode === 'truck-operations-guide' && <TruckOperationsGuide />}
         {mode === 'order' && <Header mode={mode} setMode={setMode} />}
-        {isTruckMode && mode !== 'truck-admin' && <TruckHeader mode={mode} setMode={setMode} />}
+        {isTruckMode && mode !== 'truck-admin' && <TruckHeader />}
         {mode === 'admin' && <AdminPage onBackToOrder={() => setMode('order')} />}
         {mode === 'truck-admin' && <TruckAdminPage onBackToOrder={() => setMode('truck')} />}
         {mode === 'truck' && <TruckOrderPage />}
         {mode === 'order' && <OrderPage />}
-        {mode !== 'admin' && mode !== 'truck-admin' && mode !== 'operations-guide' && mode !== 'truck-operations-guide' && <footer>Members charge account. Guests pay staff at pickup. No online payment processing.</footer>}
+        {showCustomerFooter && <footer>{mode === 'truck' ? 'Members charge account. Guests pay staff at pickup.' : 'Members charge account. Guests pay staff at pickup. No online payment processing.'}</footer>}
       </AppErrorBoundary>
     </main>
   );

@@ -316,6 +316,13 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .cheatSheetGrid article:nth-child(3) { background: #F2F8FF; border-color: #B5D4F4; }
 .opsInfoGrid ul { margin: 12px 0 0; padding-left: 18px; }
 .opsInfoGrid li { margin-top: 7px; }
+.managerReference { padding: 0; overflow: hidden; }
+.managerReference summary { cursor: pointer; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 20px; background: #F7F1DF; border-radius: 14px; }
+.managerReference summary::-webkit-details-marker { display: none; }
+.managerReference summary span { display: grid; gap: 5px; }
+.managerReference summary strong { color: var(--deep-green); font-size: clamp(20px, 2.5vw, 28px); line-height: 1.03; }
+.managerReference summary em { color: #8A5A0A; font-style: normal; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .04em; }
+.managerReferenceBody { display: grid; gap: 16px; padding: 18px 20px 20px; border-top: 1px solid #E3D7B7; }
 .statusGuideTable { display: grid; border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; background: white; }
 .statusGuideRow { display: grid; grid-template-columns: .8fr 1fr 1fr; gap: 12px; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line-soft); }
 .statusGuideRow:last-child { border-bottom: 0; }

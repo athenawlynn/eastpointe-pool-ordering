@@ -4052,7 +4052,7 @@ function TruckOperationsGuide() {
           <p className="sectionKicker"><BookOpen size={15} /> During service</p>
           <h2>Truck Staff Workflow</h2>
           <div className="opsSteps">
-            <div><strong>1</strong><span>Open the Truck Staff Dashboard on the iPad and tap once to enable the new-order sound.</span></div>
+            <div><strong>1</strong><span>Open the Truck Staff Dashboard on the iPad. Sound is on by default; tap Sound On / Test if you want to confirm audio.</span></div>
             <div><strong>2</strong><span>Use Truck Ordering Is Open or Closed to control whether customers can place orders.</span></div>
             <div><strong>3</strong><span>Move orders from New Order Waiting to Preparing, then Ready for Pickup, then Completed.</span></div>
             <div><strong>4</strong><span>Use Truck Menu Availability to mark sold-out items without editing the Google Sheet during service.</span></div>
@@ -4185,7 +4185,7 @@ function TruckOperationsGuide() {
             <h3>Before Service</h3>
             <ul>
               <li>Open the Truck Staff Dashboard.</li>
-              <li>Tap once to enable new-order sound.</li>
+              <li>Tap Sound On / Test if you want to confirm iPad audio.</li>
               <li>Confirm ordering is open or intentionally closed.</li>
               <li>Review sold-out items and prices.</li>
               <li>Place one test order only if needed.</li>
@@ -4217,45 +4217,6 @@ function TruckOperationsGuide() {
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
-            <p className="sectionKicker"><PencilLine size={15} /> Truck backend</p>
-            <h2>Truck Menu, Members & Closeout</h2>
-          </div>
-        </div>
-        <div className="opsInfoGrid">
-          <article>
-            <h3>TruckMenuItems</h3>
-            <p>Use this tab for the truck menu only.</p>
-            <ul>
-              <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
-              <li><strong>Modifiers</strong>: controls item customization buttons.</li>
-              <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
-              <li><strong>SortOrder</strong>: controls customer menu order.</li>
-            </ul>
-          </article>
-          <article>
-            <h3>Members</h3>
-            <p>Use CustomerType to control truck fee rules for member-account orders.</p>
-            <ul>
-              <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
-              <li><strong>RSM</strong>: visible 22% service fee.</li>
-              <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
-            </ul>
-          </article>
-          <article>
-            <h3>TruckOrders</h3>
-            <p>This is the permanent truck order log.</p>
-            <ul>
-              <li>Review completed orders.</li>
-              <li>Check service fees, card fees, and tips.</li>
-              <li>Use the dashboard export for daily POS closeout.</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section className="opsSection">
-        <div className="opsSectionHead">
-          <div>
             <p className="sectionKicker"><ClipboardList size={15} /> Order status</p>
             <h2>What Each Status Means</h2>
           </div>
@@ -4277,6 +4238,65 @@ function TruckOperationsGuide() {
           ))}
         </div>
       </section>
+
+      <details className="opsSection managerReference">
+        <summary>
+          <span>
+            <span className="sectionKicker"><PencilLine size={15} /> Manager reference</span>
+            <strong>Truck backend: Menu, Members & Closeout</strong>
+          </span>
+          <em>Open only for manager/admin setup</em>
+        </summary>
+        <div className="managerReferenceBody">
+          <div className="opsInfoGrid">
+            <article>
+              <h3>TruckMenuItems</h3>
+              <p>Use this tab for the truck menu only.</p>
+              <ul>
+                <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
+                <li><strong>Modifiers</strong>: controls item customization buttons.</li>
+                <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
+                <li><strong>SortOrder</strong>: controls customer menu order.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Members</h3>
+              <p>Use CustomerType to control truck fee rules for member-account orders.</p>
+              <ul>
+                <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
+                <li><strong>RSM</strong>: visible 22% service fee.</li>
+                <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>TruckOrders</h3>
+              <p>This is the permanent truck order log.</p>
+              <ul>
+                <li>Review completed orders.</li>
+                <li>Check service fees, card fees, and tips.</li>
+                <li>Use the dashboard export for daily POS closeout.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div className="opsPanel ownerToolsPanel">
+            <p className="sectionKicker"><ExternalLink size={15} /> Owner tools</p>
+            <h2>Truck Admin Links</h2>
+            <div className="opsBackendLinks">
+              <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
+                <strong>Menu & Member Update Sheet</strong>
+                <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
+                <ExternalLink size={16} />
+              </a>
+              <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
+                <strong>Netlify Deploys</strong>
+                <span>Live site publishing status</span>
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </details>
 
       <section className="opsSection">
         <div className="opsSectionHead">
@@ -4362,40 +4382,19 @@ function TruckOperationsGuide() {
           <p className="sectionKicker"><AlertTriangle size={15} /> Avoid these</p>
           <h2>Common Mistakes</h2>
           <div className="opsSteps mistakeList">
-            <div><strong>1</strong><span>Do not create a second order if the first one is delayed.</span></div>
-            <div><strong>2</strong><span>Do not mark Completed until the order has actually been picked up.</span></div>
-            <div><strong>3</strong><span>Do not leave sold-out items active in the system.</span></div>
-            <div><strong>4</strong><span>Do not promise availability without checking the dashboard.</span></div>
+            <div><strong>1</strong><span>Do not mark Completed until the order has actually been picked up.</span></div>
+            <div><strong>2</strong><span>Do not leave sold-out items active in the system.</span></div>
           </div>
         </div>
 
         <div className="opsPanel">
-          <p className="sectionKicker"><ShieldCheck size={15} /> Training sign-off</p>
+          <p className="sectionKicker"><ShieldCheck size={15} /> Staff Training sign-off</p>
           <h2>Manager Checklist</h2>
           <div className="opsSteps">
             <div><strong>1</strong><span>Staff member can open the correct truck links.</span></div>
             <div><strong>2</strong><span>Staff member can process a sample order.</span></div>
             <div><strong>3</strong><span>Staff member can mark an item sold out.</span></div>
             <div><strong>4</strong><span>Staff member can complete an order and mark POS posted.</span></div>
-          </div>
-        </div>
-      </section>
-
-      <section className="opsSection">
-        <div className="opsPanel ownerToolsPanel">
-          <p className="sectionKicker"><ExternalLink size={15} /> Owner tools</p>
-          <h2>Truck Admin Links</h2>
-          <div className="opsBackendLinks">
-            <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
-              <strong>Menu & Member Update Sheet</strong>
-              <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
-              <ExternalLink size={16} />
-            </a>
-            <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
-              <strong>Netlify Deploys</strong>
-              <span>Live site publishing status</span>
-              <ExternalLink size={16} />
-            </a>
           </div>
         </div>
       </section>

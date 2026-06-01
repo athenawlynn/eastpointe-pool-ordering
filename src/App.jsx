@@ -4239,65 +4239,6 @@ function TruckOperationsGuide() {
         </div>
       </section>
 
-      <details className="opsSection managerReference">
-        <summary>
-          <span>
-            <span className="sectionKicker"><PencilLine size={15} /> Manager reference</span>
-            <strong>Truck backend: Menu, Members & Closeout</strong>
-          </span>
-          <em>Open only for manager/admin setup</em>
-        </summary>
-        <div className="managerReferenceBody">
-          <div className="opsInfoGrid">
-            <article>
-              <h3>TruckMenuItems</h3>
-              <p>Use this tab for the truck menu only.</p>
-              <ul>
-                <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
-                <li><strong>Modifiers</strong>: controls item customization buttons.</li>
-                <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
-                <li><strong>SortOrder</strong>: controls customer menu order.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>Members</h3>
-              <p>Use CustomerType to control truck fee rules for member-account orders.</p>
-              <ul>
-                <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
-                <li><strong>RSM</strong>: visible 22% service fee.</li>
-                <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
-              </ul>
-            </article>
-            <article>
-              <h3>TruckOrders</h3>
-              <p>This is the permanent truck order log.</p>
-              <ul>
-                <li>Review completed orders.</li>
-                <li>Check service fees, card fees, and tips.</li>
-                <li>Use the dashboard export for daily POS closeout.</li>
-              </ul>
-            </article>
-          </div>
-
-          <div className="opsPanel ownerToolsPanel">
-            <p className="sectionKicker"><ExternalLink size={15} /> Owner tools</p>
-            <h2>Truck Admin Links</h2>
-            <div className="opsBackendLinks">
-              <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
-                <strong>Menu & Member Update Sheet</strong>
-                <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
-                <ExternalLink size={16} />
-              </a>
-              <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
-                <strong>Netlify Deploys</strong>
-                <span>Live site publishing status</span>
-                <ExternalLink size={16} />
-              </a>
-            </div>
-          </div>
-        </div>
-      </details>
-
       <section className="opsSection">
         <div className="opsSectionHead">
           <div>
@@ -4406,6 +4347,65 @@ function TruckOperationsGuide() {
           <p>Print the Turn Truck QR code, bookmark the Truck Staff Dashboard on the iPad, and use the dashboard during service. Use the Google Sheet only for manager-level menu and member updates.</p>
         </div>
       </section>
+
+      <details className="opsSection managerReference">
+        <summary>
+          <span>
+            <span className="sectionKicker"><PencilLine size={15} /> Manager reference</span>
+            <strong>Truck backend: Menu, Members & Closeout</strong>
+          </span>
+          <em>Open only for manager/admin setup</em>
+        </summary>
+        <div className="managerReferenceBody">
+          <div className="opsInfoGrid">
+            <article>
+              <h3>TruckMenuItems</h3>
+              <p>Use this tab for the truck menu only.</p>
+              <ul>
+                <li><strong>Available</strong>: TRUE shows the item; FALSE hides it.</li>
+                <li><strong>Modifiers</strong>: controls item customization buttons.</li>
+                <li><strong>Alcoholic</strong>: TRUE triggers the age/ID warning.</li>
+                <li><strong>SortOrder</strong>: controls customer menu order.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>Members</h3>
+              <p>Use CustomerType to control truck fee rules for member-account orders.</p>
+              <ul>
+                <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
+                <li><strong>RSM</strong>: visible 22% service fee.</li>
+                <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
+              </ul>
+            </article>
+            <article>
+              <h3>TruckOrders</h3>
+              <p>This is the permanent truck order log.</p>
+              <ul>
+                <li>Review completed orders.</li>
+                <li>Check service fees, card fees, and tips.</li>
+                <li>Use the dashboard export for daily POS closeout.</li>
+              </ul>
+            </article>
+          </div>
+
+          <div className="opsPanel ownerToolsPanel">
+            <p className="sectionKicker"><ExternalLink size={15} /> Owner tools</p>
+            <h2>Truck Admin Links</h2>
+            <div className="opsBackendLinks">
+              <a href={GOOGLE_SHEET_URL} target="_blank" rel="noreferrer">
+                <strong>Menu & Member Update Sheet</strong>
+                <span>TruckMenuItems, Members, Settings, and TruckOrders</span>
+                <ExternalLink size={16} />
+              </a>
+              <a href={NETLIFY_DEPLOYS_URL} target="_blank" rel="noreferrer">
+                <strong>Netlify Deploys</strong>
+                <span>Live site publishing status</span>
+                <ExternalLink size={16} />
+              </a>
+            </div>
+          </div>
+        </div>
+      </details>
     </div>
   );
 }

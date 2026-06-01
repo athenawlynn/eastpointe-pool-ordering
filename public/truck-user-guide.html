@@ -1,0 +1,192 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Jost:wght@300;400;500&display=swap');
+*{box-sizing:border-box}
+.gw{font-family:'Jost',sans-serif;color:var(--color-text-primary);max-width:600px;margin:0 auto;padding:0 0 2rem}
+.hdr{background:#e8f2e8;border:1px solid #b8d9b8;border-radius:var(--border-radius-lg);padding:1.75rem 2rem 1.5rem;margin-bottom:1.5rem;text-align:center}
+.hdr .ctag{font-size:11px;font-weight:500;letter-spacing:2.5px;color:#2a6e2a;text-transform:uppercase;margin-bottom:4px}
+.hdr h1{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#1e4d1e;margin:0 0 4px;line-height:1.2}
+.hdr .sub{font-size:13px;color:#5a8c5a;font-weight:300;margin:0}
+.logo-ring{width:70px;height:70px;border-radius:50%;background:#2a6e2a;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;flex-shrink:0}
+.logo-ring svg{width:40px;height:40px;fill:none;stroke:#c9aa71;stroke-width:1.5}
+.slabel{font-size:11px;letter-spacing:2px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;margin-bottom:1rem}
+.sc{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:12px;display:flex;align-items:flex-start;gap:16px;position:relative}
+.sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px}
+.sc.gold::before{background:#c9aa71}
+.sc.grn::before{background:#4a9e4a}
+.sc.teal::before{background:#2a6e2a}
+.snum{width:36px;height:36px;min-width:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;flex-shrink:0}
+.sc.gold .snum{background:#fdf6ea;color:#a07d3a;border:1px solid #e8d4a0}
+.sc.grn .snum{background:#e8f2e8;color:#2a6e2a;border:1px solid #a0d0a0}
+.sc.teal .snum{background:#e8f2e8;color:#2a6e2a;border:1px solid #a0d0a0}
+.scon{flex:1;min-width:0}
+.stitle{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--color-text-primary);margin:0 0 4px;line-height:1.2}
+.sdesc{font-size:13.5px;color:var(--color-text-secondary);line-height:1.6;margin:0 0 10px;font-weight:300}
+.svis{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px}
+.tip{border:1px solid #e8d4a0;background:#fdf9f1;border-radius:var(--border-radius-md);padding:12px 14px;margin-top:10px;font-size:13px;color:#7a5c1e;display:flex;gap:10px;align-items:flex-start;line-height:1.6}
+.mock{background:#fff;border:1px solid #dde4ee;border-radius:10px;overflow:hidden;margin-top:10px}
+.mbar{background:#4a9e4a;height:30px;display:flex;align-items:center;padding:0 12px;gap:6px}
+.mbody{padding:12px}
+.field{border:1px solid #ccc;border-radius:6px;padding:8px 12px;font-size:13px;color:#999;margin-bottom:8px;background:#fff}
+.pcard{border:1.5px solid #4a9e4a;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.pcard .pt{font-size:13px;font-weight:600;color:#2a6e2a;margin-bottom:2px}
+.pcard .pd{font-size:12px;color:#666;line-height:1.4}
+.pcard2{border:1px solid #ddd;border-radius:8px;padding:10px 12px}
+.pcard2 .pt{font-size:13px;font-weight:600;color:#4a9e4a;margin-bottom:2px}
+.pcard2 .pd{font-size:12px;color:#666;line-height:1.4}
+.catrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.cat{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #ccc;color:#555;background:#fff}
+.cat.a{background:#2c3e2d;color:#fff;border-color:#2c3e2d}
+.mitem{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid #f0f0f0}
+.mitem:last-child{border-bottom:none}
+.mitn{font-size:13px;font-weight:500;color:#1e4d1e}
+.mitp{font-size:13px;color:#555;margin-right:8px}
+.cbtn{background:#2c3e2d;color:#fff;border-radius:5px;padding:5px 10px;font-size:11px;font-weight:500}
+.qrow{display:flex;align-items:center;gap:5px}
+.qb{width:22px;height:22px;border-radius:4px;background:#4a9e4a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px}
+.trow{display:flex;gap:6px;margin:8px 0}
+.tp{font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #ccc;color:#555;background:#fff}
+.tp.s{background:#2c3e2d;color:#fff;border-color:#2c3e2d}
+.orow{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:0.5px solid #eee}
+.otot{display:flex;justify-content:space-between;font-size:14px;font-weight:600;padding-top:8px;color:#1e4d1e}
+.div{display:flex;align-items:center;gap:10px;margin:1.5rem 0}
+.dl{flex:1;height:0.5px;background:var(--color-border-tertiary)}
+.dd{width:6px;height:6px;background:#c9aa71;transform:rotate(45deg)}
+.fn{text-align:center;font-size:12px;color:var(--color-text-secondary);margin-top:1.5rem;font-weight:300}
+.status-block{background:#e8f2e8;border:1px solid #b8d9b8;border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+.status-block .stitle{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:#1e4d1e;margin:0 0 6px}
+.status-block .sdesc{font-size:13.5px;color:#5a8c5a;line-height:1.6;margin:0 0 12px;font-weight:300}
+</style>
+
+<div class="gw">
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Step by step guide to ordering from The Turn Truck at Eastpointe Country Club</h2>
+
+<div class="hdr">
+  <div class="logo-ring">
+    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="20" cy="20" r="17" stroke="#c9aa71" stroke-width="1.5" fill="none"/>
+      <line x1="10" y1="28" x2="30" y2="12" stroke="#4a9e4a" stroke-width="2" stroke-linecap="round"/>
+      <line x1="30" y1="28" x2="10" y2="12" stroke="#4a9e4a" stroke-width="2" stroke-linecap="round"/>
+      <text x="20" y="24" text-anchor="middle" font-size="9" fill="#2a6e2a" font-family="serif" font-weight="bold">ECC</text>
+    </svg>
+  </div>
+  <p class="ctag">Eastpointe Country Club</p>
+  <h1>How to Order from The Turn Truck</h1>
+  <p class="sub">A friendly guide for members · 5 easy steps</p>
+</div>
+
+<p class="slabel">Step by step</p>
+
+<div class="sc gold">
+  <div class="snum">1</div>
+  <div class="scon">
+    <p class="stitle">Choose how you're paying</p>
+    <p class="sdesc">At the top of the page, choose Member Account to charge to your account, or Guest – Pay at Pickup if you'll pay by card when you collect your order.</p>
+    <div class="mock">
+      <div class="mbar"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Payment</div></div>
+      <div class="mbody">
+        <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">How will this be paid?</div>
+        <div class="pcard"><div class="pt">Member Account</div><div class="pd">Charge this order to a verified member account.</div></div>
+        <div class="pcard2"><div class="pt">Guest – Pay at Pickup</div><div class="pd">A credit card must be provided at pickup before the order is released.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sc grn">
+  <div class="snum">2</div>
+  <div class="scon">
+    <p class="stitle">Enter your account information</p>
+    <p class="sdesc">Fill in your first and last name, your 4–6 digit member number, and your mobile number. Your mobile is required so staff can reach you with any questions.</p>
+    <div class="mock">
+      <div class="mbar"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Account Information</div></div>
+      <div class="mbody">
+        <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Name</div>
+        <div class="field">First and last name</div>
+        <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Member Number</div>
+        <div class="field">4–6 digits</div>
+        <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Mobile Number</div>
+        <div class="field" style="margin-bottom:0;">Example: 561-555-0100</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sc gold">
+  <div class="snum">3</div>
+  <div class="scon">
+    <p class="stitle">Browse the menu and add items</p>
+    <p class="sdesc">Use the category dropdown or swipe the row to filter. Items with simple choices use + / − directly. Items needing customization (bread, toppings) show a Customize button.</p>
+    <div class="mock">
+      <div class="mbar"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Food Truck Menu</div><div style="margin-left:auto;background:#e8d4a0;color:#7a5c1e;font-size:10px;padding:2px 7px;border-radius:10px;">Pickup only</div></div>
+      <div class="mbody">
+        <div class="catrow"><span class="cat a">All Items</span><span class="cat">Quick Bites</span><span class="cat">Sandwiches</span><span class="cat">Salads</span><span class="cat">Kids Menu</span></div>
+        <div class="mitem"><div><div class="mitn">Hot Dog</div><div style="font-size:11px;color:#888;">All beef, pickle relish, ketchup, mustard</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="mitp">$10</span><div class="cbtn">Customize</div></div></div>
+        <div class="mitem"><div><div class="mitn">Fresh Fruit Cup</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="mitp">$4</span><div class="qrow"><div class="qb">−</div><span style="font-size:13px;font-weight:600;color:#1e4d1e;min-width:14px;text-align:center;">0</span><div class="qb">+</div></div></div></div>
+        <div class="mitem"><div><div class="mitn">Water</div></div><div style="display:flex;align-items:center;gap:6px;"><span class="mitp">$2</span><div class="qrow"><div class="qb">−</div><span style="font-size:13px;font-weight:600;color:#1e4d1e;min-width:14px;text-align:center;">0</span><div class="qb">+</div></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sc grn">
+  <div class="snum">4</div>
+  <div class="scon">
+    <p class="stitle">Review your order and add a tip</p>
+    <p class="sdesc">Scroll to the bottom to see Your Truck Order. Choose a tip — 18%, 20%, 22%, custom, or no tip. Add any allergy or special instructions in the notes field.</p>
+    <div class="mock">
+      <div class="mbar"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Review &amp; Submit</div></div>
+      <div class="mbody">
+        <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Your Truck Order</div>
+        <div class="orow"><span>Hot Dog × 1</span><span>$10.00</span></div>
+        <div class="orow"><span>Fresh Fruit Cup × 1</span><span>$4.00</span></div>
+        <div class="otot"><span>Subtotal</span><span>$14.00</span></div>
+        <div style="font-size:11px;color:#888;letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px;">Add a Tip</div>
+        <div class="trow"><span class="tp">18%</span><span class="tp s">20%</span><span class="tp">22%</span><span class="tp">Custom</span><span class="tp">No Tip</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sc gold">
+  <div class="snum">5</div>
+  <div class="scon">
+    <p class="stitle">Submit and head to the truck</p>
+    <p class="sdesc">Tap Submit Truck Order. Your order is charged directly to your member account — no cash or card needed. Head to the truck for pickup when it's ready.</p>
+    <div class="mock">
+      <div class="mbar"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Submit</div></div>
+      <div class="mbody">
+        <div style="font-size:12px;color:#666;line-height:1.5;margin-bottom:10px;">I authorize this food truck order to be charged or reconciled to the account listed above.</div>
+        <div style="background:#2c3e2d;color:#fff;border-radius:6px;padding:10px;text-align:center;font-size:13px;font-weight:500;">Submit Truck Order</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="div"><div class="dl"></div><div class="dd"></div><div class="dl"></div></div>
+
+<div class="status-block">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+    <div style="width:32px;height:32px;border-radius:50%;background:#2a6e2a;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-search" style="font-size:16px;color:#e8f2e8;" aria-hidden="true"></i></div>
+    <p class="stitle" style="margin:0;">Already ordered? Check your status</p>
+  </div>
+  <p class="sdesc">Scroll to the bottom of the page and tap <strong style="color:#1e4d1e;">Check Truck Order</strong>. Enter your member number — and your order number too if you have it (it looks like 5001). Tap Check Status to see where your order is.</p>
+  <div class="mock">
+    <div class="mbar" style="background:#2c3e2d;"><div style="width:6px;height:6px;border-radius:50%;background:#c9aa71;"></div><div style="font-size:11px;color:#cce8cc;margin-left:4px;">Already Ordered? Check Truck Order</div></div>
+    <div class="mbody">
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Order Number</div>
+      <div class="field">Optional — example: 5001</div>
+      <div style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Member Number</div>
+      <div class="field" style="margin-bottom:10px;">4–6 digits</div>
+      <div style="background:#2c3e2d;color:#fff;border-radius:6px;padding:9px;text-align:center;font-size:13px;font-weight:500;">Check Status</div>
+    </div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.5rem;">
+  <div class="svis"><div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:6px;font-weight:500;">This is pickup only</div><div style="font-size:13px;color:var(--color-text-primary);line-height:1.6;">Orders must be collected at The Turn Truck — no delivery to your cart.</div></div>
+  <div class="svis"><div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:6px;font-weight:500;">Questions?</div><div style="font-size:13px;color:var(--color-text-primary);line-height:1.6;">Ask at the Pro Shop or flag down a staff member on the course.</div></div>
+</div>
+
+<p class="fn"><strong>Eastpointe Country Club</strong> · Est. 1974 · The Turn Truck · Member Ordering</p>
+</div>

@@ -3966,7 +3966,8 @@ function TruckOperationsGuide() {
       href: `${PUBLIC_BASE_URL}/truck`,
       Icon: Truck,
       type: 'member',
-      showQr: true
+      showQr: true,
+      guideHref: `${PUBLIC_BASE_URL}/truck-user-guide.html`
     },
     {
       title: 'Truck Staff Dashboard',
@@ -4032,7 +4033,7 @@ function TruckOperationsGuide() {
           <p>Use these for the truck QR code, staff iPad bookmark, and manager training.</p>
         </div>
         <div className="opsLinkGrid truckOpsLinkGrid">
-          {links.map(({ title, body, href, Icon, type, showQr, password }) => (
+          {links.map(({ title, body, href, guideHref, Icon, type, showQr, password }) => (
             <article className={`opsLinkCard ${type === 'staff' ? 'staffArea' : ''}`} key={title}>
               <div className="opsLinkIcon"><Icon size={22} /></div>
               <div>
@@ -4044,7 +4045,10 @@ function TruckOperationsGuide() {
               {showQr
                 ? <img className="opsQr" src={qrUrl(href)} alt={`${title} QR code`} />
                 : null}
-              <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
+              <div className="opsLinkActions">
+                <a href={href} target="_blank" rel="noreferrer">Open link <ExternalLink size={14} /></a>
+                {guideHref && <a className="secondary" href={guideHref} target="_blank" rel="noreferrer">User guide on how to order <ExternalLink size={14} /></a>}
+              </div>
             </article>
           ))}
         </div>

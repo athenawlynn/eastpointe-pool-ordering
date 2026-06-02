@@ -239,13 +239,33 @@ function normalizeTimeSetting(value, fallback) {
   return match[1].padStart(2, '0') + ':' + match[2];
 }
 
+function defaultOrderingTime(prefix, kind) {
+  if (prefix === 'Truck') return kind === 'open' ? '09:00' : '16:00';
+  return kind === 'open' ? '08:30' : '16:30';
+}
+
+function timeRangeLabel(openTime, closeTime) {
+  function label(value) {
+    const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return '';
+    let hour = Number(match[1]);
+    const minute = match[2];
+    const suffix = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12 || 12;
+    return `${hour}:${minute} ${suffix}`;
+  }
+  const open = label(openTime);
+  const close = label(closeTime);
+  return open && close ? `${open} - ${close}` : '';
+}
+
 function scheduleOpenNow(settings, prefix) {
   const enabledKey = prefix ? prefix + 'OrderingScheduleEnabled' : 'OrderingScheduleEnabled';
   if (String(settings[enabledKey] || 'FALSE').toUpperCase() !== 'TRUE') return null;
   const openKey = prefix ? prefix + 'OrderingOpenTime' : 'OrderingOpenTime';
   const closeKey = prefix ? prefix + 'OrderingCloseTime' : 'OrderingCloseTime';
-  const open = normalizeTimeSetting(settings[openKey], '08:30');
-  const close = normalizeTimeSetting(settings[closeKey], '16:30');
+  const open = normalizeTimeSetting(settings[openKey], defaultOrderingTime(prefix, 'open'));
+  const close = normalizeTimeSetting(settings[closeKey], defaultOrderingTime(prefix, 'close'));
   const now = Utilities.formatDate(new Date(), 'America/New_York', 'HH:mm');
   return now >= open && now < close;
 }
@@ -825,7 +845,12 @@ function validateSelectedModifiers(menuItem, selectedModifiers) {
 function createTruckOrder(order) {
   if (!order) throw new Error('Missing order.');
   if (!isTruckOrderingOpen()) {
-    throw new Error('Food truck ordering is currently closed. Please order directly at the truck.');
+    const settings = getSettingsObject();
+    const hours = timeRangeLabel(
+      normalizeTimeSetting(settings.TruckOrderingOpenTime, defaultOrderingTime('Truck', 'open')),
+      normalizeTimeSetting(settings.TruckOrderingCloseTime, defaultOrderingTime('Truck', 'close'))
+    );
+    throw new Error(`Food truck ordering is currently closed. Online ordering hours are ${hours}.`);
   }
   const allowedPaymentTypes = ['Member Account', 'Guest Pay at Pickup'];
   const paymentType = allowedPaymentTypes.includes(order.paymentType) ? order.paymentType : 'Member Account';

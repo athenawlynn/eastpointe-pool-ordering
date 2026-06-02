@@ -551,6 +551,11 @@ function timeInputValue(settings, key, fallback) {
   return `${match[1].padStart(2, '0')}:${match[2]}`;
 }
 
+function defaultOrderingTime(prefix, kind) {
+  if (prefix === 'Truck') return kind === 'open' ? '09:00' : '16:00';
+  return kind === 'open' ? '08:30' : '16:30';
+}
+
 function timeRangeLabel(openTime, closeTime) {
   function label(value) {
     const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
@@ -569,8 +574,8 @@ function timeRangeLabel(openTime, closeTime) {
 function scheduleIsOpen(settings, prefix = '') {
   const enabled = settingEnabled(settings, `${prefix}OrderingScheduleEnabled`, false);
   if (!enabled) return null;
-  const open = timeInputValue(settings, `${prefix}OrderingOpenTime`, '08:30');
-  const close = timeInputValue(settings, `${prefix}OrderingCloseTime`, '16:30');
+  const open = timeInputValue(settings, `${prefix}OrderingOpenTime`, defaultOrderingTime(prefix, 'open'));
+  const close = timeInputValue(settings, `${prefix}OrderingCloseTime`, defaultOrderingTime(prefix, 'close'));
   const now = new Date().toLocaleTimeString('en-US', {
     timeZone: 'America/New_York',
     hour12: false,
@@ -1874,8 +1879,8 @@ function TruckOrderPage() {
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const truckOrderingHours = timeRangeLabel(
-    timeInputValue(settings, 'TruckOrderingOpenTime', '08:30'),
-    timeInputValue(settings, 'TruckOrderingCloseTime', '16:30')
+    timeInputValue(settings, 'TruckOrderingOpenTime', defaultOrderingTime('Truck', 'open')),
+    timeInputValue(settings, 'TruckOrderingCloseTime', defaultOrderingTime('Truck', 'close'))
   );
   const isGuestPayment = form.paymentType === 'Guest Pay at Pickup';
   const isApprovedNonMemberPayment = form.paymentType === 'Member Account' && memberCustomerType === 'RSM';
@@ -1946,7 +1951,7 @@ function TruckOrderPage() {
   }
 
   function validateTruckOrder() {
-    if (!truckOrderingOpen) return 'The Turn Truck ordering is currently closed.';
+    if (!truckOrderingOpen) return `The Turn Truck ordering is currently closed. Online ordering hours are ${truckOrderingHours}.`;
     if (!form.memberName.trim()) return isGuestPayment ? 'Please enter guest name.' : 'Please enter name.';
     if (!isGuestPayment && !/^\d{4,6}$/.test(form.memberNumber.trim())) return 'Member number must be 4–6 digits.';
     if (!form.phone.trim()) return 'Please enter mobile number.';
@@ -2240,7 +2245,7 @@ function TruckOrderPage() {
           <div>
             <p className="eyebrow">Ordering paused</p>
             <h2>The Turn Truck is currently closed</h2>
-            <p>Online ordering is not available right now. Please check back during truck hours or order directly at the truck.</p>
+            <p>Online ordering is not available right now. Truck ordering hours are {truckOrderingHours || '9:00 AM - 4:00 PM'}.</p>
           </div>
           <div className="closedTruckDetails">
             <strong>No online orders can be placed while ordering is closed.</strong>
@@ -3533,8 +3538,8 @@ function TruckAdminPage({ onBackToOrder }) {
   const truckOrderingOpen = effectiveOrderingOpen(settings, 'TruckOrderingOpen', 'Truck');
   const truckMemberTipsEnabled = settingEnabled(settings, 'TruckMemberTipsEnabled', true);
   const truckScheduleEnabled = settingEnabled(settings, 'TruckOrderingScheduleEnabled', true);
-  const truckOpenTime = timeInputValue(settings, 'TruckOrderingOpenTime', '08:30');
-  const truckCloseTime = timeInputValue(settings, 'TruckOrderingCloseTime', '16:30');
+  const truckOpenTime = timeInputValue(settings, 'TruckOrderingOpenTime', defaultOrderingTime('Truck', 'open'));
+  const truckCloseTime = timeInputValue(settings, 'TruckOrderingCloseTime', defaultOrderingTime('Truck', 'close'));
   const activeCount = orders.filter(order => !['Completed', 'Cancelled'].includes(order.status)).length;
   const readyCount = orders.filter(order => order.status === 'Ready for Pickup').length;
   const closeoutOrdersToday = orders.filter(order => order.status !== 'Cancelled' && isCloseoutToday(order));

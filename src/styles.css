@@ -395,6 +395,10 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
 .refreshStatus { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .refreshStatus span { width: 8px; height: 8px; border-radius: 999px; background: #5AB87A; box-shadow: none; }
 .staffHeroControls > strong { display: inline-flex; align-items: center; min-height: 36px; padding: 7px 16px; border-radius: 20px; background: rgba(255, 255, 255, .15); color: white; font-size: clamp(14px, 1.1vw, 20px); white-space: nowrap; }
+.staffLeadTimeNotice { display: flex; align-items: center; gap: 10px; padding: 13px 28px; border-bottom: 1px solid #E3D7B7; background: #FFF3D8; color: #7A520C; font-weight: 850; }
+.staffLeadTimeNotice svg { color: #8A5A0A; flex: 0 0 auto; }
+.staffLeadTimeNotice strong { color: #173323; font-size: clamp(15px, 1.1vw, 19px); }
+.staffLeadTimeNotice span { color: #7A6B55; font-size: clamp(12px, .9vw, 15px); }
 .staffRefreshButton, .staffOrderPageButton, .staffSoundButton { border: 1px solid rgba(255, 255, 255, .18); background: rgba(255, 255, 255, .08); color: white; border-radius: 8px; padding: 9px 11px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 850; }
 .staffOrderPageButton { color: rgba(255, 255, 255, .82); }
 .staffSoundButton { background: rgba(255, 255, 255, .12); }
@@ -642,6 +646,7 @@ footer { text-align: center; margin: 22px 0 8px; font-size: 12px; color: var(--m
   .staffDashboardHero p { font-size: 15px; }
   .staffHeroControls { gap: 9px; font-size: 13px; }
   .staffHeroControls > strong { min-height: 36px; padding: 7px 14px; font-size: 15px; }
+  .staffLeadTimeNotice { align-items: flex-start; padding: 12px 18px; flex-wrap: wrap; }
   .staffRefreshButton, .staffOrderPageButton, .staffSoundButton { min-height: 36px; padding: 8px 11px; font-size: 12px; }
   .staffStats { grid-template-columns: 1fr; }
   .truckStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }

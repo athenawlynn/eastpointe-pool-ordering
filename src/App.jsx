@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home, Download, MessageCircle, Eye } from 'lucide-react';
+import { ShoppingCart, ClipboardList, RefreshCcw, Printer, Lock, CheckCircle, AlertTriangle, Phone, MapPin, Utensils, UserRound, ShieldCheck, Undo2, Truck, Wine, ChefHat, Users, QrCode, ExternalLink, TableProperties, BookOpen, Flag, PencilLine, Volume2, Home, Download, MessageCircle, Eye, Clock } from 'lucide-react';
 
 const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
@@ -3629,6 +3629,12 @@ function TruckAdminPage({ onBackToOrder }) {
           <strong>{activeCount} active orders</strong>
         </div>
       </section>
+
+      <div className="staffLeadTimeNotice">
+        <Clock size={18} />
+        <strong>20 minutes lead time for turn orders.</strong>
+        <span>Please set expectations with members and guests during busy periods.</span>
+      </div>
 
       {err && <div className="alert staffAlert"><AlertTriangle size={18} />{err}</div>}
       {soundError && <div className="alert staffAlert"><AlertTriangle size={18} />{soundError}</div>}

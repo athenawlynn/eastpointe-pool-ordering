@@ -345,7 +345,10 @@ function paymentFeeSettingsPrefix(paymentType, customerType = '') {
 function calculateTruckFees({ subtotal, tipAmount, paymentType, settings, memberCustomerType = '' }) {
   const customerType = customerTypeForPayment(paymentType, memberCustomerType);
   const prefix = paymentFeeSettingsPrefix(paymentType, customerType);
-  const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const defaultServiceFeeRate = prefix === 'TruckGuest'
+    ? 0.20
+    : percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const serviceFeeRate = percentSetting(settings, `${prefix}ServiceFeeRate`, defaultServiceFeeRate);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
   const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
   const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, customerType !== 'Golf Member');
@@ -359,11 +362,11 @@ function calculateTruckFees({ subtotal, tipAmount, paymentType, settings, member
   const safeTip = roundMoney(tipAmount);
   return {
     customerType,
-    serviceFeeLabel: `Service Fee (${Math.round(serviceFeeRate * 100)}%)`,
+    serviceFeeLabel: `${prefix === 'TruckGuest' ? 'Service Charge' : 'Service Fee'} (${Math.round(serviceFeeRate * 100)}%)`,
     serviceFeeRate,
     serviceFeeAmount,
     serviceFeeVisible,
-    creditCardFeeLabel: `Credit Card Transaction Fee (${Math.round(creditCardFeeRate * 100)}%)`,
+    creditCardFeeLabel: `Credit Card Upcharge (${Math.round(creditCardFeeRate * 100)}%)`,
     creditCardFeeRate,
     creditCardFeeAmount,
     creditCardFeeVisible,
@@ -4398,7 +4401,7 @@ function TruckOperationsGuide() {
                 <li><strong>CustomerType</strong>: controls truck fee visibility.</li>
                 <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
                 <li><strong>RSM</strong>: visible 22% service fee.</li>
-                <li>Guests use Guest - Pay at Pickup and do not need a member number.</li>
+                <li><strong>Guest - Pay at Pickup</strong>: visible 20% service charge plus visible 3% credit card upcharge.</li>
               </ul>
             </article>
             <article className="managerGuideCard">

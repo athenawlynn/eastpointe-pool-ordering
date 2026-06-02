@@ -172,7 +172,10 @@ function truckFeeSettingsPrefix(paymentType, customerType) {
 function calculateTruckFees(subtotal, tipAmount, paymentType, settings, memberCustomerType) {
   const customerType = customerTypeForPayment(paymentType, memberCustomerType);
   const prefix = truckFeeSettingsPrefix(paymentType, customerType);
-  const serviceFeeRate = percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const defaultServiceFeeRate = prefix === 'TruckGuest'
+    ? 0.20
+    : percentSetting(settings, 'TruckServiceFeeRate', 0.22);
+  const serviceFeeRate = percentSetting(settings, `${prefix}ServiceFeeRate`, defaultServiceFeeRate);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
   const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
   const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, customerType !== 'Golf Member');
@@ -187,11 +190,11 @@ function calculateTruckFees(subtotal, tipAmount, paymentType, settings, memberCu
   const finalTotal = roundMoney(Number(subtotal || 0) + serviceFeeAmount + creditCardFeeAmount + safeTip);
   return {
     customerType,
-    serviceFeeLabel: `Service Fee (${Math.round(serviceFeeRate * 100)}%)`,
+    serviceFeeLabel: `${prefix === 'TruckGuest' ? 'Service Charge' : 'Service Fee'} (${Math.round(serviceFeeRate * 100)}%)`,
     serviceFeeRate,
     serviceFeeAmount,
     serviceFeeVisible,
-    creditCardFeeLabel: `Credit Card Transaction Fee (${Math.round(creditCardFeeRate * 100)}%)`,
+    creditCardFeeLabel: `Credit Card Upcharge (${Math.round(creditCardFeeRate * 100)}%)`,
     creditCardFeeRate,
     creditCardFeeAmount,
     creditCardFeeVisible,

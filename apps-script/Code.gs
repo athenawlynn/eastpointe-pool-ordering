@@ -97,11 +97,15 @@ function parseModifierGroups(value) {
 }
 
 function normalizeModifierOption(option) {
-  if (typeof option === 'string') return { name: option, priceDelta: 0 };
+  if (typeof option === 'string') return { name: readableModifierName(option), priceDelta: 0 };
   return {
-    name: String(option.name || '').trim(),
+    name: readableModifierName(option.name),
     priceDelta: Number(option.priceDelta || 0)
   };
+}
+
+function readableModifierName(value) {
+  return String(value || '').trim().replace(/\bO[/-]S\b/g, 'on the side');
 }
 
 function normalizeModifierGroup(group) {
@@ -158,7 +162,7 @@ function defaultSaladOptionNames(item) {
   const itemName = String(item.itemName || '').toLowerCase();
   if (!category.includes('salad') && !itemName.includes('salad')) return [];
 
-  const options = ['Chopped', 'Dressing O/S'];
+  const options = ['Chopped', 'Dressing on the side'];
   if (itemName.includes('caesar')) {
     options.push('No Romaine', 'No Cheese', 'No Croutons', 'Extra Cheese', 'Extra Croutons');
   } else if (itemName.includes('garden')) {

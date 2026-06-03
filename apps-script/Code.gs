@@ -65,16 +65,19 @@ function rowsToObjects(sheet) {
 }
 
 function normalizeMenuItem(row) {
+  const category = String(row.Category || '').trim();
+  const itemName = String(row.ItemName || '').trim();
+  const modifierGroups = withDefaultModifierGroups({ category, itemName }, parseModifierGroups(row.ModifierGroups));
   return {
     itemId: String(row.ItemID || '').trim(),
-    category: String(row.Category || '').trim(),
-    itemName: String(row.ItemName || '').trim(),
+    category,
+    itemName,
     description: String(row.Description || '').trim(),
     price: Number(row.Price || 0),
     available: String(row.Available).toUpperCase() === 'TRUE' || row.Available === true,
     alcoholic: String(row.Alcoholic).toUpperCase() === 'TRUE' || row.Alcoholic === true,
     sortOrder: Number(row.SortOrder || 9999),
-    modifierGroups: parseModifierGroups(row.ModifierGroups)
+    modifierGroups
   };
 }
 
@@ -135,6 +138,60 @@ function normalizeModifierGroup(group) {
     options: extraCheeseOptions
   });
   return normalizedGroups;
+}
+
+function mergeModifierOptions(existingOptions, optionNames) {
+  const seen = {};
+  const merged = (existingOptions || []).slice();
+  merged.forEach(option => seen[String(option.name || '').toLowerCase()] = true);
+  (optionNames || []).forEach(name => {
+    const key = String(name || '').toLowerCase();
+    if (!key || seen[key]) return;
+    seen[key] = true;
+    merged.push({ name, priceDelta: 0 });
+  });
+  return merged;
+}
+
+function defaultSaladOptionNames(item) {
+  const category = String(item.category || '').toLowerCase();
+  const itemName = String(item.itemName || '').toLowerCase();
+  if (!category.includes('salad') && !itemName.includes('salad')) return [];
+
+  const options = ['Chopped', 'Dressing O/S'];
+  if (itemName.includes('caesar')) {
+    options.push('No Romaine', 'No Cheese', 'No Croutons', 'Extra Cheese', 'Extra Croutons');
+  } else if (itemName.includes('garden')) {
+    options.push('No Tomatoes', 'No Onions', 'No Cucumber', 'No Carrots', 'No Cheese', 'Extra Cheese');
+  }
+  return options;
+}
+
+function withDefaultModifierGroups(item, groups) {
+  const saladOptions = defaultSaladOptionNames(item);
+  if (!saladOptions.length) return groups;
+
+  let merged = false;
+  const nextGroups = (groups || []).map(group => {
+    if (String(group.name || '').toLowerCase() !== 'salad options') return group;
+    merged = true;
+    return {
+      name: group.name,
+      type: 'multi',
+      required: false,
+      options: mergeModifierOptions(group.options, saladOptions)
+    };
+  });
+
+  if (!merged) {
+    nextGroups.push({
+      name: 'Salad Options',
+      type: 'multi',
+      required: false,
+      options: mergeModifierOptions([], saladOptions)
+    });
+  }
+  return nextGroups;
 }
 
 function getSettingsObject() {

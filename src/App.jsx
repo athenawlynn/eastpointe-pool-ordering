@@ -109,10 +109,65 @@ function normalizeModifierGroup(group) {
   return groups;
 }
 
+function mergeModifierOptions(existingOptions = [], optionNames = []) {
+  const seen = new Set(existingOptions.map(option => option.name.toLowerCase()));
+  const additions = optionNames
+    .map(name => ({ name, priceDelta: 0 }))
+    .filter(option => {
+      const key = option.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  return [...existingOptions, ...additions];
+}
+
+function defaultSaladOptionNames(item) {
+  const category = String(item?.category || '').toLowerCase();
+  const itemName = String(item?.itemName || '').toLowerCase();
+  if (!category.includes('salad') && !itemName.includes('salad')) return [];
+
+  const options = ['Chopped', 'Dressing O/S'];
+  if (itemName.includes('caesar')) {
+    options.push('No Romaine', 'No Cheese', 'No Croutons', 'Extra Cheese', 'Extra Croutons');
+  } else if (itemName.includes('garden')) {
+    options.push('No Tomatoes', 'No Onions', 'No Cucumber', 'No Carrots', 'No Cheese', 'Extra Cheese');
+  }
+  return options;
+}
+
+function withDefaultModifierGroups(item, groups) {
+  const saladOptions = defaultSaladOptionNames(item);
+  if (!saladOptions.length) return groups;
+
+  let merged = false;
+  const nextGroups = groups.map(group => {
+    if (group.name.toLowerCase() !== 'salad options') return group;
+    merged = true;
+    return {
+      ...group,
+      type: 'multi',
+      required: false,
+      options: mergeModifierOptions(group.options, saladOptions)
+    };
+  });
+
+  if (!merged) {
+    nextGroups.push({
+      name: 'Salad Options',
+      type: 'multi',
+      required: false,
+      options: mergeModifierOptions([], saladOptions)
+    });
+  }
+  return nextGroups;
+}
+
 function modifierGroupsForItem(item) {
   const raw = item?.modifierGroups;
   const groups = Array.isArray(raw) ? raw : [];
-  return groups.flatMap(normalizeModifierGroup).filter(group => group.name && group.options.length);
+  const normalizedGroups = groups.flatMap(normalizeModifierGroup).filter(group => group.name && group.options.length);
+  return withDefaultModifierGroups(item, normalizedGroups);
 }
 
 function selectedModifierGroups(item, selectionsByGroup = {}) {

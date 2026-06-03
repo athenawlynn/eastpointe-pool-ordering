@@ -84,23 +84,57 @@ function parseModifierGroups(value) {
   try {
     const groups = JSON.parse(raw);
     if (!Array.isArray(groups)) return [];
-    return groups.map(group => ({
-      name: String(group.name || '').trim(),
-      type: group.type === 'multi' ? 'multi' : 'single',
-      required: group.required === true || String(group.required).toUpperCase() === 'TRUE',
-      options: Array.isArray(group.options)
-        ? group.options.map(option => {
-          if (typeof option === 'string') return { name: option, priceDelta: 0 };
-          return {
-            name: String(option.name || '').trim(),
-            priceDelta: Number(option.priceDelta || 0)
-          };
-        }).filter(option => option.name)
-        : []
-    })).filter(group => group.name && group.options.length);
+    return groups.reduce((acc, group) => {
+      normalizeModifierGroup(group).forEach(normalizedGroup => acc.push(normalizedGroup));
+      return acc;
+    }, []).filter(group => group.name && group.options.length);
   } catch (err) {
     return [];
   }
+}
+
+function normalizeModifierOption(option) {
+  if (typeof option === 'string') return { name: option, priceDelta: 0 };
+  return {
+    name: String(option.name || '').trim(),
+    priceDelta: Number(option.priceDelta || 0)
+  };
+}
+
+function normalizeModifierGroup(group) {
+  const name = String(group.name || '').trim();
+  const type = group.type === 'multi' ? 'multi' : 'single';
+  const required = group.required === true || String(group.required).toUpperCase() === 'TRUE';
+  const options = Array.isArray(group.options)
+    ? group.options.map(normalizeModifierOption).filter(option => option.name)
+    : [];
+
+  if (name.toLowerCase() !== 'cheese') {
+    return [{ name, type, required, options }];
+  }
+
+  const extraCheeseOptions = options.filter(option => option.name.toLowerCase() === 'extra cheese');
+  if (!extraCheeseOptions.length) {
+    return [{ name, type, required, options }];
+  }
+
+  const cheeseTypeOptions = options.filter(option => option.name.toLowerCase() !== 'extra cheese');
+  const normalizedGroups = [];
+  if (cheeseTypeOptions.length) {
+    normalizedGroups.push({
+      name: 'Cheese Type',
+      type: 'single',
+      required,
+      options: cheeseTypeOptions
+    });
+  }
+  normalizedGroups.push({
+    name: 'Cheese Add-ons',
+    type: 'multi',
+    required: false,
+    options: extraCheeseOptions
+  });
+  return normalizedGroups;
 }
 
 function getSettingsObject() {

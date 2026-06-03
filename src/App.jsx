@@ -73,17 +73,46 @@ function normalizeModifierOption(option) {
   };
 }
 
+function normalizeModifierGroup(group) {
+  const name = String(group?.name || '').trim();
+  const type = group?.type === 'multi' ? 'multi' : 'single';
+  const required = Boolean(group?.required);
+  const options = Array.isArray(group?.options)
+    ? group.options.map(normalizeModifierOption).filter(option => option.name)
+    : [];
+
+  if (name.toLowerCase() !== 'cheese') {
+    return [{ name, type, required, options }];
+  }
+
+  const extraCheeseOptions = options.filter(option => option.name.toLowerCase() === 'extra cheese');
+  if (!extraCheeseOptions.length) {
+    return [{ name, type, required, options }];
+  }
+
+  const cheeseTypeOptions = options.filter(option => option.name.toLowerCase() !== 'extra cheese');
+  const groups = [];
+  if (cheeseTypeOptions.length) {
+    groups.push({
+      name: 'Cheese Type',
+      type: 'single',
+      required,
+      options: cheeseTypeOptions
+    });
+  }
+  groups.push({
+    name: 'Cheese Add-ons',
+    type: 'multi',
+    required: false,
+    options: extraCheeseOptions
+  });
+  return groups;
+}
+
 function modifierGroupsForItem(item) {
   const raw = item?.modifierGroups;
   const groups = Array.isArray(raw) ? raw : [];
-  return groups.map(group => ({
-    name: String(group?.name || '').trim(),
-    type: group?.type === 'multi' ? 'multi' : 'single',
-    required: Boolean(group?.required),
-    options: Array.isArray(group?.options)
-      ? group.options.map(normalizeModifierOption).filter(option => option.name)
-      : []
-  })).filter(group => group.name && group.options.length);
+  return groups.flatMap(normalizeModifierGroup).filter(group => group.name && group.options.length);
 }
 
 function selectedModifierGroups(item, selectionsByGroup = {}) {

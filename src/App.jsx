@@ -6,7 +6,7 @@ const SCRIPT_URL = import.meta.env.VITE_SCRIPT_URL || '';
 const ADMIN_KEY = import.meta.env.VITE_ADMIN_KEY || '';
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'poolstaff';
 const TRUCK_PASSWORD = import.meta.env.VITE_TRUCK_STAFF_PASSWORD || 'truckstaff';
-const API_TIMEOUT_MS = 12000;
+const API_TIMEOUT_MS = 30000;
 const API_RETRIES = 2;
 const CONFIRMATION_KEY = 'eastpointeLastConfirmation';
 const TRUCK_CONFIRMATION_KEY = 'eastpointeLastTruckConfirmation';
@@ -757,7 +757,12 @@ function sleep(ms) {
 }
 
 function apiErrorMessage(error, action) {
-  if (error.name === 'AbortError') return 'The ordering system is taking longer than expected to respond. Please try again.';
+  if (error.name === 'AbortError') {
+    if (action === 'createTruckOrder' || action === 'createOrder') {
+      return 'The order submission paused before we received confirmation. Please try again once.';
+    }
+    return 'The connection paused for a moment. Please try again.';
+  }
   if (String(error.message || '').includes('Failed to fetch')) return 'Unable to reach the ordering system. Please check the connection and try again.';
   return error.message || `Unable to complete ${action}.`;
 }

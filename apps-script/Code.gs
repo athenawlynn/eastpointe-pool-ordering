@@ -64,15 +64,19 @@ function rowsToObjects(sheet) {
     });
 }
 
-function normalizeMenuItem(row) {
+function normalizeMenuItem(row, menuType) {
   const category = String(row.Category || '').trim();
   const itemName = String(row.ItemName || '').trim();
-  const modifierGroups = withDefaultModifierGroups({ category, itemName }, parseModifierGroups(row.ModifierGroups));
+  const isTruckMenu = menuType === 'truck';
+  const modifierGroups = isTruckMenu
+    ? withDefaultModifierGroups({ category, itemName }, parseModifierGroups(row.ModifierGroups))
+    : parseModifierGroups(row.ModifierGroups);
   return {
     itemId: String(row.ItemID || '').trim(),
     category,
     itemName,
-    description: String(row.Description || '').trim(),
+    menuType: isTruckMenu ? 'truck' : 'pool',
+    description: isTruckMenu ? truckMenuDescription({ itemName, description: row.Description }) : String(row.Description || '').trim(),
     price: Number(row.Price || 0),
     available: String(row.Available).toUpperCase() === 'TRUE' || row.Available === true,
     alcoholic: String(row.Alcoholic).toUpperCase() === 'TRUE' || row.Alcoholic === true,
@@ -160,7 +164,7 @@ function mergeModifierOptions(existingOptions, optionNames) {
 function defaultSaladOptionNames(item) {
   const category = String(item.category || '').toLowerCase();
   const itemName = String(item.itemName || '').toLowerCase();
-  if (!category.includes('salad') && !itemName.includes('salad')) return [];
+  if (!category.includes('salad')) return [];
 
   const options = ['Chopped', 'Dressing on the side'];
   if (itemName.includes('caesar')) {
@@ -171,9 +175,47 @@ function defaultSaladOptionNames(item) {
   return options;
 }
 
+function defaultModifierGroupForItem(item) {
+  const category = String(item.category || '').toLowerCase();
+  const itemName = String(item.itemName || '').toLowerCase();
+  const groups = [];
+  if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
+    groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
+  }
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    groups.push({ name: 'Choose One', type: 'single', required: true, options: [
+      { name: 'House-Made Hot Chili', priceDelta: 0 },
+      { name: 'Soup of the Day', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('peanut butter') && itemName.includes('jelly')) {
+    groups.push({ name: 'Jelly Choice', type: 'single', required: false, options: [
+      { name: 'Grape Jelly', priceDelta: 0 },
+      { name: 'Strawberry Jelly', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('chicken tenders') || itemName.includes('french fries')) {
+    groups.push({ name: 'Dipping Sauces', type: 'multi', required: false, options: [
+      { name: 'Ketchup', priceDelta: 0 },
+      { name: 'Honey Mustard', priceDelta: 0 },
+      { name: 'BBQ Sauce', priceDelta: 0 },
+      { name: 'Ranch', priceDelta: 0 }
+    ] });
+  }
+  if (category.includes('grab') && itemName.includes('whole fruit')) {
+    groups.push({ name: 'Fruit Choice', type: 'single', required: true, options: [
+      { name: 'Banana', priceDelta: 0 },
+      { name: 'Orange', priceDelta: 0 },
+      { name: 'Apple', priceDelta: 0 }
+    ] });
+  }
+  return groups;
+}
+
 function withDefaultModifierGroups(item, groups) {
   const saladOptions = defaultSaladOptionNames(item);
-  if (!saladOptions.length) return groups;
+  const defaultGroups = defaultModifierGroupForItem(item);
+  if (!saladOptions.length && !defaultGroups.length) return groups;
 
   let merged = false;
   const nextGroups = (groups || []).map(group => {
@@ -187,7 +229,7 @@ function withDefaultModifierGroups(item, groups) {
     };
   });
 
-  if (!merged) {
+  if (saladOptions.length && !merged) {
     nextGroups.push({
       name: 'Salad Options',
       type: 'multi',
@@ -195,7 +237,37 @@ function withDefaultModifierGroups(item, groups) {
       options: mergeModifierOptions([], saladOptions)
     });
   }
+
+  defaultGroups.forEach(defaultGroup => {
+    const existingIndex = nextGroups.findIndex(group => String(group.name || '').toLowerCase() === defaultGroup.name.toLowerCase());
+    if (existingIndex >= 0) {
+      nextGroups[existingIndex] = {
+        name: nextGroups[existingIndex].name,
+        type: nextGroups[existingIndex].type,
+        required: nextGroups[existingIndex].required,
+        options: mergeModifierOptions(nextGroups[existingIndex].options, defaultGroup.options.map(option => option.name))
+      };
+    } else {
+      nextGroups.push(defaultGroup);
+    }
+  });
   return nextGroups;
+}
+
+function truckMenuDescription(item) {
+  const itemName = String(item.itemName || '').toLowerCase();
+  const existing = String(item.description || '').trim();
+  if (existing) return existing;
+  if (itemName === 'chicken salad') return 'Prepared chicken salad served in a cup.';
+  if (itemName === 'tuna salad') return 'Prepared tuna salad served in a cup.';
+  if (itemName === 'egg salad') return 'Prepared egg salad served in a cup.';
+  if (itemName === 'ham & cheese') return 'Kids menu ham and cheese sandwich.';
+  if (itemName === 'turkey & cheese') return 'Kids menu turkey and cheese sandwich.';
+  if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids menu peanut butter and jelly sandwich.';
+  if (itemName.includes('chicken tenders')) return 'Kids menu chicken tenders with optional dipping sauce.';
+  if (itemName.includes('french fries')) return 'Kids menu fries with optional dipping sauce.';
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) return "Choose a cup of house-made hot chili or today's soup.";
+  return '';
 }
 
 function getSettingsObject() {
@@ -444,7 +516,7 @@ function updateMenuAvailabilityForSheet(sheetName, itemId, available) {
 function getMenu() {
   const sheet = getSheet('MenuItems');
   const items = rowsToObjects(sheet)
-    .map(normalizeMenuItem)
+    .map(row => normalizeMenuItem(row, 'pool'))
     .filter(i => i.itemId && i.itemName)
     .sort((a, b) => {
       if (a.category === b.category) return a.sortOrder - b.sortOrder;
@@ -456,7 +528,7 @@ function getMenu() {
 function getTruckMenu() {
   const sheet = getSheet('TruckMenuItems');
   const items = rowsToObjects(sheet)
-    .map(normalizeMenuItem)
+    .map(row => normalizeMenuItem(row, 'truck'))
     .filter(i => i.itemId && i.itemName)
     .sort((a, b) => a.sortOrder - b.sortOrder);
   return items;

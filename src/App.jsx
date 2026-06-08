@@ -127,9 +127,10 @@ function mergeModifierOptions(existingOptions = [], optionNames = []) {
 }
 
 function defaultSaladOptionNames(item) {
+  if (item?.menuType !== 'truck') return [];
   const category = String(item?.category || '').toLowerCase();
   const itemName = String(item?.itemName || '').toLowerCase();
-  if (!category.includes('salad') && !itemName.includes('salad')) return [];
+  if (!category.includes('salad')) return [];
 
   const options = ['Chopped', 'Dressing on the side'];
   if (itemName.includes('caesar')) {
@@ -140,9 +141,48 @@ function defaultSaladOptionNames(item) {
   return options;
 }
 
+function defaultModifierGroupForItem(item) {
+  if (item?.menuType !== 'truck') return [];
+  const category = String(item?.category || '').toLowerCase();
+  const itemName = String(item?.itemName || '').toLowerCase();
+  const groups = [];
+  if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
+    groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
+  }
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    groups.push({ name: 'Choose One', type: 'single', required: true, options: [
+      { name: 'House-Made Hot Chili', priceDelta: 0 },
+      { name: 'Soup of the Day', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('peanut butter') && itemName.includes('jelly')) {
+    groups.push({ name: 'Jelly Choice', type: 'single', required: false, options: [
+      { name: 'Grape Jelly', priceDelta: 0 },
+      { name: 'Strawberry Jelly', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('chicken tenders') || itemName.includes('french fries')) {
+    groups.push({ name: 'Dipping Sauces', type: 'multi', required: false, options: [
+      { name: 'Ketchup', priceDelta: 0 },
+      { name: 'Honey Mustard', priceDelta: 0 },
+      { name: 'BBQ Sauce', priceDelta: 0 },
+      { name: 'Ranch', priceDelta: 0 }
+    ] });
+  }
+  if (category.includes('grab') && itemName.includes('whole fruit')) {
+    groups.push({ name: 'Fruit Choice', type: 'single', required: true, options: [
+      { name: 'Banana', priceDelta: 0 },
+      { name: 'Orange', priceDelta: 0 },
+      { name: 'Apple', priceDelta: 0 }
+    ] });
+  }
+  return groups;
+}
+
 function withDefaultModifierGroups(item, groups) {
   const saladOptions = defaultSaladOptionNames(item);
-  if (!saladOptions.length) return groups;
+  const defaultGroups = defaultModifierGroupForItem(item);
+  if (!saladOptions.length && !defaultGroups.length) return groups;
 
   let merged = false;
   const nextGroups = groups.map(group => {
@@ -156,7 +196,7 @@ function withDefaultModifierGroups(item, groups) {
     };
   });
 
-  if (!merged) {
+  if (saladOptions.length && !merged) {
     nextGroups.push({
       name: 'Salad Options',
       type: 'multi',
@@ -164,7 +204,36 @@ function withDefaultModifierGroups(item, groups) {
       options: mergeModifierOptions([], saladOptions)
     });
   }
+
+  defaultGroups.forEach(defaultGroup => {
+    const existingIndex = nextGroups.findIndex(group => group.name.toLowerCase() === defaultGroup.name.toLowerCase());
+    if (existingIndex >= 0) {
+      nextGroups[existingIndex] = {
+        ...nextGroups[existingIndex],
+        options: mergeModifierOptions(nextGroups[existingIndex].options, defaultGroup.options.map(option => option.name))
+      };
+    } else {
+      nextGroups.push(defaultGroup);
+    }
+  });
   return nextGroups;
+}
+
+function truckMenuDescription(item) {
+  if (item?.menuType !== 'truck') return String(item?.description || '').trim();
+  const itemName = String(item?.itemName || '').toLowerCase();
+  const existing = String(item?.description || '').trim();
+  if (existing) return existing;
+  if (itemName === 'chicken salad') return 'Prepared chicken salad served in a cup.';
+  if (itemName === 'tuna salad') return 'Prepared tuna salad served in a cup.';
+  if (itemName === 'egg salad') return 'Prepared egg salad served in a cup.';
+  if (itemName === 'ham & cheese') return 'Kids menu ham and cheese sandwich.';
+  if (itemName === 'turkey & cheese') return 'Kids menu turkey and cheese sandwich.';
+  if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids menu peanut butter and jelly sandwich.';
+  if (itemName.includes('chicken tenders')) return 'Kids menu chicken tenders with optional dipping sauce.';
+  if (itemName.includes('french fries')) return 'Kids menu fries with optional dipping sauce.';
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) return "Choose a cup of house-made hot chili or today's soup.";
+  return '';
 }
 
 function modifierGroupsForItem(item) {
@@ -1097,9 +1166,10 @@ function modifierOptionCount(item) {
   return modifierGroupsForItem(item).reduce((sum, group) => sum + group.options.length, 0);
 }
 
-function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, onQuantityChange, onCustomize }) {
+function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, onQuantityChange, onCustomize, showCategory = false }) {
   const modifierGroups = modifierGroupsForItem(item);
   const hasModifiers = modifierGroups.length > 0;
+  const description = truckMenuDescription(item);
 
   return (
     <div className={!item.available ? 'menuItem truckMenuItem unavailable' : 'menuItem truckMenuItem'}>
@@ -1108,7 +1178,8 @@ function TruckMenuItem({ item, quantity, modifierSelections = {}, onQuickAdd, on
           <h3>{item.itemName}</h3>
           <strong>{currency(item.price)}</strong>
         </div>
-        {item.description && <p>{item.description}</p>}
+        {showCategory && <span className={item.category === 'Kids Menu' ? 'categoryBadge kidsCategoryBadge' : 'categoryBadge'}>{item.category || 'Menu'}</span>}
+        {description && <p>{description}</p>}
         <div className="menuPillRow">
           {item.alcoholic && <span className="pill warning">Alcohol</span>}
           {!item.available && <span className="pill muted">Unavailable</span>}
@@ -1914,7 +1985,7 @@ function TruckOrderPage() {
           apiGet('truckMenu'),
           apiGet('settings')
         ]);
-        setMenu(menuData.items || []);
+        setMenu((menuData.items || []).map(item => ({ ...item, menuType: 'truck' })));
         setSettings(settingsData.settings || {});
         setActiveCat('All Items');
       } catch (e) {
@@ -2442,6 +2513,7 @@ function TruckOrderPage() {
                   onQuantityChange={(quantity) => setTruckItemQuantity(item.itemId, quantity)}
                   onCustomize={() => setCustomizingItemId(item.itemId)}
                   modifierSelections={modifierSelections[item.itemId] || {}}
+                  showCategory={activeCat === 'All Items'}
                 />
               ))}
             </div>

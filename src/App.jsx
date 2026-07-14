@@ -141,11 +141,34 @@ function defaultSaladOptionNames(item) {
   return options;
 }
 
+const TRUCK_SALAD_DRESSINGS = [
+  'Louie Dressing',
+  'Balsamic Vinaigrette',
+  'Raspberry Vinaigrette',
+  'Ranch Honey Dressing',
+  'Ponzu Chili Dressing',
+  'Greek Vinaigrette',
+  'Caesar Dressing',
+  'Blue Cheese Dressing',
+  'Champagne Vinaigrette',
+  'Ranch Dressing',
+  'Honey Mustard'
+];
+
 function defaultModifierGroupForItem(item) {
   if (item?.menuType !== 'truck') return [];
   const category = String(item?.category || '').toLowerCase();
   const itemName = String(item?.itemName || '').toLowerCase();
   const groups = [];
+  const isSalad = category.includes('salad') || itemName.includes('salad');
+  if (isSalad) {
+    groups.push({
+      name: 'Salad Dressing',
+      type: 'single',
+      required: false,
+      options: TRUCK_SALAD_DRESSINGS.map(name => ({ name, priceDelta: 0 }))
+    });
+  }
   if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
     groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
   }

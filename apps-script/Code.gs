@@ -179,6 +179,27 @@ function defaultModifierGroupForItem(item) {
   const category = String(item.category || '').toLowerCase();
   const itemName = String(item.itemName || '').toLowerCase();
   const groups = [];
+  const isSalad = category.includes('salad') || itemName.includes('salad');
+  if (isSalad) {
+    groups.push({
+      name: 'Salad Dressing',
+      type: 'single',
+      required: false,
+      options: [
+        'Louie Dressing',
+        'Balsamic Vinaigrette',
+        'Raspberry Vinaigrette',
+        'Ranch Honey Dressing',
+        'Ponzu Chili Dressing',
+        'Greek Vinaigrette',
+        'Caesar Dressing',
+        'Blue Cheese Dressing',
+        'Champagne Vinaigrette',
+        'Ranch Dressing',
+        'Honey Mustard'
+      ].map(name => ({ name, priceDelta: 0 }))
+    });
+  }
   if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
     groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
   }
@@ -189,9 +210,21 @@ function defaultModifierGroupForItem(item) {
     ] });
   }
   if (itemName.includes('peanut butter') && itemName.includes('jelly')) {
-    groups.push({ name: 'Jelly Choice', type: 'single', required: false, options: [
+    groups.push({ name: 'Jelly Choice', type: 'single', required: true, options: [
       { name: 'Grape Jelly', priceDelta: 0 },
       { name: 'Strawberry Jelly', priceDelta: 0 }
+    ] });
+  }
+  if (itemName === 'ham & cheese' || itemName === 'turkey & cheese') {
+    groups.push({ name: 'Bread Choice', type: 'single', required: true, options: [
+      { name: 'White Bread', priceDelta: 0 },
+      { name: 'Wheat Bread', priceDelta: 0 }
+    ] });
+    groups.push({ name: 'Preparation', type: 'single', required: true, options: [
+      { name: 'Plain', priceDelta: 0 },
+      { name: 'Mayonnaise', priceDelta: 0 },
+      { name: 'Mustard', priceDelta: 0 },
+      { name: 'Mayonnaise & Mustard', priceDelta: 0 }
     ] });
   }
   if (itemName.includes('chicken tenders') || itemName.includes('french fries')) {
@@ -208,6 +241,52 @@ function defaultModifierGroupForItem(item) {
       { name: 'Orange', priceDelta: 0 },
       { name: 'Apple', priceDelta: 0 }
     ] });
+  }
+  if (itemName.includes('cookie')) {
+    groups.push({ name: 'Cookie Choice', type: 'single', required: true, options: [
+      { name: 'Chocolate Chip', priceDelta: 0 },
+      { name: 'Oatmeal Raisin', priceDelta: 0 },
+      { name: 'Sugar Cookie', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('potato chip')) {
+    groups.push({ name: 'Chip Choice', type: 'single', required: true, options: [
+      { name: 'Original', priceDelta: 0 },
+      { name: 'BBQ', priceDelta: 0 },
+      { name: 'Sour Cream & Onion', priceDelta: 0 },
+      { name: 'Salt & Vinegar', priceDelta: 0 }
+    ] });
+  }
+  if (itemName.includes('candy') || itemName.includes('health bar')) {
+    groups.push({ name: 'Bar Choice', type: 'single', required: true, options: [
+      { name: 'Snickers', priceDelta: 0 },
+      { name: "M&M's", priceDelta: 0 },
+      { name: "Hershey's", priceDelta: 0 },
+      { name: 'KIND Bar', priceDelta: 0 }
+    ] });
+  }
+  if (itemName === 'gatorade') {
+    groups.push({ name: 'Flavor', type: 'single', required: true, options: [
+      { name: 'Lemon-Lime', priceDelta: 0 },
+      { name: 'Fruit Punch', priceDelta: 0 },
+      { name: 'Orange', priceDelta: 0 },
+      { name: 'Glacier Freeze', priceDelta: 0 }
+    ] });
+  }
+  const cannedDrinkFlavors = {
+    'white claw': ['Black Cherry', 'Mango', 'Lime', 'Raspberry'],
+    'high noon': ['Pineapple', 'Peach', 'Watermelon', 'Grapefruit'],
+    'surfside': ['Iced Tea + Vodka', 'Lemonade + Vodka', 'Half & Half'],
+    'long drink': ['Traditional Citrus', 'Zero', 'Cranberry'],
+    'nutrl': ['Pineapple', 'Watermelon', 'Orange', 'Lime']
+  };
+  if (cannedDrinkFlavors[itemName]) {
+    groups.push({
+      name: 'Flavor',
+      type: 'single',
+      required: true,
+      options: cannedDrinkFlavors[itemName].map(name => ({ name, priceDelta: 0 }))
+    });
   }
   return groups;
 }
@@ -261,9 +340,9 @@ function truckMenuDescription(item) {
   if (itemName === 'chicken salad') return 'Prepared chicken salad served in a cup.';
   if (itemName === 'tuna salad') return 'Prepared tuna salad served in a cup.';
   if (itemName === 'egg salad') return 'Prepared egg salad served in a cup.';
-  if (itemName === 'ham & cheese') return 'Kids menu ham and cheese sandwich.';
-  if (itemName === 'turkey & cheese') return 'Kids menu turkey and cheese sandwich.';
-  if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids menu peanut butter and jelly sandwich.';
+  if (itemName === 'ham & cheese') return 'Kids ham and cheese sandwich with your choice of bread and preparation.';
+  if (itemName === 'turkey & cheese') return 'Kids turkey and cheese sandwich with your choice of bread and preparation.';
+  if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids peanut butter and jelly sandwich with grape or strawberry jelly.';
   if (itemName.includes('chicken tenders')) return 'Kids menu chicken tenders with optional dipping sauce.';
   if (itemName.includes('french fries')) return 'Kids menu fries with optional dipping sauce.';
   if (itemName.includes('hot chili') || itemName.includes('soup of the day')) return "Choose a cup of house-made hot chili or today's soup.";

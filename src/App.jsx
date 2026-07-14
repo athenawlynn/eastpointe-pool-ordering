@@ -160,7 +160,7 @@ function defaultModifierGroupForItem(item) {
   const category = String(item?.category || '').toLowerCase();
   const itemName = String(item?.itemName || '').toLowerCase();
   const groups = [];
-  const isSalad = category.includes('salad') || itemName.includes('salad');
+  const isSalad = category.includes('salad');
   if (isSalad) {
     groups.push({
       name: 'Salad Dressing',

@@ -184,7 +184,7 @@ function defaultModifierGroupForItem(item) {
     groups.push({
       name: 'Salad Dressing',
       type: 'single',
-      required: false,
+      required: true,
       options: [
         'Louie Dressing',
         'Balsamic Vinaigrette',
@@ -201,7 +201,7 @@ function defaultModifierGroupForItem(item) {
     });
   }
   if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
-    groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
+    groups.push({ name: 'Serving Style', type: 'single', required: true, options: [{ name: 'Cup', priceDelta: 0 }] });
   }
   if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
     groups.push({ name: 'Choose One', type: 'single', required: true, options: [

@@ -165,12 +165,12 @@ function defaultModifierGroupForItem(item) {
     groups.push({
       name: 'Salad Dressing',
       type: 'single',
-      required: false,
+      required: true,
       options: TRUCK_SALAD_DRESSINGS.map(name => ({ name, priceDelta: 0 }))
     });
   }
   if (['chicken salad', 'tuna salad', 'egg salad'].includes(itemName)) {
-    groups.push({ name: 'Serving Style', type: 'single', required: false, options: [{ name: 'Cup', priceDelta: 0 }] });
+    groups.push({ name: 'Serving Style', type: 'single', required: true, options: [{ name: 'Cup', priceDelta: 0 }] });
   }
   if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
     groups.push({ name: 'Choose One', type: 'single', required: true, options: [
@@ -334,6 +334,18 @@ function selectedModifierGroups(item, selectionsByGroup = {}) {
     const options = group.options.filter(option => selectedNames.includes(option.name));
     return options.length ? { group: group.name, selections: options } : null;
   }).filter(Boolean);
+}
+
+function itemNoteWithFallbackModifiers(item, selectionsByGroup = {}, itemNote = '') {
+  const backendGroupNames = new Set(
+    (Array.isArray(item?.modifierGroups) ? item.modifierGroups : [])
+      .map(group => String(group?.name || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  const fallbackSelections = selectedModifierGroups(item, selectionsByGroup)
+    .filter(group => !backendGroupNames.has(group.group.toLowerCase()))
+    .map(group => `${group.group}: ${group.selections.map(option => option.name).join(', ')}`);
+  return [...fallbackSelections, String(itemNote || '').trim()].filter(Boolean).join(' | ');
 }
 
 function modifierUnitTotal(item) {
@@ -2118,7 +2130,7 @@ function TruckOrderPage() {
       ...item,
       quantity: Number(quantities[item.itemId]),
       selectedModifiers: selectedModifierGroups(item, modifierSelections[item.itemId]),
-      itemNote: String(itemNotes[item.itemId] || '').trim()
+      itemNote: itemNoteWithFallbackModifiers(item, modifierSelections[item.itemId], itemNotes[item.itemId])
     })), [orderedTruckMenu, quantities, modifierSelections, itemNotes]);
   const subtotal = selectedItems.reduce((sum, item) => sum + orderItemLineTotal(item), 0);
   const truckHasAlcohol = selectedItems.some(item => item.alcoholic);

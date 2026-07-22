@@ -418,13 +418,16 @@ function truckFeeSettingsPrefix(paymentType, customerType) {
 function calculateTruckFees(subtotal, tipAmount, paymentType, settings, memberCustomerType) {
   const customerType = customerTypeForPayment(paymentType, memberCustomerType);
   const prefix = truckFeeSettingsPrefix(paymentType, customerType);
-  const defaultServiceFeeRate = prefix === 'TruckGuest'
+  const isGolfMember = customerType === 'Golf Member';
+  const defaultServiceFeeRate = isGolfMember
+    ? 0
+    : prefix === 'TruckGuest'
     ? 0.20
     : percentSetting(settings, 'TruckServiceFeeRate', 0.22);
   const serviceFeeRate = percentSetting(settings, `${prefix}ServiceFeeRate`, defaultServiceFeeRate);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
-  const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
-  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, customerType !== 'Golf Member');
+  const serviceFeeEnabled = !isGolfMember && settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
+  const serviceFeeVisible = !isGolfMember && settingEnabled(settings, `${prefix}ServiceFeeVisible`, true);
   const creditCardFeeEnabled = settingEnabled(settings, `${prefix}CreditCardFeeEnabled`, paymentType === 'Guest Pay at Pickup');
   const creditCardFeeVisible = settingEnabled(settings, `${prefix}CreditCardFeeVisible`, creditCardFeeEnabled);
   const serviceFeeAmount = serviceFeeEnabled ? roundMoney(Number(subtotal || 0) * serviceFeeRate) : 0;

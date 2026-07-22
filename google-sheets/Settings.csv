@@ -20,7 +20,7 @@ TruckOrderingCloseTime,16:30
 TruckServiceFeeRate,0.22
 TruckCreditCardFeeRate,0.03
 TruckCreditCardFeeBase,SubtotalPlusServiceFee
-TruckMemberServiceFeeEnabled,TRUE
+TruckMemberServiceFeeEnabled,FALSE
 TruckMemberServiceFeeVisible,FALSE
 TruckMemberCreditCardFeeEnabled,FALSE
 TruckMemberCreditCardFeeVisible,FALSE

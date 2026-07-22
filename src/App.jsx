@@ -595,13 +595,16 @@ function paymentFeeSettingsPrefix(paymentType, customerType = '') {
 function calculateTruckFees({ subtotal, tipAmount, paymentType, settings, memberCustomerType = '' }) {
   const customerType = customerTypeForPayment(paymentType, memberCustomerType);
   const prefix = paymentFeeSettingsPrefix(paymentType, customerType);
-  const defaultServiceFeeRate = prefix === 'TruckGuest'
+  const isGolfMember = customerType === 'Golf Member';
+  const defaultServiceFeeRate = isGolfMember
+    ? 0
+    : prefix === 'TruckGuest'
     ? 0.20
     : percentSetting(settings, 'TruckServiceFeeRate', 0.22);
   const serviceFeeRate = percentSetting(settings, `${prefix}ServiceFeeRate`, defaultServiceFeeRate);
   const creditCardFeeRate = percentSetting(settings, 'TruckCreditCardFeeRate', 0.03);
-  const serviceFeeEnabled = settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
-  const serviceFeeVisible = settingEnabled(settings, `${prefix}ServiceFeeVisible`, customerType !== 'Golf Member');
+  const serviceFeeEnabled = !isGolfMember && settingEnabled(settings, `${prefix}ServiceFeeEnabled`, true);
+  const serviceFeeVisible = !isGolfMember && settingEnabled(settings, `${prefix}ServiceFeeVisible`, true);
   const creditCardFeeEnabled = settingEnabled(settings, `${prefix}CreditCardFeeEnabled`, paymentType === 'Guest Pay at Pickup');
   const creditCardFeeVisible = settingEnabled(settings, `${prefix}CreditCardFeeVisible`, creditCardFeeEnabled);
   const serviceFeeAmount = serviceFeeEnabled ? roundMoney(Number(subtotal || 0) * serviceFeeRate) : 0;
@@ -681,6 +684,9 @@ function displayTipLabel(label) {
 }
 
 function tipDetails(subtotal, tipChoice, customTip) {
+  if (String(tipChoice || '') === '') {
+    return { amount: 0, label: '' };
+  }
   if (tipChoice === 'custom') {
     const custom = Math.max(0, Number(customTip || 0) || 0);
     return { amount: custom, label: custom > 0 ? 'Custom' : 'No tip' };
@@ -2060,7 +2066,7 @@ function TruckOrderPage() {
   const [form, setForm] = useState({
     paymentType: savedConfirmation?.paymentType || 'Member Account',
     guestCardType: savedConfirmation?.guestCardType || '',
-    tipChoice: savedConfirmation?.tipChoice || '20',
+    tipChoice: savedConfirmation?.tipChoice || '',
     customTip: '',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
@@ -2729,8 +2735,12 @@ function TruckOrderPage() {
                   <span>{checkoutFees.creditCardFeeLabel || 'Credit card transaction fee'}</span><strong>{currency(checkoutFees.creditCardFeeAmount)}</strong>
                 </>
               )}
-              <span>{checkoutTip.label && checkoutTip.label !== 'No tip' ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
-              <span>Estimated total</span><strong>{currency(checkoutTotal)}</strong>
+              {checkoutTip.amount > 0 && (
+                <>
+                  <span>{checkoutTip.label ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
+                </>
+              )}
+              <span>Total</span><strong>{currency(checkoutTotal)}</strong>
             </div>
             {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
           </div>

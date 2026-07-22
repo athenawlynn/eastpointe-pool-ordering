@@ -619,7 +619,7 @@ function calculateTruckFees({ subtotal, tipAmount, paymentType, settings, member
     serviceFeeRate,
     serviceFeeAmount,
     serviceFeeVisible,
-    creditCardFeeLabel: `Credit Card Upcharge (${Math.round(creditCardFeeRate * 100)}%)`,
+    creditCardFeeLabel: `Credit Card Service Charge (${Math.round(creditCardFeeRate * 100)}%)`,
     creditCardFeeRate,
     creditCardFeeAmount,
     creditCardFeeVisible,
@@ -1441,7 +1441,7 @@ function OrderPage() {
     fulfillmentType: savedConfirmation?.fulfillmentType || 'Pickup',
     paymentType: savedConfirmation?.paymentType || 'Member Account',
     guestCardType: savedConfirmation?.guestCardType || '',
-    tipChoice: savedConfirmation?.tipChoice || '20',
+    tipChoice: savedConfirmation?.tipChoice || '',
     customTip: '',
     memberName: savedConfirmation?.memberName || '',
     memberNumber: savedConfirmation?.memberNumber || '',
@@ -2017,8 +2017,12 @@ function OrderPage() {
             )}
             <div className="guestTotalBox">
               <span>Subtotal</span><strong>{currency(subtotal)}</strong>
-              <span>{checkoutTip.label && checkoutTip.label !== 'No tip' ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
-              <span>{isGuestPayment ? 'Estimated total' : 'Total with tip'}</span><strong>{currency(checkoutTotal)}</strong>
+              {checkoutTip.amount > 0 && (
+                <>
+                  <span>{checkoutTip.label ? `Tip (${checkoutTip.label})` : 'Tip'}</span><strong>{currency(checkoutTip.amount)}</strong>
+                </>
+              )}
+              <span>Total</span><strong>{currency(checkoutTotal)}</strong>
             </div>
             {isGuestPayment && <div className="paymentDueNotice"><strong>Credit card required at pickup.</strong> Orders will not be released without the guest presenting a valid card to staff.</div>}
           </div>
@@ -4680,7 +4684,7 @@ function TruckOperationsGuide() {
                 <li><strong>CustomerType</strong>: controls truck fee visibility.</li>
                 <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
                 <li><strong>RSM</strong>: visible 22% service fee.</li>
-                <li><strong>Guest - Pay at Pickup</strong>: visible 20% service charge plus visible 3% credit card upcharge.</li>
+                <li><strong>Guest - Pay at Pickup</strong>: visible 20% service charge plus visible 3% credit card service charge.</li>
               </ul>
             </article>
             <article className="managerGuideCard">

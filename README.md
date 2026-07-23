@@ -69,26 +69,18 @@ Important settings:
 
 ### Required Members columns
 
-`MemberNumber, Status`
+`MemberNumber, Status, CustomerType`
 
 The MVP uses simple validation only:
 
 - The submitted member number must be 4–6 digits.
 - The member number must exist in the `Members` tab.
 - The member number must have `Status` set to `Active`.
+- `CustomerType` controls truck checkout fees. Use `Golf Member` for Golf Full Single/Golf members and `RSM` for all active RSM categories.
 
 The member's typed name is collected for the bar ticket, but it is **not** checked against the member database.
 
-The included test members include:
-- `1001`
-- `1002`
-- `1003`
-- `11225`
-- `11890`
-- `12456`
-- and additional fake 4–5 digit numbers in `Members.csv`
-
-For real use, replace the fake member list with the club’s approved member-number list.
+The included `Members.csv` is generated from the Eastpointe member category workbook. It includes Golf Full Single, Golf, RSM: House/Social, RSM: Sports, RSM: Summer, RSM: Tennis, and RSM: Young Executive members. Inactive/Suspended members are excluded.
 
 
 ## Apps Script setup

@@ -1,36 +1,1244 @@
-MemberNumber,Status,CustomerType
-1001,Active,Golf Member
-1002,Active,Golf Member
-1003,Active,Golf Member
-1004,Active,Golf Member
-1005,Active,Golf Member
-11225,Active,Golf Member
-11890,Active,Golf Member
-12456,Active,Golf Member
-13002,Active,Golf Member
-14567,Active,Golf Member
-15001,Active,Golf Member
-16234,Active,Golf Member
-17345,Active,Golf Member
-18456,Active,Golf Member
-19567,Active,Golf Member
-20678,Active,Golf Member
-21789,Active,Golf Member
-22890,Active,Golf Member
-23901,Active,Golf Member
-24012,Active,Golf Member
-25123,Active,Golf Member
-26234,Active,Golf Member
-27345,Active,Golf Member
-28456,Active,Golf Member
-29567,Active,Golf Member
-06741,Active,Golf Member
-07088,Active,Golf Member
-06939,Active,Golf Member
-06271,Active,Golf Member
-06470,Active,Golf Member
-06949,Active,RSM
-07056,Active,RSM
-06592,Active,RSM
-0693,Active,RSM
-9238,Active,RSM
+MemberNumber,Status,CustomerType,Name,MemberCategory
+02555,Active,Golf Member,"Abel, Bruce",Golf Full Single
+06382,Active,Golf Member,"Acimovic, Aleks",Golf Full Single
+06081,Active,Golf Member,"Annun, David",Golf Full Single
+04916,Active,Golf Member,"Arseneault, David",Golf Full Single
+07421,Active,Golf Member,"Aumick, Jeff",Golf Full Single
+04771,Active,Golf Member,"Baker, Jane",Golf Full Single
+06375,Active,Golf Member,"Bavaro, Joseph",Golf Full Single
+07300,Active,Golf Member,"Beatty, Douglas",Golf Full Single
+03024,Active,Golf Member,"Bentley, Bruce",Golf Full Single
+06585,Active,Golf Member,"Berger, Michael",Golf Full Single
+06536,Active,Golf Member,"Berke, Brian",Golf Full Single
+04193,Active,Golf Member,"Berler, Beverly",Golf Full Single
+07222,Active,Golf Member,"Blandino, Frank",Golf Full Single
+06976,Active,Golf Member,"Blizzard, Mark",Golf Full Single
+06586,Active,Golf Member,"Bodell, Ian",Golf Full Single
+04863,Active,Golf Member,"Bohacik, Terry",Golf Full Single
+07036,Active,Golf Member,"Borgmeyer, Scott",Golf Full Single
+06980,Active,Golf Member,"Bowers, Barry",Golf Full Single
+06629,Active,Golf Member,"Brattebo, Brian",Golf Full Single
+07601,Active,Golf Member,"Brennan, Bill",Golf Full Single
+06566,Active,Golf Member,"Bruno, Ernest",Golf Full Single
+07484,Active,Golf Member,"Burke, Robert",Golf Full Single
+07275,Active,Golf Member,"Campbell, Debbie",Golf Full Single
+06199,Active,Golf Member,"Cantor, Max",Golf Full Single
+00855,Active,Golf Member,"Capko, William",Golf Full Single
+06768,Active,Golf Member,"Carter, Kathy",Golf Full Single
+07493,Active,Golf Member,"Chapin, Terry",Golf Full Single
+07439,Active,Golf Member,"Chase, Jeffry",Golf Full Single
+06871,Active,Golf Member,"Chesler, Judith",Golf Full Single
+06228,Active,Golf Member,"Christiano, Albert",Golf Full Single
+07084,Active,Golf Member,"Cohn, Marc",Golf Full Single
+06061,Active,Golf Member,"Colemon, Gerald",Golf Full Single
+06843,Active,Golf Member,"Colletti, Charlie",Golf Full Single
+04904,Active,Golf Member,"Costa, Jorge",Golf Full Single
+07186,Active,Golf Member,"Costa, Robert",Golf Full Single
+07138,Active,Golf Member,"Cox, Gayla",Golf Full Single
+07492,Active,Golf Member,"Crissman, Mitch",Golf Full Single
+07189,Active,Golf Member,"Cunningham, Richard",Golf Full Single
+07393,Active,Golf Member,"Dameo, Rocque",Golf Full Single
+06173,Active,Golf Member,"Delaney, Michael",Golf Full Single
+06139,Active,Golf Member,"DellAquila, Lawrence",Golf Full Single
+02482,Active,Golf Member,"Di Serio, Victor",Golf Full Single
+06198,Active,Golf Member,"Dressler, Murray",Golf Full Single
+07593,Active,Golf Member,"Dunst, Isabel",Golf Full Single
+03072,Active,Golf Member,"Effert, Jerry",Golf Full Single
+07098,Active,Golf Member,"Elbin, Kelly",Golf Full Single
+07283,Active,Golf Member,"Franco, Eric",Golf Full Single
+02546,Active,Golf Member,"Gagnon, Don",Golf Full Single
+02427,Active,Golf Member,"Galonek, Edward",Golf Full Single
+06740,Active,Golf Member,"Geist, Richard",Golf Full Single
+06340,Active,Golf Member,"Gerstein, Elaine",Golf Full Single
+06545,Active,Golf Member,"Gilvar, David",Golf Full Single
+07004,Active,Golf Member,"Goldman, Gail",Golf Full Single
+07499,Active,Golf Member,"Grace, Holly",Golf Full Single
+06222,Active,Golf Member,"Grossman, Janet",Golf Full Single
+06728,Active,Golf Member,"Grosso, Jacqueline",Golf Full Single
+07270,Active,Golf Member,"Halbreich, Jodi",Golf Full Single
+04664,Active,Golf Member,"Hano, Gail",Golf Full Single
+07698,Active,Golf Member,"Hellman, Jaime",Golf Full Single
+07139,Active,Golf Member,"Henitz, Diana",Golf Full Single
+03027,Active,Golf Member,"Hennessey, Jay",Golf Full Single
+07130,Active,Golf Member,"Hensel, Bob",Golf Full Single
+06162,Active,Golf Member,"Higgins, Jim",Golf Full Single
+07479,Active,Golf Member,"Hollis, Mike",Golf Full Single
+06707,Active,Golf Member,"Holloway, Scott",Golf Full Single
+07357,Active,Golf Member,"Homburger, Myna",Golf Full Single
+04133,Active,Golf Member,"Hutchinson, Rick",Golf Full Single
+07124,Active,Golf Member,"Hutton, Thomas",Golf Full Single
+04719,Active,Golf Member,"Ivins, John",Golf Full Single
+06867,Active,Golf Member,"Jackson, Scott",Golf Full Single
+04490,Active,Golf Member,"Jacobs, Fred",Golf Full Single
+07524,Active,Golf Member,"Jacobs, Marci",Golf Full Single
+06601,Active,Golf Member,"Jennings, Bob",Golf Full Single
+06859,Active,Golf Member,"Jones, Dale",Golf Full Single
+04025,Active,Golf Member,"Jones, Nancy",Golf Full Single
+02464,Active,Golf Member,"Justine, Jerry",Golf Full Single
+06076,Active,Golf Member,"Kates, Penny",Golf Full Single
+07156,Active,Golf Member,"Kellogg, Dave",Golf Full Single
+07056,Active,Golf Member,"Kittredge, Caren",Golf Full Single
+06372,Active,Golf Member,"Kridel, Nancy",Golf Full Single
+06204,Active,Golf Member,"LaDonna, Doreen",Golf Full Single
+07220,Active,Golf Member,"Lancianese, Anthony",Golf Full Single
+07798,Active,Golf Member,"Lane, Brenda",Golf Full Single
+03074,Active,Golf Member,"Langbart, Marsha",Golf Full Single
+06058,Active,Golf Member,"Larsen, Glenn",Golf Full Single
+07155,Active,Golf Member,"Lechtman, Duke",Golf Full Single
+06894,Active,Golf Member,"Lerner, Mimi",Golf Full Single
+07586,Active,Golf Member,"Lipari, John",Golf Full Single
+02466,Active,Golf Member,"Lisberg, Kathy",Golf Full Single
+06950,Active,Golf Member,"Long, Gordon",Golf Full Single
+07404,Active,Golf Member,"Lurie, Geoffrey",Golf Full Single
+06543,Active,Golf Member,"Lyons, Jim",Golf Full Single
+04869,Active,Golf Member,"Malvasio, Joseph",Golf Full Single
+06741,Active,Golf Member,"Mangiafico, Cynthia",Golf Full Single
+04819,Active,Golf Member,"Marois, Germain",Golf Full Single
+00918,Active,Golf Member,"Marshall, Tim",Golf Full Single
+07212,Active,Golf Member,"Miller, Kathy",Golf Full Single
+06710,Active,Golf Member,"Miller, Madeleine",Golf Full Single
+02448,Active,Golf Member,"Monahan, Joan",Golf Full Single
+04351,Active,Golf Member,"Morris, Alan",Golf Full Single
+06985,Active,Golf Member,"Mortman, David",Golf Full Single
+06593,Active,Golf Member,"Murphy, James",Golf Full Single
+07369,Active,Golf Member,"Myers, Frankie",Golf Full Single
+07491,Active,Golf Member,"Nevins, Theodore",Golf Full Single
+00127,Active,Golf Member,"Oberman, Ellen",Golf Full Single
+04859,Active,Golf Member,"Olak, Jemi",Golf Full Single
+06371,Active,Golf Member,"Paradise, Joseph",Golf Full Single
+06578,Active,Golf Member,"Parisi, Robert",Golf Full Single
+06610,Active,Golf Member,"Passaro, Eileen",Golf Full Single
+06052,Active,Golf Member,"Pinsky, Stephanie",Golf Full Single
+03070,Active,Golf Member,"Plauche, Skip",Golf Full Single
+02529,Active,Golf Member,"Plonner, Tony",Golf Full Single
+06794,Active,Golf Member,"Ponn, Terri",Golf Full Single
+04903,Active,Golf Member,"Porter, David",Golf Full Single
+06051,Active,Golf Member,"Potash, Barbara",Golf Full Single
+06452,Active,Golf Member,"Price, Lori",Golf Full Single
+00172,Active,Golf Member,"Puccini, Joan",Golf Full Single
+06716,Active,Golf Member,"Rashad, Ahmad",Golf Full Single
+03080,Active,Golf Member,"Rogell, Pat",Golf Full Single
+06968,Active,Golf Member,"Rossman, Nancy",Golf Full Single
+07017,Active,Golf Member,"Rotter, Rebecca",Golf Full Single
+06644,Active,Golf Member,"Rubiera, Nirio",Golf Full Single
+07086,Active,Golf Member,"Rubin, Amy",Golf Full Single
+06771,Active,Golf Member,"Russell, Martha",Golf Full Single
+07135,Active,Golf Member,"Sartorius, Bob",Golf Full Single
+00945,Active,Golf Member,"Saunders, Dean",Golf Full Single
+07159,Active,Golf Member,"Schachter, Deborah",Golf Full Single
+06581,Active,Golf Member,"Schiller, Wallace",Golf Full Single
+07070,Active,Golf Member,"Scott, Benjamin",Golf Full Single
+06392,Active,Golf Member,"Seidman, Sidney",Golf Full Single
+07718,Active,Golf Member,"Shapiro, Steve",Golf Full Single
+06056,Active,Golf Member,"Sica, Monica",Golf Full Single
+00053,Active,Golf Member,"Singer, Henry",Golf Full Single
+07431,Active,Golf Member,"Slomin, Ed",Golf Full Single
+06640,Active,Golf Member,"Smyth, Paul",Golf Full Single
+04748,Active,Golf Member,"Sparks, Frank",Golf Full Single
+04202,Active,Golf Member,"Sperber, Susan",Golf Full Single
+00319,Active,Golf Member,"Spiess, Joseph",Golf Full Single
+02518,Active,Golf Member,"Stoeckle, Joseph",Golf Full Single
+04096,Active,Golf Member,"Telman, Don",Golf Full Single
+06853,Active,Golf Member,"Teta, Jane",Golf Full Single
+07105,Active,Golf Member,"Thompson, Scott",Golf Full Single
+06387,Active,Golf Member,"Timmer, Geoff",Golf Full Single
+07200,Active,Golf Member,"Turnberger, Michael",Golf Full Single
+07481,Active,Golf Member,"Turner, Chuck",Golf Full Single
+02459,Active,Golf Member,"Turner, Thomas Jack",Golf Full Single
+04969,Active,Golf Member,"Venditti, John",Golf Full Single
+07071,Active,Golf Member,"Waltz, Karen",Golf Full Single
+07490,Active,Golf Member,"Ward, Roy",Golf Full Single
+04465,Active,Golf Member,"Weible, Bill",Golf Full Single
+07510,Active,Golf Member,"Weigand, Gerard",Golf Full Single
+07206,Active,Golf Member,"Werboff, Robert",Golf Full Single
+00997,Active,Golf Member,"Wing-Lyon, Maria",Golf Full Single
+06570,Active,Golf Member,"Winn, Joseph",Golf Full Single
+02480,Active,Golf Member,"Winston, Michael",Golf Full Single
+07120,Active,Golf Member,"Woon, Cindy",Golf Full Single
+07584,Active,Golf Member,"Zannella, Joanne",Golf Full Single
+06911,Active,Golf Member,"Accomando, Ben",Golf
+07243,Active,Golf Member,"Ahern, John",Golf
+06800,Active,Golf Member,"Andersson, Peter",Golf
+06150,Active,Golf Member,"Andrew, Herbert",Golf
+06087,Active,Golf Member,"Anselmo, John",Golf
+04312,Active,Golf Member,"Anthony, Jeff",Golf
+07085,Active,Golf Member,"Aschenbach, William",Golf
+06753,Active,Golf Member,"Audett, Trudy",Golf
+06995,Active,Golf Member,"Bain, Curtis",Golf
+06227,Active,Golf Member,"Baker, William",Golf
+02528,Active,Golf Member,"Balderston, Bruce",Golf
+07446,Active,Golf Member,"Baldwin, George",Golf
+07474,Active,Golf Member,"Berman, Ira",Golf
+06457,Active,Golf Member,"Bernstein, Stephen",Golf
+04975,Active,Golf Member,"Beron, David",Golf
+07191,Active,Golf Member,"Beron, Herb",Golf
+06038,Active,Golf Member,"Berrios, Wilbert",Golf
+06487,Active,Golf Member,"Blalock, Todd",Golf
+07091,Active,Golf Member,"Blume, Eric",Golf
+06850,Active,Golf Member,"Bonheim, Nelson",Golf
+07129,Active,Golf Member,"Booty, Peter",Golf
+06940,Active,Golf Member,"Boss, Daniel",Golf
+07716,Active,Golf Member,"Braverman, Josh",Golf
+07856,Active,Golf Member,"Bravo, Angela",Golf
+06856,Active,Golf Member,"Bray, Doug",Golf
+04258,Active,Golf Member,"Brilliant, Alan",Golf
+07573,Active,Golf Member,"Brody, Jon",Golf
+07695,Active,Golf Member,"Buckley, Gregory",Golf
+07674,Active,Golf Member,"Burdette, Ian",Golf
+06284,Active,Golf Member,"Butler, Robert",Golf
+07703,Active,Golf Member,"Caldwell, Matthew",Golf
+06735,Active,Golf Member,"Callandrillo, James",Golf
+07169,Active,Golf Member,"Campbell, Scott",Golf
+04648,Active,Golf Member,"Campion, Doug",Golf
+07495,Active,Golf Member,"Caplan, Wayne",Golf
+07166,Active,Golf Member,"Capobianco-Bullard, Chery",Golf
+07552,Active,Golf Member,"Capotis, Homer",Golf
+07485,Active,Golf Member,"Capp, Harvey",Golf
+07219,Active,Golf Member,"Cappellano, Rich",Golf
+06011,Active,Golf Member,"Caramante, Patrick",Golf
+06770,Active,Golf Member,"Castro, Julia",Golf
+04992,Active,Golf Member,"Cavallaro, Tom",Golf
+07662,Active,Golf Member,"Cerretani, Craig",Golf
+06832,Active,Golf Member,"Chan, Paul",Golf
+06900,Active,Golf Member,"Chapman, Dan",Golf
+07468,Active,Golf Member,"Chernes, Josh",Golf
+07477,Active,Golf Member,"Chick, Cynthia",Golf
+06970,Active,Golf Member,"Clapton, Colin",Golf
+02503,Active,Golf Member,"Clarkson, William",Golf
+04972,Active,Golf Member,"Clerihue, Donald",Golf
+06896,Active,Golf Member,"Close, Joshua",Golf
+06429,Active,Golf Member,"Cogen, Frederick",Golf
+04549,Active,Golf Member,"Colannino, Dominic",Golf
+07596,Active,Golf Member,"Cook, Jerry",Golf
+07371,Active,Golf Member,"Costa, Anthony",Golf
+07745,Active,Golf Member,"Costello, Al",Golf
+07480,Active,Golf Member,"Coughlin, Timothy",Golf
+04352,Active,Golf Member,"Cowhey, Tom",Golf
+06599,Active,Golf Member,"Crowley, William",Golf
+06955,Active,Golf Member,"Cybulski, Jane",Golf
+06522,Active,Golf Member,"Danziger, Carl",Golf
+04335,Active,Golf Member,"Davis, David",Golf
+06541,Active,Golf Member,"Davis, Peggy",Golf
+07529,Active,Golf Member,"DeAngelis, Daniel",Golf
+01635,Active,Golf Member,"DeBellis, Anthony",Golf
+07101,Active,Golf Member,"DeCapua, Vincent",Golf
+04060,Active,Golf Member,"DeMuro, Peter",Golf
+06648,Active,Golf Member,"Dinzik, Drew",Golf
+06603,Active,Golf Member,"Doherty, Thomas",Golf
+07303,Active,Golf Member,"Domney, Steven",Golf
+07281,Active,Golf Member,"Doyle, Blake",Golf
+07282,Active,Golf Member,"Doyle, Matt",Golf
+04315,Active,Golf Member,"Doyle, Richard",Golf
+06791,Active,Golf Member,"Duckrow, Richard",Golf
+07677,Active,Golf Member,"Durrett, Chase",Golf
+07216,Active,Golf Member,"Duryea, Ron",Golf
+02428,Active,Golf Member,"Elowitch, Stanley",Golf
+07106,Active,Golf Member,"Elson, Lewis",Golf
+07055,Active,Golf Member,"Emerson, Chris",Golf
+07370,Active,Golf Member,"Esparo, Lynne",Golf
+07201,Active,Golf Member,"Esser, Jim",Golf
+06397,Active,Golf Member,"Farber, Stephen",Golf
+06187,Active,Golf Member,"Feldman, Joanne",Golf
+00141,Active,Golf Member,"Fenton, Barry",Golf
+06346,Active,Golf Member,"Ferris, Carl",Golf
+06852,Active,Golf Member,"Ficarro, Chase",Golf
+07122,Active,Golf Member,"Fico, John",Golf
+07705,Active,Golf Member,"Fischbein, Richard",Golf
+06798,Active,Golf Member,"Fisher, Charles",Golf
+07651,Active,Golf Member,"Fishman, Loel",Golf
+06847,Active,Golf Member,"Fleming, Ralph",Golf
+07246,Active,Golf Member,"Foley, Michael",Golf
+02559,Active,Golf Member,"Forbush, Cliff",Golf
+06506,Active,Golf Member,"Frankfurth, Paul",Golf
+07003,Active,Golf Member,"Friedlander, Roger",Golf
+07461,Active,Golf Member,"Friedman, Steven",Golf
+07087,Active,Golf Member,"Friend, Jamie",Golf
+07476,Active,Golf Member,"Gaito, Linda",Golf
+07385,Active,Golf Member,"Galasso, William",Golf
+00710,Active,Golf Member,"Gallen, John",Golf
+06569,Active,Golf Member,"Garden, Thomas",Golf
+06677,Active,Golf Member,"Garfinkel, John",Golf
+07511,Active,Golf Member,"Gartenfeld, Mark",Golf
+06772,Active,Golf Member,"Gates, Glenn",Golf
+07482,Active,Golf Member,"Geist, Randall",Golf
+07580,Active,Golf Member,"Gelb, Mark",Golf
+07263,Active,Golf Member,"Genco, Michael",Golf
+07520,Active,Golf Member,"Genovesi, Joe",Golf
+06027,Active,Golf Member,"Geraci, John",Golf
+07313,Active,Golf Member,"Gershkowitz, Laurie",Golf
+07595,Active,Golf Member,"Gershowitz, Howard",Golf
+07454,Active,Golf Member,"Gerstel, Larry",Golf
+01484,Active,Golf Member,"Gilbert, John",Golf
+06388,Active,Golf Member,"Gilfand, Steven",Golf
+06824,Active,Golf Member,"Gill, Kevin",Golf
+07127,Active,Golf Member,"Gluckstern, Michael",Golf
+02561,Active,Golf Member,"Goldman, William H.",Golf
+06942,Active,Golf Member,"Goldstein, Bruce",Golf
+03036,Active,Golf Member,"Gonzales, Paul",Golf
+04441,Active,Golf Member,"Goswami, Achal",Golf
+07238,Active,Golf Member,"Green, Priscilla",Golf
+07366,Active,Golf Member,"Grimason, Alan",Golf
+07532,Active,Golf Member,"Grossman, Robert",Golf
+06708,Active,Golf Member,"Gruen, John",Golf
+06138,Active,Golf Member,"Guarnaccia, Aurora",Golf
+06430,Active,Golf Member,"Guerrieri, David",Golf
+06925,Active,Golf Member,"Hacker, Marleen",Golf
+02035,Active,Golf Member,"Hamblin, Paul",Golf
+06025,Active,Golf Member,"Hamilton, Joe",Golf
+02429,Active,Golf Member,"Hanley, Bill",Golf
+06886,Active,Golf Member,"Harders, William",Golf
+06957,Active,Golf Member,"Harrison, Alfred",Golf
+06427,Active,Golf Member,"Hausman, Bruce",Golf
+07029,Active,Golf Member,"Healey, Gregg",Golf
+07614,Active,Golf Member,"Hedde, Glenn",Golf
+07398,Active,Golf Member,"Hess, Leonard",Golf
+04148,Active,Golf Member,"Heyman, Ken",Golf
+07403,Active,Golf Member,"Hicks, Michael",Golf
+07574,Active,Golf Member,"Holl, Barton",Golf
+04747,Active,Golf Member,"Hollifield, Kyle",Golf
+07346,Active,Golf Member,"Homer, Mark",Golf
+07287,Active,Golf Member,"Hornstein, Debbie",Golf
+07365,Active,Golf Member,"Hubka, Cole",Golf
+06592,Active,Golf Member,"Hughes, Robert",Golf
+04461,Active,Golf Member,"Hutensky, Harold",Golf
+06828,Active,Golf Member,"Hyman, George",Golf
+02325,Active,Golf Member,"Iannazzi, Donald",Golf
+07428,Active,Golf Member,"Izzo, Joe",Golf
+04553,Active,Golf Member,"Jackson, Ivor",Golf
+07525,Active,Golf Member,"Jankus, Thomas",Golf
+04773,Active,Golf Member,"Jannazzo, Don",Golf
+07049,Active,Golf Member,"Johnson, Erik",Golf
+04921,Active,Golf Member,"Johnson, Robert",Golf
+06664,Active,Golf Member,"Jones, Ray",Golf
+07620,Active,Golf Member,"Judd, John",Golf
+07256,Active,Golf Member,"Kamin, Sue",Golf
+07374,Active,Golf Member,"Kastil, Victor",Golf
+07367,Active,Golf Member,"Kaufman, Howie",Golf
+07064,Active,Golf Member,"Kessler, Craig",Golf
+06400,Active,Golf Member,"Kiesling, Paul",Golf
+06470,Active,Golf Member,"Killory, Daniel",Golf
+03066,Active,Golf Member,"King, Susan",Golf
+06977,Active,Golf Member,"King, William",Golf
+06618,Active,Golf Member,"Kirk, Mark",Golf
+07544,Active,Golf Member,"Klein, Frank",Golf
+07488,Active,Golf Member,"Klein, Stuart",Golf
+06823,Active,Golf Member,"Kleinfeld, Robert",Golf
+07551,Active,Golf Member,"Kneeland, Paul",Golf
+07531,Active,Golf Member,"Koehler, Jamie",Golf
+04576,Active,Golf Member,"Kolker, Harvey",Golf
+07611,Active,Golf Member,"Koltun, Lisa",Golf
+07026,Active,Golf Member,"Korbo, Jim",Golf
+07516,Active,Golf Member,"Kornblum, Alan",Golf
+07507,Active,Golf Member,"Krain, Dick",Golf
+04636,Active,Golf Member,"Kulok, William",Golf
+07460,Active,Golf Member,"Lamb, Susan",Golf
+07153,Active,Golf Member,"Lamparello, Francis",Golf
+07469,Active,Golf Member,"Landers, Nathan",Golf
+02537,Active,Golf Member,"Lane, William",Golf
+04768,Active,Golf Member,"Langburd, Donna",Golf
+06949,Active,Golf Member,"Lanigan, Charles",Golf
+00436,Active,Golf Member,"Lassman, Ira",Golf
+07663,Active,Golf Member,"Laughlin, David",Golf
+00160,Active,Golf Member,"Leichman, Kenneth",Golf
+06747,Active,Golf Member,"Levine, Stuart",Golf
+07629,Active,Golf Member,"Levine, Wayne",Golf
+06930,Active,Golf Member,"Lewin, George",Golf
+07455,Active,Golf Member,"Locascio, Thomas",Golf
+06808,Active,Golf Member,"London, Neil",Golf
+07550,Active,Golf Member,"Loughran, Paul",Golf
+06013,Active,Golf Member,"Lukowiak, Ronald",Golf
+04805,Active,Golf Member,"Lynn, John",Golf
+04488,Active,Golf Member,"Lyons, Mike",Golf
+02352,Active,Golf Member,"Lyons, Timothy",Golf
+07636,Active,Golf Member,"Macdonald, Ken",Golf
+07600,Active,Golf Member,"Macintyre, Julie",Golf
+06006,Active,Golf Member,"Magula, Dusan",Golf
+01433,Active,Golf Member,"Mancinelli, Lou",Golf
+07509,Active,Golf Member,"Mandel, William",Golf
+07269,Active,Golf Member,"Maounis, Matthew",Golf
+06967,Active,Golf Member,"Marino, Albert",Golf
+04327,Active,Golf Member,"Markarian, David",Golf
+06914,Active,Golf Member,"Marks, Michael",Golf
+06105,Active,Golf Member,"Marose, Jason",Golf
+06149,Active,Golf Member,"Martini, George",Golf
+02430,Active,Golf Member,"Mason, Dean",Golf
+06381,Active,Golf Member,"Mate, Bill",Golf
+07753,Active,Golf Member,"McArdle, Mike",Golf
+06874,Active,Golf Member,"McCann, Richard",Golf
+07590,Active,Golf Member,"McDonough, William",Golf
+06071,Active,Golf Member,"McGrath, Robert",Golf
+06271,Active,Golf Member,"McHugh, James",Golf
+07447,Active,Golf Member,"McNerney, Mike",Golf
+06176,Active,Golf Member,"McTernan, Kevin",Golf
+07557,Active,Golf Member,"Meckert, Bill",Golf
+07515,Active,Golf Member,"Mecklinger, Shelly",Golf
+02484,Active,Golf Member,"Meehan, Richard Earle",Golf
+06779,Active,Golf Member,"Meierling, Jan",Golf
+07512,Active,Golf Member,"Meloan, Paul",Golf
+06650,Active,Golf Member,"Meriano, Anthony",Golf
+07285,Active,Golf Member,"Messuri, Alex",Golf
+06256,Active,Golf Member,"Meyer, Kevin",Golf
+06868,Active,Golf Member,"Michaels, Wayne",Golf
+07233,Active,Golf Member,"Michals, Brad",Golf
+07012,Active,Golf Member,"Miller, Jon",Golf
+07116,Active,Golf Member,"Millman, Clyde",Golf
+07202,Active,Golf Member,"Minarsky, Paul",Golf
+07096,Active,Golf Member,"Minerd, Brian",Golf
+06835,Active,Golf Member,"Moeller, Joe",Golf
+06389,Active,Golf Member,"Mohen, Thomas",Golf
+07471,Active,Golf Member,"Moore, Becky",Golf
+07359,Active,Golf Member,"Morel, David",Golf
+07675,Active,Golf Member,"Morra, Tom",Golf
+00706,Active,Golf Member,"Mostel, Debbie",Golf
+02485,Active,Golf Member,"Muccini, Alfred",Golf
+07535,Active,Golf Member,"Nadeau, Gerard",Golf
+04775,Active,Golf Member,"Nagin, Laurance Wm.",Golf
+07486,Active,Golf Member,"Newman, David",Golf
+06547,Active,Golf Member,"O'Dea, Evelyn",Golf
+06944,Active,Golf Member,"Ostermayer, Kristen",Golf
+04837,Active,Golf Member,"Ostermayer, Larry",Golf
+04611,Active,Golf Member,"Panico, Bob",Golf
+07704,Active,Golf Member,"Papadakos, James",Golf
+02516,Active,Golf Member,"Paranzino, Joseph",Golf
+07391,Active,Golf Member,"Pasternak, Reuven",Golf
+06645,Active,Golf Member,"Patten, Mark",Golf
+06131,Active,Golf Member,"Payne, Edward",Golf
+06573,Active,Golf Member,"Peltz, David",Golf
+07160,Active,Golf Member,"Picker, Bennett",Golf
+07649,Active,Golf Member,"Pierce, Mike",Golf
+07284,Active,Golf Member,"Piluso, Ron",Golf
+07422,Active,Golf Member,"Pinto, Nina",Golf
+06213,Active,Golf Member,"Pistone, Thomas",Golf
+02520,Active,Golf Member,"Potts, Horace",Golf
+07494,Active,Golf Member,"Pulver, Wayne",Golf
+07583,Active,Golf Member,"Putterman, Larry",Golf
+07088,Active,Golf Member,"Rattigan, James",Golf
+04020,Active,Golf Member,"Recchia, Anthony",Golf
+06730,Active,Golf Member,"Reid, Joe",Golf
+07395,Active,Golf Member,"Reis, George",Golf
+06736,Active,Golf Member,"Reiss, Barry",Golf
+06781,Active,Golf Member,"Repinec, Stephen",Golf
+07203,Active,Golf Member,"Revens, Michael",Golf
+07758,Active,Golf Member,"Ricciardi, Sal",Golf
+07257,Active,Golf Member,"Rogers, Kara",Golf
+06720,Active,Golf Member,"Rose, Mark",Golf
+07467,Active,Golf Member,"Rose, Mark B.",Golf
+07548,Active,Golf Member,"Rosen, Alec",Golf
+06754,Active,Golf Member,"Rosen, Alexander",Golf
+07444,Active,Golf Member,"Rosen, Chris",Golf
+00882,Active,Golf Member,"Ross, William T.",Golf
+06767,Active,Golf Member,"Rosselli, Matteo",Golf
+06965,Active,Golf Member,"Rossman, Richard",Golf
+07615,Active,Golf Member,"Rothstein, Mel",Golf
+06092,Active,Golf Member,"Ruskay, Ryan",Golf
+04949,Active,Golf Member,"Ruzumna, Heidi",Golf
+07592,Active,Golf Member,"Ryan, Bill",Golf
+04218,Active,Golf Member,"Saiontz, Henry",Golf
+06538,Active,Golf Member,"Saland, Woody",Golf
+06872,Active,Golf Member,"Sampedro, Alisa",Golf
+06607,Active,Golf Member,"Sandler, Richard",Golf
+06085,Active,Golf Member,"Sassos, Tom",Golf
+06788,Active,Golf Member,"Schepp, Barry",Golf
+07619,Active,Golf Member,"Schmitt, Adam",Golf
+06734,Active,Golf Member,"Schneiders, Peter",Golf
+07024,Active,Golf Member,"Schwartz, David",Golf
+07109,Active,Golf Member,"Schwartz, Howard",Golf
+02016,Active,Golf Member,"Scranton, Christopher",Golf
+06584,Active,Golf Member,"Sebastiani, Aleksei",Golf
+07496,Active,Golf Member,"Shapira, David",Golf
+06504,Active,Golf Member,"Shapiro, Howie",Golf
+07226,Active,Golf Member,"Sheldon, Beth",Golf
+06292,Active,Golf Member,"Sherling, Ronald",Golf
+06966,Active,Golf Member,"Sifrit, Robert",Golf
+07199,Active,Golf Member,"Silverstein, Jeffrey",Golf
+07131,Active,Golf Member,"Sinnott, Margaret",Golf
+00833,Active,Golf Member,"Sisca, Charlie",Golf
+04434,Active,Golf Member,"Slutsky, Mike",Golf
+07513,Active,Golf Member,"Smith, Beau",Golf
+04815,Active,Golf Member,"Smith, Marshall",Golf
+07504,Active,Golf Member,"Solnick, Richard",Golf
+02551,Active,Golf Member,"Sonntag, Randy",Golf
+07553,Active,Golf Member,"Sparkman, Mark",Golf
+07487,Active,Golf Member,"Spears, Paul",Golf
+04880,Active,Golf Member,"Speckmann, Richard",Golf
+07519,Active,Golf Member,"Srivastava, Arun",Golf
+06080,Active,Golf Member,"Stamberger, Rich",Golf
+07598,Active,Golf Member,"Starace, Louis",Golf
+07062,Active,Golf Member,"Starkman, Nancy",Golf
+06939,Active,Golf Member,"Stoller, Lisa",Golf
+07068,Active,Golf Member,"Stone, Carolyn",Golf
+07211,Active,Golf Member,"Strahan, Bill",Golf
+07475,Active,Golf Member,"Swales, Tom",Golf
+07187,Active,Golf Member,"Szapucki, Matthew",Golf
+06246,Active,Golf Member,"Tapper, Geoffrey",Golf
+01692,Active,Golf Member,"Terenzio, George",Golf
+07025,Active,Golf Member,"Teufel, Timothy",Golf
+07545,Active,Golf Member,"Thaney, Ed",Golf
+07715,Active,Golf Member,"Thorsen, Eric",Golf
+06223,Active,Golf Member,"Thurston, Geoffrey",Golf
+04770,Active,Golf Member,"Tighe, Christopher",Golf
+06414,Active,Golf Member,"Trapanese, Joseph",Golf
+07533,Active,Golf Member,"Tse, Avery",Golf
+02541,Active,Golf Member,"Tucker, Gene",Golf
+07065,Active,Golf Member,"Turco, John",Golf
+07743,Active,Golf Member,"Van Heerden, Erica",Golf
+07436,Active,Golf Member,"Vanson, Mark",Golf
+07301,Active,Golf Member,"Vogler, Paul",Golf
+00992,Active,Golf Member,"Voskanian, Steve",Golf
+07193,Active,Golf Member,"Waitikowich, Butch",Golf
+07459,Active,Golf Member,"Waldron, Joan",Golf
+06683,Active,Golf Member,"Walker, A.J.",Golf
+07500,Active,Golf Member,"Wasser, Alan",Golf
+04987,Active,Golf Member,"Weaver, Ronald",Golf
+07250,Active,Golf Member,"Weinberg, Jay",Golf
+06796,Active,Golf Member,"White, George",Golf
+07497,Active,Golf Member,"White, Stanley",Golf
+06553,Active,Golf Member,"Willinger, Scott",Golf
+07102,Active,Golf Member,"Winston, Scott",Golf
+00208,Active,Golf Member,"Wishner, Rosie",Golf
+06666,Active,Golf Member,"Witkowski, Maureen",Golf
+07052,Active,Golf Member,"Wood, David",Golf
+07597,Active,Golf Member,"Wood, William",Golf
+06525,Active,Golf Member,"Wrubel, Irwin",Golf
+07399,Active,Golf Member,"Zinn, Fredric",Golf
+07699,Active,Golf Member,"Zylstra, Joel",Golf
+07337,Active,RSM,"Abraham, Lauren",RSM: House/Social
+06100,Active,RSM,"Abramson, Mitchell",RSM: House/Social
+06442,Active,RSM,"Adess, Michael",RSM: House/Social
+07304,Active,RSM,"Akers, Matthew",RSM: House/Social
+07627,Active,RSM,"Albert, Jaime",RSM: House/Social
+04502,Active,RSM,"Altman, Rita",RSM: House/Social
+07613,Active,RSM,"Amigone, Marjorie",RSM: House/Social
+04811,Active,RSM,"Anson, Donald",RSM: House/Social
+07843,Active,RSM,"Appel, Alan",RSM: House/Social
+00042,Active,RSM,"Aresi, Rosemary",RSM: House/Social
+07450,Active,RSM,"Aresi, Steven",RSM: House/Social
+06257,Active,RSM,"Aron, Edward",RSM: House/Social
+06971,Active,RSM,"Arone, Chris",RSM: House/Social
+06097,Active,RSM,"Aruta, Arlene",RSM: House/Social
+07363,Active,RSM,"Atkins, Bruce",RSM: House/Social
+07747,Active,RSM,"Auger, Linda",RSM: House/Social
+04914,Active,RSM,"Axelrod, David",RSM: House/Social
+07589,Active,RSM,"Axman, Steven",RSM: House/Social
+06293,Active,RSM,"Babji Rao, Vaibhavi",RSM: House/Social
+07738,Active,RSM,"Backer, Ekatrina",RSM: House/Social
+07435,Active,RSM,"Badiola, Gigi",RSM: House/Social
+07812,Active,RSM,"Baer, Andrew",RSM: House/Social
+07744,Active,RSM,"Bailey, Angie",RSM: House/Social
+07324,Active,RSM,"Bain, Vincent",RSM: House/Social
+07730,Active,RSM,"Baker, Joel",RSM: House/Social
+07729,Active,RSM,"Ball, Brad",RSM: House/Social
+06582,Active,RSM,"Banford, Laura",RSM: House/Social
+04649,Active,RSM,"Baraf, Charles",RSM: House/Social
+06473,Active,RSM,"Barbella, Wanda",RSM: House/Social
+06726,Active,RSM,"Bartolotta, Robert",RSM: House/Social
+07750,Active,RSM,"Barton, Ben",RSM: House/Social
+07386,Active,RSM,"Bass, Lori",RSM: House/Social
+04179,Active,RSM,"Bass, Sigmund",RSM: House/Social
+07638,Active,RSM,"Battaglia, Anthony",RSM: House/Social
+07795,Active,RSM,"Battaglia, Anthony",RSM: House/Social
+07797,Active,RSM,"Battaglia, Anthony",RSM: House/Social
+06471,Active,RSM,"Becker, Robert",RSM: House/Social
+07616,Active,RSM,"Belanger, Marie-Pierre",RSM: House/Social
+07672,Active,RSM,"Benson, MaryLou",RSM: House/Social
+07762,Active,RSM,"Bereflod, Markus",RSM: House/Social
+07183,Active,RSM,"Berger, Barry",RSM: House/Social
+07678,Active,RSM,"Bergman, Stephen",RSM: House/Social
+07858,Active,RSM,"Berk, Bernard",RSM: House/Social
+07575,Active,RSM,"Bernstein, Sandra",RSM: House/Social
+07416,Active,RSM,"Bianchi, Caroline Kahn",RSM: House/Social
+07387,Active,RSM,"Birchby, Keith",RSM: House/Social
+07781,Active,RSM,"Bloch, Edward",RSM: House/Social
+07325,Active,RSM,"Blodgett, Russell",RSM: House/Social
+02401,Active,RSM,"Bonica, Carmela",RSM: House/Social
+07562,Active,RSM,"Bonick, Vikki",RSM: House/Social
+02533,Active,RSM,"Bordett, Robert",RSM: House/Social
+04944,Active,RSM,"Bortone, Salvador",RSM: House/Social
+06718,Active,RSM,"Bourgeois, Barbara",RSM: House/Social
+07839,Active,RSM,"Bowers, Dan",RSM: House/Social
+06559,Active,RSM,"Boyland, Stefan",RSM: House/Social
+06672,Active,RSM,"Boynes, David",RSM: House/Social
+04389,Active,RSM,"Brady, Frank",RSM: House/Social
+06179,Active,RSM,"Brady, Patrick",RSM: House/Social
+04426,Active,RSM,"Branchinelli, Rosetta",RSM: House/Social
+07605,Active,RSM,"Brand, Warren",RSM: House/Social
+06851,Active,RSM,"Brett, Gina",RSM: House/Social
+07766,Active,RSM,"Briggs, Lauren",RSM: House/Social
+07777,Active,RSM,"Briggs, Lauren",RSM: House/Social
+07609,Active,RSM,"Brody, Vicki",RSM: House/Social
+07254,Active,RSM,"Brooks, Michael",RSM: House/Social
+07644,Active,RSM,"Brown, Cale",RSM: House/Social
+07140,Active,RSM,"Brown, David D",RSM: House/Social
+04073,Active,RSM,"Bruce, Jeffrey",RSM: House/Social
+07218,Active,RSM,"Burkowsky, Maura",RSM: House/Social
+07390,Active,RSM,"Caldone, Mark",RSM: House/Social
+07259,Active,RSM,"Campbell, Douglas",RSM: House/Social
+02330,Active,RSM,"Capobianco, Geraldine",RSM: House/Social
+04907,Active,RSM,"Capparelli, Peter",RSM: House/Social
+07690,Active,RSM,"Carlsson, MaryAlice",RSM: House/Social
+07857,Active,RSM,"Carrano, Ray",RSM: House/Social
+01676,Active,RSM,"Carsillo, Mark",RSM: House/Social
+01783,Active,RSM,"Carsillo, Michael E",RSM: House/Social
+06403,Active,RSM,"Carter, Kevin",RSM: House/Social
+07731,Active,RSM,"Casselli, Joanne",RSM: House/Social
+06513,Active,RSM,"Casto, Mary",RSM: House/Social
+07426,Active,RSM,"Castroviejo, Christopher",RSM: House/Social
+06183,Active,RSM,"Catapano, Joanne",RSM: House/Social
+07785,Active,RSM,"Cawthon, Monica",RSM: House/Social
+06946,Active,RSM,"Chakrabarti, Biji",RSM: House/Social
+07831,Active,RSM,"Chanley, Joseph",RSM: House/Social
+06869,Active,RSM,"Chaprinka, Christopher",RSM: House/Social
+07463,Active,RSM,"Char, Jared",RSM: House/Social
+07198,Active,RSM,"Chernow, Ronald",RSM: House/Social
+04615,Active,RSM,"Ciampi, Fred",RSM: House/Social
+06391,Active,RSM,"Cohen, Barry",RSM: House/Social
+07648,Active,RSM,"Cohen, Debra",RSM: House/Social
+07808,Active,RSM,"Colannino, Christine",RSM: House/Social
+07560,Active,RSM,"Cook, Tom",RSM: House/Social
+06576,Active,RSM,"Cookler, Chad",RSM: House/Social
+07221,Active,RSM,"Coratti, Joseph",RSM: House/Social
+00240,Active,RSM,"Cordani, Anne",RSM: House/Social
+06418,Active,RSM,"Correia, David",RSM: House/Social
+06410,Active,RSM,"Cortese, Cory",RSM: House/Social
+07177,Active,RSM,"Cossa, Richard",RSM: House/Social
+07717,Active,RSM,"Costantini, Vince",RSM: House/Social
+07755,Active,RSM,"Crescenzi, Vincent",RSM: House/Social
+07361,Active,RSM,"Crosby, Joan",RSM: House/Social
+07141,Active,RSM,"Cunningham, Diane",RSM: House/Social
+07351,Active,RSM,"Danzger, Neil",RSM: House/Social
+06280,Active,RSM,"DeLucchi, John",RSM: House/Social
+07261,Active,RSM,"DeRubeis, Frederick",RSM: House/Social
+07686,Active,RSM,"DeSantis, Gabriella",RSM: House/Social
+07733,Active,RSM,"DelRose, Jason",RSM: House/Social
+01776,Active,RSM,"Delahunt, John",RSM: House/Social
+07822,Active,RSM,"Delamater, Charles",RSM: House/Social
+07362,Active,RSM,"Demeter, Lia",RSM: House/Social
+04802,Active,RSM,"Desmond, Michael",RSM: House/Social
+04884,Active,RSM,"Devlin, Holly",RSM: House/Social
+07564,Active,RSM,"Dober, Joan",RSM: House/Social
+07621,Active,RSM,"Doctor, Dianne",RSM: House/Social
+07821,Active,RSM,"Doherty, Erin",RSM: House/Social
+07571,Active,RSM,"Domaceti, George",RSM: House/Social
+00077,Active,RSM,"Doppelt, Helen",RSM: House/Social
+07851,Active,RSM,"Dougherty, Chris",RSM: House/Social
+00051,Active,RSM,"Doyle, Helga",RSM: House/Social
+06411,Active,RSM,"Drourr, Elvira",RSM: House/Social
+06542,Active,RSM,"Duffy, Eleanor",RSM: House/Social
+07735,Active,RSM,"Durrett, Jaclyn",RSM: House/Social
+07144,Active,RSM,"Duryea, Nancy",RSM: House/Social
+07761,Active,RSM,"Duty, Sarah",RSM: House/Social
+07767,Active,RSM,"Duygu, Cetin",RSM: House/Social
+07771,Active,RSM,"Duygu, Cetin",RSM: House/Social
+07773,Active,RSM,"Duygu, Cetin",RSM: House/Social
+07554,Active,RSM,"Eastpointe, Prospect",RSM: House/Social
+07299,Active,RSM,"Eckert, Blaise",RSM: House/Social
+07534,Active,RSM,"Edelman, Peter",RSM: House/Social
+06605,Active,RSM,"Efron, Neil",RSM: House/Social
+06820,Active,RSM,"Egozi, Benjamin",RSM: House/Social
+06731,Active,RSM,"Epstein, Edward",RSM: House/Social
+01679,Active,RSM,"Eras, Serkan",RSM: House/Social
+06266,Active,RSM,"Esak, Mary",RSM: House/Social
+06424,Active,RSM,"Etzkin, Joanne",RSM: House/Social
+07350,Active,RSM,"Fabian, Karen",RSM: House/Social
+07572,Active,RSM,"Fahlander, Irene",RSM: House/Social
+07171,Active,RSM,"Falconio, William",RSM: House/Social
+06807,Active,RSM,"Farid, Amir",RSM: House/Social
+00778,Active,RSM,"Fierro, Sam",RSM: House/Social
+07249,Active,RSM,"Fisch, Robert",RSM: House/Social
+07780,Active,RSM,"Fisch, Robert",RSM: House/Social
+00290,Active,RSM,"Fishmann, Blossom",RSM: House/Social
+07610,Active,RSM,"Fisk, Pam",RSM: House/Social
+07799,Active,RSM,"Fitzpatrick, Kevin",RSM: House/Social
+07558,Active,RSM,"Flaherty, Garrett",RSM: House/Social
+07786,Active,RSM,"Fleschner, Andrew",RSM: House/Social
+07630,Active,RSM,"Florio, Leslie",RSM: House/Social
+04238,Active,RSM,"Fowler, Richard",RSM: House/Social
+07594,Active,RSM,"Frank, Rita",RSM: House/Social
+04776,Active,RSM,"Franklin, Barbara",RSM: House/Social
+04527,Active,RSM,"Freedman, Stanford",RSM: House/Social
+07089,Active,RSM,"Freundel, Corey",RSM: House/Social
+06706,Active,RSM,"Friedkin, Richard",RSM: House/Social
+02369,Active,RSM,"Friedland, Barbara",RSM: House/Social
+07542,Active,RSM,"Fuentes, Manuel",RSM: House/Social
+06448,Active,RSM,"Gabor, Joel",RSM: House/Social
+07400,Active,RSM,"Gaete, Frank",RSM: House/Social
+04950,Active,RSM,"Ganz, Sue",RSM: House/Social
+07860,Active,RSM,"Garnett, Catharine",RSM: House/Social
+04154,Active,RSM,"Garofalo, Mike",RSM: House/Social
+07549,Active,RSM,"Garvey, Doug",RSM: House/Social
+06552,Active,RSM,"Gary, Jack",RSM: House/Social
+06864,Active,RSM,"Gary, Mike",RSM: House/Social
+07276,Active,RSM,"Gatto, Erin",RSM: House/Social
+06527,Active,RSM,"Gazlay, Patricia",RSM: House/Social
+02535,Active,RSM,"Gebhart, Lisa Robin",RSM: House/Social
+04111,Active,RSM,"Gelespy, Seymour",RSM: House/Social
+07013,Active,RSM,"Geller, Robert",RSM: House/Social
+07452,Active,RSM,"Gendal, Lisa",RSM: House/Social
+07104,Active,RSM,"George, Linda",RSM: House/Social
+00296,Active,RSM,"Gilden, Anne",RSM: House/Social
+04759,Active,RSM,"Glabman, Chick",RSM: House/Social
+07763,Active,RSM,"Glass, Elliott",RSM: House/Social
+04183,Active,RSM,"Goldman, David",RSM: House/Social
+07569,Active,RSM,"Goldsack, Lisa",RSM: House/Social
+01660,Active,RSM,"Goldstein, Adam",RSM: House/Social
+06172,Active,RSM,"Goldwasser, Gary",RSM: House/Social
+06454,Active,RSM,"Goodman, Barbara",RSM: House/Social
+06826,Active,RSM,"Gordon, Alan",RSM: House/Social
+07360,Active,RSM,"Gordon, Faith",RSM: House/Social
+02389,Active,RSM,"Gordon, Larry",RSM: House/Social
+07195,Active,RSM,"Gordon, Martin",RSM: House/Social
+01639,Active,RSM,"Gouveia, David",RSM: House/Social
+07757,Active,RSM,"Graeve, Christopher",RSM: House/Social
+04745,Active,RSM,"Grazio, Joan",RSM: House/Social
+06439,Active,RSM,"Green, Gilda",RSM: House/Social
+07264,Active,RSM,"Green, Isabella",RSM: House/Social
+06833,Active,RSM,"Greenberg, Harvey",RSM: House/Social
+06269,Active,RSM,"Greenberg, Judy",RSM: House/Social
+07809,Active,RSM,"Greene, Tyler",RSM: House/Social
+07090,Active,RSM,"Grimm, Kathy",RSM: House/Social
+07570,Active,RSM,"Gross, Leonard",RSM: House/Social
+07255,Active,RSM,"Guillo, Paul",RSM: House/Social
+07787,Active,RSM,"Guillo, Paul",RSM: House/Social
+07466,Active,RSM,"Gulla, George",RSM: House/Social
+07711,Active,RSM,"Hall, Andrew",RSM: House/Social
+07146,Active,RSM,"Halm, Becky",RSM: House/Social
+07628,Active,RSM,"Halpern, Colin",RSM: House/Social
+04598,Active,RSM,"Hamel, Denis",RSM: House/Social
+06479,Active,RSM,"Hankin, Michelle",RSM: House/Social
+04101,Active,RSM,"Hanley, Linnea",RSM: House/Social
+07713,Active,RSM,"Harrington, Alicia",RSM: House/Social
+04998,Active,RSM,"Harstad, Michael",RSM: House/Social
+07228,Active,RSM,"Harte, Gregory",RSM: House/Social
+06609,Active,RSM,"Hastings, Carrie",RSM: House/Social
+06497,Active,RSM,"Hatfield, Jay",RSM: House/Social
+04180,Active,RSM,"Haviland, Barbara",RSM: House/Social
+07092,Active,RSM,"Hayes, Carolina",RSM: House/Social
+00133,Active,RSM,"Hecht, Irene",RSM: House/Social
+07626,Active,RSM,"Hellofs, Linda",RSM: House/Social
+00754,Active,RSM,"Hershfield, Lee & Yael",RSM: House/Social
+07722,Active,RSM,"Hesselgesser, Gary",RSM: House/Social
+07768,Active,RSM,"Hicks, David",RSM: House/Social
+07789,Active,RSM,"Hicks, David",RSM: House/Social
+07775,Active,RSM,"Hicks, Matthew",RSM: House/Social
+02349,Active,RSM,"Hill, Amy",RSM: House/Social
+07306,Active,RSM,"Hillman, Benjamin",RSM: House/Social
+07405,Active,RSM,"Hillman, Carlos",RSM: House/Social
+04704,Active,RSM,"Hills, Marsha",RSM: House/Social
+06238,Active,RSM,"Hilt, John",RSM: House/Social
+07376,Active,RSM,"Hodges, Allen",RSM: House/Social
+00252,Active,RSM,"Hoffman, Mary Ann",RSM: House/Social
+07794,Active,RSM,"Holl, Barton H",RSM: House/Social
+04781,Active,RSM,"Houben, Jacques",RSM: House/Social
+06067,Active,RSM,"Houston, William",RSM: House/Social
+06154,Active,RSM,"Huynh, Charlie",RSM: House/Social
+06591,Active,RSM,"Iggulden, Rosemary",RSM: House/Social
+07606,Active,RSM,"Isaacson, Joan",RSM: House/Social
+04098,Active,RSM,"Jacobs, Elliot",RSM: House/Social
+04976,Active,RSM,"Jacobsen, Johan",RSM: House/Social
+06818,Active,RSM,"Jeffreys, Mary Ellen",RSM: House/Social
+06192,Active,RSM,"Johnson, Andy",RSM: House/Social
+07373,Active,RSM,"Jorgensen, Jacob",RSM: House/Social
+07388,Active,RSM,"Kahn, Hyman",RSM: House/Social
+07335,Active,RSM,"Kamber, Cathy",RSM: House/Social
+07438,Active,RSM,"Kanaan, Joanne",RSM: House/Social
+07322,Active,RSM,"Kapolas, Mary",RSM: House/Social
+07260,Active,RSM,"Kaprove, Robert",RSM: House/Social
+07097,Active,RSM,"Kass, Linda",RSM: House/Social
+07334,Active,RSM,"Kaston, Joshua",RSM: House/Social
+06811,Active,RSM,"Katz, Ann",RSM: House/Social
+06390,Active,RSM,"Katz, Stewart",RSM: House/Social
+07414,Active,RSM,"Keane, Maureen",RSM: House/Social
+07296,Active,RSM,"Kellner, Craig",RSM: House/Social
+07321,Active,RSM,"Kilgour, Robert",RSM: House/Social
+02331,Active,RSM,"King, Kathleen",RSM: House/Social
+07861,Active,RSM,"Klansky, Scott",RSM: House/Social
+04665,Active,RSM,"Klenn, Edward",RSM: House/Social
+04720,Active,RSM,"Koenig, Stuart",RSM: House/Social
+02532,Active,RSM,"Kolenich, James",RSM: House/Social
+07543,Active,RSM,"Kopec, Donald",RSM: House/Social
+06725,Active,RSM,"Kornreich, Ivi",RSM: House/Social
+07804,Active,RSM,"Koumoulis, Peter",RSM: House/Social
+07396,Active,RSM,"Kratenstein, David",RSM: House/Social
+06751,Active,RSM,"Krieger, Eileen",RSM: House/Social
+07587,Active,RSM,"Kripke, Margaret",RSM: House/Social
+06499,Active,RSM,"Krug, George J.",RSM: House/Social
+06608,Active,RSM,"Kuppersmith, Barbara",RSM: House/Social
+07247,Active,RSM,"Ladino, Michael",RSM: House/Social
+07368,Active,RSM,"Laidla, Eileen",RSM: House/Social
+06929,Active,RSM,"Landers, Kevin",RSM: House/Social
+02328,Active,RSM,"Landis, Kenneth",RSM: House/Social
+07669,Active,RSM,"Lane, Catherine",RSM: House/Social
+07746,Active,RSM,"Lappin, Jonathan",RSM: House/Social
+01777,Active,RSM,"Larkin, Michael",RSM: House/Social
+07624,Active,RSM,"Laughlin, Heather",RSM: House/Social
+07410,Active,RSM,"Lawrence, Ellen",RSM: House/Social
+06466,Active,RSM,"LeVine, Karyn",RSM: House/Social
+04878,Active,RSM,"Leckrone, James",RSM: House/Social
+00106,Active,RSM,"Lehrman, Gloria",RSM: House/Social
+06568,Active,RSM,"Leibowitz, Tracey",RSM: House/Social
+07437,Active,RSM,"Lettick, Diane",RSM: House/Social
+07796,Active,RSM,"Levent, Zeytinci",RSM: House/Social
+00062,Active,RSM,"Levit, Judith",RSM: House/Social
+07178,Active,RSM,"Lewis, Bret",RSM: House/Social
+06405,Active,RSM,"Libbey, Leanne",RSM: House/Social
+06665,Active,RSM,"Light, Horace",RSM: House/Social
+06299,Active,RSM,"Lips, Mark",RSM: House/Social
+07389,Active,RSM,"Lisanti, Joseph",RSM: House/Social
+04746,Active,RSM,"Liscom, Clayton",RSM: House/Social
+07358,Active,RSM,"List, Ilene Tina",RSM: House/Social
+04926,Active,RSM,"Little, Don",RSM: House/Social
+07312,Active,RSM,"Little, Gerald",RSM: House/Social
+04331,Active,RSM,"Lodge, Ted",RSM: House/Social
+07152,Active,RSM,"Lokmanoglu, Tufan",RSM: House/Social
+07165,Active,RSM,"Long, Rob",RSM: House/Social
+07355,Active,RSM,"Lowenthal, Dave",RSM: House/Social
+02364,Active,RSM,"Lowenthal, Joan",RSM: House/Social
+06236,Active,RSM,"Luck, Gary",RSM: House/Social
+06034,Active,RSM,"Lupo, Mary",RSM: House/Social
+07440,Active,RSM,"Lutz, Vicki",RSM: House/Social
+06534,Active,RSM,"Lyons, Bente",RSM: House/Social
+07803,Active,RSM,"Macdonald, Pete",RSM: House/Social
+07588,Active,RSM,"Mahon, Daniel",RSM: House/Social
+07728,Active,RSM,"Mahon, James",RSM: House/Social
+04784,Active,RSM,"Maier, Richard",RSM: House/Social
+07759,Active,RSM,"Maini, Mandeep",RSM: House/Social
+04876,Active,RSM,"Mandel, Joy",RSM: House/Social
+07719,Active,RSM,"Mandell, Eric",RSM: House/Social
+07353,Active,RSM,"Mandli, Sharon",RSM: House/Social
+06103,Active,RSM,"Maniscalco, Diana",RSM: House/Social
+07859,Active,RSM,"Manzer, Alison",RSM: House/Social
+04937,Active,RSM,"Marconi, Allan",RSM: House/Social
+07060,Active,RSM,"Marcos, Eman",RSM: House/Social
+04734,Active,RSM,"Marcus, Judith",RSM: House/Social
+01663,Active,RSM,"Mardula, Stan",RSM: House/Social
+07622,Active,RSM,"Markham, Joanna",RSM: House/Social
+07258,Active,RSM,"Marren, Harry",RSM: House/Social
+07793,Active,RSM,"Marshall, Tim A",RSM: House/Social
+06974,Active,RSM,"Martin, Craig",RSM: House/Social
+07769,Active,RSM,"Martinez Aquino, Yorleny",RSM: House/Social
+07356,Active,RSM,"Mattos, Jaqueline",RSM: House/Social
+06398,Active,RSM,"Matz, John D.",RSM: House/Social
+01470,Active,RSM,"Mauro, Frank",RSM: House/Social
+07424,Active,RSM,"McCarthy, Sean",RSM: House/Social
+07774,Active,RSM,"McCormack, Christina",RSM: House/Social
+00011,Active,RSM,"McCrudden, Jim",RSM: House/Social
+07231,Active,RSM,"McGorry, Michael",RSM: House/Social
+00755,Active,RSM,"McIntosh, Muzette",RSM: House/Social
+07673,Active,RSM,"McKay, Albert",RSM: House/Social
+06481,Active,RSM,"McMahon, Stephen",RSM: House/Social
+07765,Active,RSM,"McNamara, Scott",RSM: House/Social
+07179,Active,RSM,"Medney, Heather",RSM: House/Social
+07688,Active,RSM,"Mendell, Seth",RSM: House/Social
+06384,Active,RSM,"Meranus, Harvey",RSM: House/Social
+02338,Active,RSM,"Messuri, Philip",RSM: House/Social
+07783,Active,RSM,"Meyer, Kevin J",RSM: House/Social
+07671,Active,RSM,"Michel, Sean",RSM: House/Social
+07687,Active,RSM,"Miller, Caryn",RSM: House/Social
+07406,Active,RSM,"Miller, Victoria",RSM: House/Social
+07442,Active,RSM,"Millett, Bobbie",RSM: House/Social
+07149,Active,RSM,"Mills, Michelle",RSM: House/Social
+06285,Active,RSM,"Miltenberger, Michael",RSM: House/Social
+06758,Active,RSM,"Mims, Marilyn",RSM: House/Social
+07347,Active,RSM,"Monakee, Chad",RSM: House/Social
+07740,Active,RSM,"Morano, Tony",RSM: House/Social
+07465,Active,RSM,"Morris, Greg",RSM: House/Social
+04242,Active,RSM,"Morris, Roe",RSM: House/Social
+04068,Active,RSM,"Moscato, Jessica",RSM: House/Social
+02513,Active,RSM,"Moseley, Sharon",RSM: House/Social
+02491,Active,RSM,"Moxley, Dale",RSM: House/Social
+06681,Active,RSM,"Muehlheuser, Leslie",RSM: House/Social
+07754,Active,RSM,"Mullett, Marie",RSM: House/Social
+07176,Active,RSM,"Murphy, Nick",RSM: House/Social
+04522,Active,RSM,"Murray, William",RSM: House/Social
+06001,Active,RSM,"Muster, Martin",RSM: House/Social
+01447,Active,RSM,"Myers, Kathleen",RSM: House/Social
+04646,Active,RSM,"Myers, Robert",RSM: House/Social
+02436,Active,RSM,"Nardulli, Jean",RSM: House/Social
+03854,Active,RSM,"Nassau, Merrill",RSM: House/Social
+07174,Active,RSM,"Neese, Alan",RSM: House/Social
+06498,Active,RSM,"Nelson, Diane",RSM: House/Social
+06053,Active,RSM,"Nevins, Ed",RSM: House/Social
+06879,Active,RSM,"Norcross, Jason",RSM: House/Social
+02471,Active,RSM,"Nordone, Darren",RSM: House/Social
+04609,Active,RSM,"Nunno, William",RSM: House/Social
+06849,Active,RSM,"Nussbaum, Tuangtip",RSM: House/Social
+00353,Active,RSM,"O'Brien, Thomas",RSM: House/Social
+06870,Active,RSM,"O'Brochta, Hillary",RSM: House/Social
+06062,Active,RSM,"O'Connor, Michael",RSM: House/Social
+07384,Active,RSM,"O'Dowd, Hara",RSM: House/Social
+07113,Active,RSM,"O'Keefe, Ryan",RSM: House/Social
+07838,Active,RSM,"O'Meara, Patricia",RSM: House/Social
+07645,Active,RSM,"OReilly, Kevin",RSM: House/Social
+07392,Active,RSM,"Odom, John",RSM: House/Social
+00358,Active,RSM,"Olin, Shirley",RSM: House/Social
+04728,Active,RSM,"Ornstein, Doris",RSM: House/Social
+06512,Active,RSM,"Owens, Mike",RSM: House/Social
+07581,Active,RSM,"Pamintuan, Eilis",RSM: House/Social
+06208,Active,RSM,"Pare, Pierre",RSM: House/Social
+07182,Active,RSM,"Pascale, Ginger",RSM: House/Social
+07118,Active,RSM,"Pearl, Gary",RSM: House/Social
+07689,Active,RSM,"Pendon, Ryan",RSM: House/Social
+04348,Active,RSM,"Perrotti, Susan",RSM: House/Social
+06404,Active,RSM,"Phelan Coletti, Deirdri",RSM: House/Social
+07816,Active,RSM,"Pollock, Kevin",RSM: House/Social
+02531,Active,RSM,"Proses, Gary",RSM: House/Social
+04917,Active,RSM,"Puccini, Lido",RSM: House/Social
+07154,Active,RSM,"Pugliano, Frederick",RSM: House/Social
+04889,Active,RSM,"Pugliese, Roberta",RSM: House/Social
+07382,Active,RSM,"Raber, Sheila",RSM: House/Social
+04952,Active,RSM,"Racicot, Lynne",RSM: House/Social
+07608,Active,RSM,"Rankin, Carol",RSM: House/Social
+06713,Active,RSM,"Rapp, Cristopher",RSM: House/Social
+07727,Active,RSM,"Rashad, Ana Luz R.",RSM: House/Social
+06475,Active,RSM,"Raymond, Cheryl",RSM: House/Social
+07432,Active,RSM,"Reagan, Donald",RSM: House/Social
+06193,Active,RSM,"Rehhaut, Bernard",RSM: House/Social
+04973,Active,RSM,"Reiter, Arlene",RSM: House/Social
+04692,Active,RSM,"Relyea, William H.",RSM: House/Social
+07429,Active,RSM,"Repass, Robin",RSM: House/Social
+04750,Active,RSM,"Rey, Josh",RSM: House/Social
+07751,Active,RSM,"Richards, Kim",RSM: House/Social
+01508,Active,RSM,"Richer, Maureen",RSM: House/Social
+07517,Active,RSM,"Richter, Edward",RSM: House/Social
+07806,Active,RSM,"Ritter, Robert",RSM: House/Social
+06406,Active,RSM,"Robertson, Kathryn",RSM: House/Social
+04968,Active,RSM,"Robins, Marylee",RSM: House/Social
+07834,Active,RSM,"Robins, Ronald",RSM: House/Social
+04207,Active,RSM,"Robinson, Rita",RSM: House/Social
+07693,Active,RSM,"Rocklage, Matthew",RSM: House/Social
+04744,Active,RSM,"Roden, Clare",RSM: House/Social
+04605,Active,RSM,"Rogers, Paul",RSM: House/Social
+07409,Active,RSM,"Roos, Larry",RSM: House/Social
+07310,Active,RSM,"Rosen, Andrew",RSM: House/Social
+06005,Active,RSM,"Rosenberg, Adrienne",RSM: House/Social
+06724,Active,RSM,"Rosenberg, Kim",RSM: House/Social
+06455,Active,RSM,"Rosenberg, Myron",RSM: House/Social
+06514,Active,RSM,"Rosenberg, Stuart",RSM: House/Social
+07344,Active,RSM,"Rosenthal, Daniel Gary",RSM: House/Social
+04347,Active,RSM,"Rosenthal, Judi",RSM: House/Social
+07298,Active,RSM,"Rosenwach, Morey",RSM: House/Social
+07782,Active,RSM,"Rosenwach, Morey",RSM: House/Social
+07752,Active,RSM,"Rothe, Bill",RSM: House/Social
+07094,Active,RSM,"Rubin, Hope",RSM: House/Social
+07723,Active,RSM,"Rudman, Robin",RSM: House/Social
+01647,Active,RSM,"Ryan, Thomas",RSM: House/Social
+07022,Active,RSM,"Rybak, Alex",RSM: House/Social
+06158,Active,RSM,"Sabarsky, Sylvia",RSM: House/Social
+01695,Active,RSM,"Sabatello, Ted Paul",RSM: House/Social
+06221,Active,RSM,"Salamon, Jane",RSM: House/Social
+07378,Active,RSM,"Salsberg, Andi",RSM: House/Social
+00303,Active,RSM,"Salzman, Renee",RSM: House/Social
+06750,Active,RSM,"Satiritz, Nick",RSM: House/Social
+06055,Active,RSM,"Saura, Anthony",RSM: House/Social
+00228,Active,RSM,"Savrann, Richard",RSM: House/Social
+07457,Active,RSM,"Schaffer, Carol",RSM: House/Social
+04249,Active,RSM,"Schapiro, Bernard",RSM: House/Social
+00050,Active,RSM,"Schechter, Sylvia",RSM: House/Social
+01460,Active,RSM,"Scheffer, Miles",RSM: House/Social
+07010,Active,RSM,"Scherle, Dan",RSM: House/Social
+07170,Active,RSM,"Schimmenti, Maryann",RSM: House/Social
+00107,Active,RSM,"Schlenger, Leah",RSM: House/Social
+06059,Active,RSM,"Schneider, Shelly",RSM: House/Social
+02534,Active,RSM,"Schoen, John",RSM: House/Social
+07694,Active,RSM,"Schuler, Barbara",RSM: House/Social
+07108,Active,RSM,"Schwab, Pauline",RSM: House/Social
+07702,Active,RSM,"Schwadel, Peter",RSM: House/Social
+07343,Active,RSM,"Schwalb, Jennifer",RSM: House/Social
+06190,Active,RSM,"Schwalb, Joel",RSM: House/Social
+07802,Active,RSM,"Sclavos, George",RSM: House/Social
+07411,Active,RSM,"Scott, Sally",RSM: House/Social
+07697,Active,RSM,"Scott, Susan",RSM: House/Social
+07340,Active,RSM,"Scurletis, Dennis",RSM: House/Social
+07749,Active,RSM,"Segal, Martin",RSM: House/Social
+06963,Active,RSM,"Sheahan, Ashley",RSM: House/Social
+07213,Active,RSM,"Sherman, Peter",RSM: House/Social
+02340,Active,RSM,"Shore, Lee",RSM: House/Social
+04330,Active,RSM,"Silvestri, Karen",RSM: House/Social
+06737,Active,RSM,"Simmerok, Bruce",RSM: House/Social
+07348,Active,RSM,"Simon, Emily Ann",RSM: House/Social
+07021,Active,RSM,"Singer, Andrew",RSM: House/Social
+07849,Active,RSM,"Singer, Morris",RSM: House/Social
+06196,Active,RSM,"Sirott, Norma",RSM: House/Social
+06703,Active,RSM,"Skurnick, Norman",RSM: House/Social
+07724,Active,RSM,"Slatter, Julian",RSM: House/Social
+04118,Active,RSM,"Slavis, Elliot",RSM: House/Social
+07419,Active,RSM,"Soll, Robin",RSM: House/Social
+07720,Active,RSM,"Sparacio, Jonathan",RSM: House/Social
+07441,Active,RSM,"Spencer, William",RSM: House/Social
+07307,Active,RSM,"Sperando, Angelo",RSM: House/Social
+07235,Active,RSM,"Spitalny, Frank",RSM: House/Social
+07805,Active,RSM,"Spivack, Gary",RSM: House/Social
+07430,Active,RSM,"Sprague, Serena",RSM: House/Social
+07148,Active,RSM,"Sreter, Alex",RSM: House/Social
+07271,Active,RSM,"Stadfeld, Max",RSM: House/Social
+07536,Active,RSM,"Stamoulis, Nick",RSM: House/Social
+07742,Active,RSM,"State, Dan",RSM: House/Social
+00708,Active,RSM,"Stein, Raymond",RSM: House/Social
+00779,Active,RSM,"Steinberg, Sindy",RSM: House/Social
+04660,Active,RSM,"Stenko, Christine",RSM: House/Social
+07555,Active,RSM,"Stringfellow, Paris",RSM: House/Social
+04114,Active,RSM,"Strupinsky, Holly",RSM: House/Social
+07607,Active,RSM,"Sullivan, Carolyn",RSM: House/Social
+06548,Active,RSM,"Syslo, India",RSM: House/Social
+07180,Active,RSM,"Taback, Joel",RSM: House/Social
+07352,Active,RSM,"Talkin, Richard",RSM: House/Social
+06567,Active,RSM,"Tallon, Helen",RSM: House/Social
+06606,Active,RSM,"Tambovsky, Elena",RSM: House/Social
+07760,Active,RSM,"Tanenbaum, Eleanor",RSM: House/Social
+04404,Active,RSM,"Tarpell, Noreen",RSM: House/Social
+06922,Active,RSM,"Tarver, Dan",RSM: House/Social
+06505,Active,RSM,"Tassone, Frank",RSM: House/Social
+07647,Active,RSM,"Taylor, Brooke",RSM: House/Social
+06262,Active,RSM,"Teres, Daniel",RSM: House/Social
+07320,Active,RSM,"Terminesi, Marco",RSM: House/Social
+07776,Active,RSM,"Termotto, Maximilian",RSM: House/Social
+07784,Active,RSM,"Termotto, Maximilian",RSM: House/Social
+07696,Active,RSM,"Tesoriero, Joe",RSM: House/Social
+07427,Active,RSM,"Tessler, Abe",RSM: House/Social
+07591,Active,RSM,"Teyssedou, Cidalia",RSM: House/Social
+02393,Active,RSM,"Ticker, Frances",RSM: House/Social
+06170,Active,RSM,"Tillakhodjayev, Akmal",RSM: House/Social
+07792,Active,RSM,"Timmer, Geoffrey",RSM: House/Social
+07603,Active,RSM,"Tramutola, Jimmy",RSM: House/Social
+07741,Active,RSM,"Tucker, Kameron",RSM: House/Social
+04959,Active,RSM,"Turner, Michael",RSM: House/Social
+07617,Active,RSM,"Tutman, Jeff",RSM: House/Social
+00382,Active,RSM,"Uchin, Lawrence",RSM: House/Social
+07756,Active,RSM,"Ulrich, Robert",RSM: House/Social
+07501,Active,RSM,"Valentino, Alex",RSM: House/Social
+07314,Active,RSM,"Valenza-Gale, Rebecca",RSM: House/Social
+02394,Active,RSM,"Van Natta, Lee",RSM: House/Social
+06697,Active,RSM,"Van Rensselaer, Frank",RSM: House/Social
+07585,Active,RSM,"Vanicek, JoAnn",RSM: House/Social
+07338,Active,RSM,"Viniar, Robert",RSM: House/Social
+07709,Active,RSM,"Viola, Kathie",RSM: House/Social
+02335,Active,RSM,"Vollins, Ruth",RSM: House/Social
+02453,Active,RSM,"VonSchrader, Carol",RSM: House/Social
+01474,Active,RSM,"Wall, Patrick C.",RSM: House/Social
+04359,Active,RSM,"Walter, Mark",RSM: House/Social
+07668,Active,RSM,"Waters, Betty Anne",RSM: House/Social
+07737,Active,RSM,"Waugh, Vonis",RSM: House/Social
+07349,Active,RSM,"Webber, Lori",RSM: House/Social
+07779,Active,RSM,"Webber, Lori",RSM: House/Social
+06701,Active,RSM,"Weinberger, Robert",RSM: House/Social
+06532,Active,RSM,"Weiner, Carol",RSM: House/Social
+06508,Active,RSM,"Weinstein, Marc",RSM: House/Social
+07691,Active,RSM,"Weisbrod, Rick",RSM: House/Social
+07563,Active,RSM,"Weisz, Kathleen",RSM: House/Social
+07732,Active,RSM,"Wertheim, Pam",RSM: House/Social
+04262,Active,RSM,"Weston, Gerald",RSM: House/Social
+07734,Active,RSM,"Wexler, Paul",RSM: House/Social
+07408,Active,RSM,"Whigham, Gary",RSM: House/Social
+06698,Active,RSM,"Wiesen, Elaine",RSM: House/Social
+07726,Active,RSM,"Wightman, Chuck",RSM: House/Social
+06529,Active,RSM,"Williams, Douglas",RSM: House/Social
+04485,Active,RSM,"Wilson, Robert",RSM: House/Social
+07157,Active,RSM,"Wilson, Shanelle",RSM: House/Social
+02494,Active,RSM,"Woodruff, Robert",RSM: House/Social
+06924,Active,RSM,"Woodward, Woody",RSM: House/Social
+06978,Active,RSM,"Yaffe, Helen",RSM: House/Social
+06812,Active,RSM,"Yesnick, Lester",RSM: House/Social
+07402,Active,RSM,"Yorks, Julie",RSM: House/Social
+06409,Active,RSM,"Yost, Robert",RSM: House/Social
+01662,Active,RSM,"Young, Vincent",RSM: House/Social
+06520,Active,RSM,"Zaman, Malik",RSM: House/Social
+07418,Active,RSM,"Zimbalist, Kristy",RSM: House/Social
+06024,Active,RSM,"Ziner, Saul",RSM: House/Social
+07790,Active,RSM,"Zonca, Mark",RSM: House/Social
+00017,Active,RSM,"Zuflacht, Gloria",RSM: House/Social
+04645,Active,RSM,"Zysman, Leonard",RSM: House/Social
+06866,Active,RSM,"Abuzobaa, Sean",RSM: Sports
+06516,Active,RSM,"Astor, Bart",RSM: Sports
+07415,Active,RSM,"Berkey, Todd",RSM: Sports
+07526,Active,RSM,"Brady, Steven",RSM: Sports
+07530,Active,RSM,"Brennan, Kevin",RSM: Sports
+07538,Active,RSM,"Burke, Stephen",RSM: Sports
+06805,Active,RSM,"Carley, Carianne",RSM: Sports
+06425,Active,RSM,"Cestari, Lois",RSM: Sports
+00095,Active,RSM,"Czirban, Bonnie",RSM: Sports
+04831,Active,RSM,"DuBoys, Gail",RSM: Sports
+06258,Active,RSM,"Dunsky, Joel",RSM: Sports
+04130,Active,RSM,"Egan, Charles",RSM: Sports
+00091,Active,RSM,"Epstein, Sanford",RSM: Sports
+07521,Active,RSM,"Fedner, Reed",RSM: Sports
+07397,Active,RSM,"Gleckner, Mark",RSM: Sports
+07323,Active,RSM,"Goldman, Howard",RSM: Sports
+04452,Active,RSM,"Greenebaum, Eric",RSM: Sports
+07503,Active,RSM,"Hadian, Navid",RSM: Sports
+06225,Active,RSM,"Hankin, Arthur",RSM: Sports
+07528,Active,RSM,"Jamieson, Thomas",RSM: Sports
+06806,Active,RSM,"Kunitz, Selma",RSM: Sports
+06296,Active,RSM,"Lee, James",RSM: Sports
+06563,Active,RSM,"Littenberg, Stanley",RSM: Sports
+07527,Active,RSM,"Lucas, Francis",RSM: Sports
+01492,Active,RSM,"Lugosi, Robert",RSM: Sports
+07379,Active,RSM,"Luray, Leslie",RSM: Sports
+04558,Active,RSM,"Miller, Marilyn",RSM: Sports
+04450,Active,RSM,"Modlin, Maddy",RSM: Sports
+06535,Active,RSM,"Nelson, Elizabeth",RSM: Sports
+04674,Active,RSM,"Rakowsky, Dayle",RSM: Sports
+04597,Active,RSM,"Ravitz, Lawrence",RSM: Sports
+06482,Active,RSM,"Silverman, Mark",RSM: Sports
+06704,Active,RSM,"Suskin, Jayne",RSM: Sports
+04159,Active,RSM,"Tillinghast, Paula",RSM: Sports
+06744,Active,RSM,"Viau, Bryan",RSM: Sports
+07332,Active,RSM,"Ward, Kevin",RSM: Sports
+00883,Active,RSM,"Weinstein, Arthur",RSM: Sports
+07635,Active,RSM,"Accetturo, David",RSM: Summer
+07670,Active,RSM,"Amdur, Marc",RSM: Summer
+07819,Active,RSM,"Bajger, Joe",RSM: Summer
+07820,Active,RSM,"Belanger, James",RSM: Summer
+07807,Active,RSM,"Bess, John",RSM: Summer
+07657,Active,RSM,"Borbone, Michael",RSM: Summer
+07813,Active,RSM,"Bower, Rob",RSM: Summer
+07639,Active,RSM,"Callahan, Stacey",RSM: Summer
+07845,Active,RSM,"Chambers, Cathy",RSM: Summer
+07679,Active,RSM,"Claunch, Alyssa",RSM: Summer
+07846,Active,RSM,"Cryer, William",RSM: Summer
+07811,Active,RSM,"Curran, John",RSM: Summer
+07847,Active,RSM,"Custis, Jensen",RSM: Summer
+07827,Active,RSM,"Davis, RIchard",RSM: Summer
+07842,Active,RSM,"Donahue, Bryan",RSM: Summer
+07664,Active,RSM,"Dreyer, Douglas",RSM: Summer
+07850,Active,RSM,"Dubauskas, Keith",RSM: Summer
+07815,Active,RSM,"Evans, Jon",RSM: Summer
+07826,Active,RSM,"Fykes, Brent",RSM: Summer
+07653,Active,RSM,"Gale, Matthew",RSM: Summer
+07652,Active,RSM,"Genchi, Steve",RSM: Summer
+07848,Active,RSM,"Gliwa, Kyle",RSM: Summer
+07832,Active,RSM,"Gralapp, Tyler",RSM: Summer
+07634,Active,RSM,"Hall, Gregg",RSM: Summer
+07833,Active,RSM,"Holliger, Thomas",RSM: Summer
+07841,Active,RSM,"Huertas, Joe",RSM: Summer
+07655,Active,RSM,"Ivans, Steven",RSM: Summer
+07818,Active,RSM,"Kelly, Bill",RSM: Summer
+07658,Active,RSM,"McCoy, Ryan",RSM: Summer
+07643,Active,RSM,"Mehdipour, Mike",RSM: Summer
+07840,Active,RSM,"Mirsky, Corey",RSM: Summer
+07632,Active,RSM,"Moll, Michael",RSM: Summer
+07646,Active,RSM,"Moren, Dino (Deanna)",RSM: Summer
+07650,Active,RSM,"Mosessian, Madison",RSM: Summer
+07814,Active,RSM,"Ognenovski, Dakota",RSM: Summer
+07642,Active,RSM,"Rogers, Lauren",RSM: Summer
+07641,Active,RSM,"Sabatino, Vinny",RSM: Summer
+07835,Active,RSM,"Schmidt, Joseph",RSM: Summer
+07659,Active,RSM,"Slusher, Zachary",RSM: Summer
+07830,Active,RSM,"Slyh, John",RSM: Summer
+07829,Active,RSM,"Snider, Troy",RSM: Summer
+07640,Active,RSM,"Snyder, Jim",RSM: Summer
+07817,Active,RSM,"Sofarelli, Beth",RSM: Summer
+07844,Active,RSM,"Soper, Horace",RSM: Summer
+07656,Active,RSM,"Stalker, Chris",RSM: Summer
+07637,Active,RSM,"Walter, Robert",RSM: Summer
+07828,Active,RSM,"Weber, Erik",RSM: Summer
+07667,Active,RSM,"Wilson, Eric",RSM: Summer
+07837,Active,RSM,"Young, Matthew",RSM: Summer
+07654,Active,RSM,"Zentner, Gary",RSM: Summer
+07823,Active,RSM,"Zimmerman, Robert",RSM: Summer
+07824,Active,RSM,"Zimmerman, Tyler",RSM: Summer
+08025,Active,RSM,"Adler, Barbara",RSM: Tennis
+08208,Active,RSM,"Aerni, Sarah",RSM: Tennis
+08209,Active,RSM,"Aprea, Johnna",RSM: Tennis
+08228,Active,RSM,"Auslander, Heidi",RSM: Tennis
+08090,Active,RSM,"Bernstein, Brianna",RSM: Tennis
+08158,Active,RSM,"Bernstein, Phyllis",RSM: Tennis
+08031,Active,RSM,"Berube, Julie",RSM: Tennis
+08039,Active,RSM,"Bevacqua, Tiffany",RSM: Tennis
+08160,Active,RSM,"Bevard, Linda",RSM: Tennis
+08156,Active,RSM,"Biele, Olghina",RSM: Tennis
+08110,Active,RSM,"Boockford, Sarah",RSM: Tennis
+08136,Active,RSM,"Borenius, Helena",RSM: Tennis
+08212,Active,RSM,"Brack, Tina",RSM: Tennis
+08121,Active,RSM,"Braniff, Rosemary",RSM: Tennis
+08169,Active,RSM,"Casper, Alicia",RSM: Tennis
+08229,Active,RSM,"Charney, Jamie",RSM: Tennis
+08220,Active,RSM,"Ciafardini, Kathy",RSM: Tennis
+08159,Active,RSM,"Clark, Gloria",RSM: Tennis
+08101,Active,RSM,"Cochran, Michelle",RSM: Tennis
+08038,Active,RSM,"Cowan, Christine",RSM: Tennis
+08200,Active,RSM,"Cox, Candace",RSM: Tennis
+08163,Active,RSM,"Cropp, Jennifer",RSM: Tennis
+08202,Active,RSM,"Dai, Chang",RSM: Tennis
+08029,Active,RSM,"Daversa, Judy",RSM: Tennis
+08176,Active,RSM,"Davis, Holden",RSM: Tennis
+08154,Active,RSM,"Davis, Monica",RSM: Tennis
+08175,Active,RSM,"DeFloria, Charie",RSM: Tennis
+08181,Active,RSM,"Denes, Susan",RSM: Tennis
+08036,Active,RSM,"Doyle, Lynn",RSM: Tennis
+08194,Active,RSM,"Enriquez, Shana",RSM: Tennis
+08063,Active,RSM,"Feinerman, Robin",RSM: Tennis
+08027,Active,RSM,"Francis, Stacey",RSM: Tennis
+08044,Active,RSM,"Gable, Helen",RSM: Tennis
+08149,Active,RSM,"Gannon, Jacqui",RSM: Tennis
+08070,Active,RSM,"Geraci-Huffstutter, Judy",RSM: Tennis
+08151,Active,RSM,"Gleiber, Robert",RSM: Tennis
+08203,Active,RSM,"Glinsky, Tamara",RSM: Tennis
+08168,Active,RSM,"Goetz, Elizabeth",RSM: Tennis
+08188,Active,RSM,"Golden, Elizabeth",RSM: Tennis
+08014,Active,RSM,"Gonzalez, Sandy",RSM: Tennis
+08196,Active,RSM,"Graulau, Parissa",RSM: Tennis
+08045,Active,RSM,"Green, Jacqueline",RSM: Tennis
+08146,Active,RSM,"Haas, Linden",RSM: Tennis
+08183,Active,RSM,"Haile, Cornelia",RSM: Tennis
+08111,Active,RSM,"Heller, Joyce",RSM: Tennis
+08205,Active,RSM,"Hudak, Anne-Marie",RSM: Tennis
+08172,Active,RSM,"Kelly, Elizabeth",RSM: Tennis
+08226,Active,RSM,"Kempf, Cheryl",RSM: Tennis
+08187,Active,RSM,"Kithania, Prateek",RSM: Tennis
+08227,Active,RSM,"Klepacki, Lorraine",RSM: Tennis
+08125,Active,RSM,"Kourakis, Elisabeth",RSM: Tennis
+08225,Active,RSM,"Kraus, Elaine",RSM: Tennis
+08128,Active,RSM,"Krell, Kathy",RSM: Tennis
+08171,Active,RSM,"Krellentein, Ely",RSM: Tennis
+08224,Active,RSM,"Martinez, Gloria",RSM: Tennis
+08150,Active,RSM,"Mazzola, Kerry",RSM: Tennis
+08182,Active,RSM,"Mejia, Andrea",RSM: Tennis
+08021,Active,RSM,"Mitchell, Dale",RSM: Tennis
+08142,Active,RSM,"Morrone, Alyssa",RSM: Tennis
+08204,Active,RSM,"Mote, Jill",RSM: Tennis
+08195,Active,RSM,"Newton, Richard",RSM: Tennis
+08177,Active,RSM,"Nicklaus, Joy",RSM: Tennis
+08207,Active,RSM,"Ortega, Frances",RSM: Tennis
+08213,Active,RSM,"Owen, Kelly",RSM: Tennis
+08012,Active,RSM,"Parsons, Gale",RSM: Tennis
+08107,Active,RSM,"Paulino-Grisham, Ella",RSM: Tennis
+08113,Active,RSM,"Payne, Corinne",RSM: Tennis
+08180,Active,RSM,"Peck, Deborah",RSM: Tennis
+08152,Active,RSM,"Perrino, Nadine",RSM: Tennis
+08222,Active,RSM,"Ragosa, Danielle",RSM: Tennis
+08184,Active,RSM,"Raymond, Jenine",RSM: Tennis
+08190,Active,RSM,"Reby, Robert",RSM: Tennis
+08199,Active,RSM,"Reed, Wendy",RSM: Tennis
+08192,Active,RSM,"Rimstedt, Sandra",RSM: Tennis
+08201,Active,RSM,"Rivero, Norellus",RSM: Tennis
+08024,Active,RSM,"Roth, Lori",RSM: Tennis
+08173,Active,RSM,"Ruwe, Stacy",RSM: Tennis
+08054,Active,RSM,"Schulker, Marc",RSM: Tennis
+08103,Active,RSM,"Secrest, Barbara",RSM: Tennis
+08056,Active,RSM,"Segal, Jeremy",RSM: Tennis
+08037,Active,RSM,"Seidman, Sandi",RSM: Tennis
+08042,Active,RSM,"Selz, Liliana",RSM: Tennis
+08167,Active,RSM,"Sheehan, Janet",RSM: Tennis
+08178,Active,RSM,"Smith, Elizabeth",RSM: Tennis
+08053,Active,RSM,"Smylie, Winnie",RSM: Tennis
+08165,Active,RSM,"Spina, Joan",RSM: Tennis
+08084,Active,RSM,"Spivey, Shannon",RSM: Tennis
+08210,Active,RSM,"St. Amand, Lisa",RSM: Tennis
+08170,Active,RSM,"Starr, Laura",RSM: Tennis
+08179,Active,RSM,"Sterling, Nancy",RSM: Tennis
+08022,Active,RSM,"Torsiello, Adrienne",RSM: Tennis
+08191,Active,RSM,"Tracy, Holly",RSM: Tennis
+08211,Active,RSM,"Tracy, Holly",RSM: Tennis
+08174,Active,RSM,"Trout, Diana",RSM: Tennis
+08206,Active,RSM,"Tsarnas, Kelly",RSM: Tennis
+08198,Active,RSM,"Varone, Sherry",RSM: Tennis
+08197,Active,RSM,"Wahl, Myra",RSM: Tennis
+08030,Active,RSM,"Waxman, Hollie",RSM: Tennis
+08153,Active,RSM,"Wilson, Marilyn",RSM: Tennis
+08193,Active,RSM,"Wyner, Holly",RSM: Tennis
+08189,Active,RSM,"Zobl, Jennifer",RSM: Tennis
+07633,Active,RSM,"Brennan, William",RSM: Young Executive
+07665,Active,RSM,"Crescenzi, Alexander",RSM: Young Executive
+07706,Active,RSM,"Fischbein, Ethan",RSM: Young Executive
+07710,Active,RSM,"Hull, James",RSM: Young Executive
+07836,Active,RSM,"Pierce, Noah",RSM: Young Executive

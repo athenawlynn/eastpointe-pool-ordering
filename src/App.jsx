@@ -564,10 +564,34 @@ function isApprovedNonMemberOrder(order) {
   return order?.customerType === 'RSM';
 }
 
+function normalizeMemberCustomerType(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if ([
+    'rsm',
+    'approved non-member',
+    'approved non member',
+    'non-member',
+    'non member',
+    'nonmember',
+    'house/social',
+    'rsm: house/social',
+    'sports',
+    'rsm: sports',
+    'summer',
+    'rsm: summer',
+    'tennis',
+    'rsm: tennis',
+    'young executive',
+    'rsm: young executive'
+  ].includes(raw)) {
+    return 'RSM';
+  }
+  return 'Golf Member';
+}
+
 function customerTypeForPayment(paymentType, memberCustomerType = '') {
   if (paymentType === 'Guest Pay at Pickup') return 'Guest';
-  if (memberCustomerType === 'RSM') return 'RSM';
-  return 'Golf Member';
+  return normalizeMemberCustomerType(memberCustomerType);
 }
 
 function roundMoney(value) {
@@ -4682,7 +4706,7 @@ function TruckOperationsGuide() {
                 <li><strong>MemberNumber</strong>: 4-6 digits, keep leading zeroes.</li>
                 <li><strong>Status</strong>: Active allows ordering.</li>
                 <li><strong>CustomerType</strong>: controls truck fee visibility.</li>
-                <li><strong>Golf Member</strong>: hidden 22% service fee.</li>
+                <li><strong>Golf Member</strong>: no service fee.</li>
                 <li><strong>RSM</strong>: visible 22% service fee.</li>
                 <li><strong>Guest - Pay at Pickup</strong>: visible 20% service charge plus visible 3% credit card service charge.</li>
               </ul>

@@ -396,7 +396,23 @@ function normalizeCustomerType(value) {
   const raw = String(value || '').trim().toLowerCase();
   if (raw === 'guest') return 'Guest';
   if (raw === 'rsm') return 'RSM';
-  if (['approved non-member', 'approved non member', 'non-member', 'non member', 'nonmember'].includes(raw)) {
+  if ([
+    'approved non-member',
+    'approved non member',
+    'non-member',
+    'non member',
+    'nonmember',
+    'house/social',
+    'rsm: house/social',
+    'sports',
+    'rsm: sports',
+    'summer',
+    'rsm: summer',
+    'tennis',
+    'rsm: tennis',
+    'young executive',
+    'rsm: young executive'
+  ].includes(raw)) {
     return 'RSM';
   }
   return 'Golf Member';

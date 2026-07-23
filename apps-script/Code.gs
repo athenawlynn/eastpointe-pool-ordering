@@ -690,7 +690,7 @@ function validateMemberNumber(memberNumber, serviceName) {
 
   const member = getMembers().find(m => memberNumbersMatch(m.memberNumber, normalized));
   if (!member) {
-    throw new Error(`Member number not found. Please check your member number or contact ${contactName}.`);
+    throw new Error('Member number not found. Please check your member number or contact the club.');
   }
 
   if (String(member.status || '').toLowerCase() !== 'active') {

@@ -892,7 +892,8 @@ function apiErrorMessage(error, action) {
 
 function truckErrorMessage(message) {
   return String(message || 'Unable to complete truck order.')
-    .replace(/contact the Pool Bar/g, 'contact The Turn Truck')
+    .replace(/contact The Turn Truck/g, 'contact the club')
+    .replace(/contact the Pool Bar/g, 'contact the club')
     .replace(/Pool ordering/g, 'Truck ordering')
     .replace(/Pool Bar/g, 'The Turn Truck');
 }

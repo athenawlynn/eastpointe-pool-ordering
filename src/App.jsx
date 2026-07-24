@@ -1878,6 +1878,7 @@ function OrderPage() {
           </label>
           <label>Member Number
             <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={e => setLookupField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+            <span className="fieldHint">If your member number starts with 0, include the 0 before your number.</span>
           </label>
         </div>
         <button className="ghostLookupButton" onClick={lookupOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
@@ -1941,6 +1942,7 @@ function OrderPage() {
         {!isGuestPayment && (
           <label>Member Number
             <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={e => setField('memberNumber', e.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+            <span className="fieldHint">If your member number starts with 0, include the 0 before your number.</span>
           </label>
         )}
         <label>Mobile Number
@@ -2591,6 +2593,7 @@ function TruckOrderPage() {
             </label>
             <label>Member Number
               <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+              <span className="fieldHint">If your member number starts with 0, include the 0 before your number.</span>
             </label>
           </div>
           <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>
@@ -2646,6 +2649,7 @@ function TruckOrderPage() {
         {!isGuestPayment && (
           <label>Member Number
             <input inputMode="numeric" maxLength="6" value={form.memberNumber} onChange={event => setField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+            <span className="fieldHint">If your member number starts with 0, include the 0 before your number.</span>
           </label>
         )}
         <label>Mobile Number
@@ -2848,6 +2852,7 @@ function TruckOrderPage() {
           </label>
           <label>Member Number
             <input inputMode="numeric" maxLength="6" value={lookup.memberNumber} onChange={event => setLookupField('memberNumber', event.target.value.replace(/\D/g, ''))} placeholder="4–6 digits" />
+            <span className="fieldHint">If your member number starts with 0, include the 0 before your number.</span>
           </label>
         </div>
         <button className="ghostLookupButton" onClick={lookupTruckOrder} disabled={lookingUp}>{lookingUp ? 'Checking...' : 'Check Status'}</button>

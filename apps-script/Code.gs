@@ -68,19 +68,21 @@ function normalizeMenuItem(row, menuType) {
   const category = String(row.Category || '').trim();
   const itemName = String(row.ItemName || '').trim();
   const isTruckMenu = menuType === 'truck';
+  const soupOfDayName = String(row.SoupOfDayName || '').trim();
   const modifierGroups = isTruckMenu
-    ? withDefaultModifierGroups({ category, itemName }, parseModifierGroups(row.ModifierGroups))
+    ? withDefaultModifierGroups({ category, itemName, soupOfDayName }, parseModifierGroups(row.ModifierGroups))
     : parseModifierGroups(row.ModifierGroups);
   return {
     itemId: String(row.ItemID || '').trim(),
     category,
     itemName,
     menuType: isTruckMenu ? 'truck' : 'pool',
-    description: isTruckMenu ? truckMenuDescription({ itemName, description: row.Description }) : String(row.Description || '').trim(),
+    description: isTruckMenu ? truckMenuDescription({ itemName, description: row.Description, soupOfDayName }) : String(row.Description || '').trim(),
     price: Number(row.Price || 0),
     available: String(row.Available).toUpperCase() === 'TRUE' || row.Available === true,
     alcoholic: String(row.Alcoholic).toUpperCase() === 'TRUE' || row.Alcoholic === true,
     sortOrder: Number(row.SortOrder || 9999),
+    soupOfDayName,
     modifierGroups
   };
 }
@@ -204,9 +206,10 @@ function defaultModifierGroupForItem(item) {
     groups.push({ name: 'Serving Style', type: 'single', required: true, options: [{ name: 'Cup', priceDelta: 0 }] });
   }
   if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    const soupName = String(item.soupOfDayName || '').trim();
     groups.push({ name: 'Choose One', type: 'single', required: true, options: [
       { name: 'House-Made Hot Chili', priceDelta: 0 },
-      { name: 'Soup of the Day', priceDelta: 0 }
+      { name: soupName ? `Soup of the Day - ${soupName}` : 'Soup of the Day', priceDelta: 0 }
     ] });
   }
   if (itemName.includes('peanut butter') && itemName.includes('jelly')) {
@@ -345,8 +348,46 @@ function truckMenuDescription(item) {
   if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids peanut butter and jelly sandwich with grape or strawberry jelly.';
   if (itemName.includes('chicken tenders')) return 'Kids menu chicken tenders with optional dipping sauce.';
   if (itemName.includes('french fries')) return 'Kids menu fries with optional dipping sauce.';
-  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) return "Choose a cup of house-made hot chili or today's soup.";
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    const soupName = String(item.soupOfDayName || '').trim();
+    return soupName
+      ? `Today's soup: ${soupName}. Choose a cup of house-made hot chili or today's soup.`
+      : "Choose a cup of house-made hot chili or today's soup.";
+  }
   return '';
+}
+
+function isTruckSoupSelector(item) {
+  return String(item.itemId || '').indexOf('TSOUP') === 0 || String(item.category || '').trim().toLowerCase() === 'soups';
+}
+
+function activeTruckSoupSelector(items) {
+  return items
+    .filter(item => isTruckSoupSelector(item) && item.available)
+    .sort((a, b) => Number(a.sortOrder || 9999) - Number(b.sortOrder || 9999))[0] || null;
+}
+
+function truckCustomerMenuItems(items) {
+  const activeSoup = activeTruckSoupSelector(items);
+  const soupName = activeSoup ? activeSoup.itemName : '';
+  return items
+    .filter(item => !isTruckSoupSelector(item))
+    .map(item => {
+      const itemName = String(item.itemName || '').toLowerCase();
+      if (!(itemName.includes('hot chili') || itemName.includes('soup of the day'))) return item;
+      return normalizeMenuItem({
+        ItemID: item.itemId,
+        Category: item.category,
+        ItemName: item.itemName,
+        Description: soupName ? `Today's soup: ${soupName}. Choose a cup of house-made hot chili or today's soup.` : item.description,
+        Price: item.price,
+        Available: item.available,
+        Alcoholic: item.alcoholic,
+        SortOrder: item.sortOrder,
+        ModifierGroups: '[]',
+        SoupOfDayName: soupName
+      }, 'truck');
+    });
 }
 
 function getSettingsObject() {
@@ -585,10 +626,10 @@ function updateMenuAvailability(itemId, available) {
 }
 
 function updateTruckMenuAvailability(itemId, available) {
-  updateMenuAvailabilityForSheet('TruckMenuItems', itemId, available);
+  updateMenuAvailabilityForSheet('TruckMenuItems', itemId, available, true);
 }
 
-function updateMenuAvailabilityForSheet(sheetName, itemId, available) {
+function updateMenuAvailabilityForSheet(sheetName, itemId, available, singleActiveTruckSoup) {
   const normalizedItemId = String(itemId || '').trim();
   if (!normalizedItemId) throw new Error('Missing menu item.');
 
@@ -596,9 +637,21 @@ function updateMenuAvailabilityForSheet(sheetName, itemId, available) {
   const values = sheet.getDataRange().getValues();
   const headers = values[0] || [];
   const itemIdCol = headers.indexOf('ItemID') + 1;
+  const categoryCol = headers.indexOf('Category') + 1;
   const availableCol = headers.indexOf('Available') + 1;
   if (itemIdCol < 1 || availableCol < 1) {
     throw new Error(sheetName + ' sheet is missing required columns.');
+  }
+
+  const settingSoupAvailable = singleActiveTruckSoup && available && normalizedItemId.indexOf('TSOUP') === 0;
+  if (settingSoupAvailable) {
+    for (let r = 2; r <= values.length; r++) {
+      const rowItemId = String(sheet.getRange(r, itemIdCol).getValue()).trim();
+      const category = categoryCol > 0 ? String(sheet.getRange(r, categoryCol).getValue()).trim().toLowerCase() : '';
+      if (rowItemId.indexOf('TSOUP') === 0 || category === 'soups') {
+        sheet.getRange(r, availableCol).setValue(false);
+      }
+    }
   }
 
   for (let r = 2; r <= values.length; r++) {
@@ -624,6 +677,15 @@ function getMenu() {
 }
 
 function getTruckMenu() {
+  const sheet = getSheet('TruckMenuItems');
+  const items = rowsToObjects(sheet)
+    .map(row => normalizeMenuItem(row, 'truck'))
+    .filter(i => i.itemId && i.itemName)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  return truckCustomerMenuItems(items);
+}
+
+function getTruckStaffMenu() {
   const sheet = getSheet('TruckMenuItems');
   const items = rowsToObjects(sheet)
     .map(row => normalizeMenuItem(row, 'truck'))
@@ -840,6 +902,10 @@ function doGet(e) {
     }
 
     if (action === 'truckMenu') {
+      if (e.parameter.view === 'staff') {
+        if (e.parameter.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
+        return jsonResponse({ ok: true, items: getTruckStaffMenu() });
+      }
       return jsonResponse({ ok: true, items: getTruckMenu() });
     }
 
@@ -943,7 +1009,7 @@ function doPost(e) {
     if (action === 'updateTruckMenuAvailability') {
       if (body.adminKey !== ADMIN_KEY) throw new Error('Unauthorized.');
       updateTruckMenuAvailability(body.itemId, body.available);
-      return jsonResponse({ ok: true, items: getTruckMenu() });
+      return jsonResponse({ ok: true, items: getTruckStaffMenu() });
     }
 
     return jsonResponse({ ok: false, error: 'Unknown action.' });

@@ -173,9 +173,10 @@ function defaultModifierGroupForItem(item) {
     groups.push({ name: 'Serving Style', type: 'single', required: true, options: [{ name: 'Cup', priceDelta: 0 }] });
   }
   if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    const soupName = String(item.soupOfDayName || '').trim();
     groups.push({ name: 'Choose One', type: 'single', required: true, options: [
       { name: 'House-Made Hot Chili', priceDelta: 0 },
-      { name: 'Soup of the Day', priceDelta: 0 }
+      { name: soupName ? `Soup of the Day - ${soupName}` : 'Soup of the Day', priceDelta: 0 }
     ] });
   }
   if (itemName.includes('peanut butter') && itemName.includes('jelly')) {
@@ -313,8 +314,42 @@ function truckMenuDescription(item) {
   if (itemName.includes('peanut butter') && itemName.includes('jelly')) return 'Kids peanut butter and jelly sandwich with grape or strawberry jelly.';
   if (itemName.includes('chicken tenders')) return 'Kids menu chicken tenders with optional dipping sauce.';
   if (itemName.includes('french fries')) return 'Kids menu fries with optional dipping sauce.';
-  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) return "Choose a cup of house-made hot chili or today's soup.";
+  if (itemName.includes('hot chili') || itemName.includes('soup of the day')) {
+    const soupName = String(item?.soupOfDayName || '').trim();
+    return soupName
+      ? `Today's soup: ${soupName}. Choose a cup of house-made hot chili or today's soup.`
+      : "Choose a cup of house-made hot chili or today's soup.";
+  }
   return '';
+}
+
+function isTruckSoupSelector(item) {
+  return String(item?.itemId || '').startsWith('TSOUP') || String(item?.category || '').trim().toLowerCase() === 'soups';
+}
+
+function activeTruckSoupSelector(items = []) {
+  return items
+    .filter(item => isTruckSoupSelector(item) && item.available)
+    .sort((a, b) => Number(a.sortOrder || 9999) - Number(b.sortOrder || 9999))[0] || null;
+}
+
+function truckCustomerMenuItems(items = []) {
+  const activeSoup = activeTruckSoupSelector(items);
+  const soupName = activeSoup ? activeSoup.itemName : '';
+  return items
+    .filter(item => !isTruckSoupSelector(item))
+    .map(item => {
+      const itemName = String(item.itemName || '').toLowerCase();
+      if (!(itemName.includes('hot chili') || itemName.includes('soup of the day'))) return item;
+      return {
+        ...item,
+        soupOfDayName: soupName,
+        description: soupName
+          ? `Today's soup: ${soupName}. Choose a cup of house-made hot chili or today's soup.`
+          : item.description,
+        modifierGroups: withDefaultModifierGroups({ ...item, soupOfDayName: soupName }, [])
+      };
+    });
 }
 
 function modifierGroupsForItem(item) {
@@ -2118,7 +2153,7 @@ function TruckOrderPage() {
           apiGet('truckMenu'),
           apiGet('settings')
         ]);
-        setMenu((menuData.items || []).map(item => ({ ...item, menuType: 'truck' })));
+        setMenu(truckCustomerMenuItems((menuData.items || []).map(item => ({ ...item, menuType: 'truck' }))));
         setSettings(settingsData.settings || {});
         setActiveCat('All Items');
       } catch (e) {
@@ -3530,7 +3565,7 @@ function TruckAdminPage({ onBackToOrder }) {
           headers: { Authorization: `Bearer ${getTruckToken()}` }
         }),
         apiGet('settings'),
-        apiGet('truckMenu')
+        apiGet('truckMenu', { view: 'staff', adminKey: ADMIN_KEY })
       ]);
       const nextOrders = ordersRes.orders || [];
       setOrders(prevOrders => {
@@ -3641,7 +3676,13 @@ function TruckAdminPage({ onBackToOrder }) {
   async function updateTruckMenuAvailability(itemId, available) {
     setUpdatingMenuItem(itemId);
     const previousMenuItems = menuItems;
-    setMenuItems(prev => prev.map(item => item.itemId === itemId ? { ...item, available } : item));
+    setMenuItems(prev => {
+      const selectingSoup = available && String(itemId || '').startsWith('TSOUP');
+      return prev.map(item => {
+        if (selectingSoup && isTruckSoupSelector(item)) return { ...item, available: item.itemId === itemId };
+        return item.itemId === itemId ? { ...item, available } : item;
+      });
+    });
     try {
       const res = await adminFunction('truck-update-menu-availability', {
         method: 'POST',
